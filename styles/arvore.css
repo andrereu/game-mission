@@ -1,0 +1,96 @@
+.arvore-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  background: var(--cor-fundo);
+}
+
+.arvore-cabecalho {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--cor-borda);
+}
+.arvore-titulo { margin: 0; font-size: 16px; }
+.arvore-fechar {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--cor-peca-borda);
+  background: var(--cor-peca);
+  color: var(--cor-texto);
+  cursor: pointer;
+}
+
+.arvore-palco {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+  background: var(--cor-canvas);
+  touch-action: none;
+  cursor: grab;
+}
+.arvore-mundo { position: absolute; inset: 0; transform-origin: 0 0; }
+.arvore-arestas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4000px;
+  height: 4000px;
+  overflow: visible;
+  pointer-events: none;
+}
+.arvore-aresta { stroke: var(--cor-peca-borda); stroke-width: 2; opacity: 0.6; }
+.arvore-nos { position: absolute; inset: 0; }
+
+.arvore-no {
+  position: absolute;
+  width: 68px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 4px;
+  border-radius: 10px;
+  background: var(--cor-peca);
+  border: 2px solid var(--cor-borda);
+  color: var(--cor-texto);
+  font: inherit;
+  cursor: pointer;
+  transition: opacity 120ms ease, border-color 120ms ease;
+}
+.arvore-no[data-era="elementos"] { border-color: var(--era-elementos); }
+.arvore-no[data-era="natureza"] { border-color: var(--era-natureza); }
+.arvore-no[data-era="vida"] { border-color: var(--era-vida); }
+.arvore-no[data-era="tecnologia"] { border-color: var(--era-tecnologia); }
+.arvore-no[data-era="cultura"] { border-color: var(--era-cultura); }
+.arvore-no[data-era="ficcao"] { border-color: var(--era-ficcao); }
+.arvore-no-icone { font-size: 22px; line-height: 1; }
+img.arvore-no-icone { width: 24px; height: 24px; }
+.arvore-no-nome { font-size: 11px; text-align: center; word-break: break-word; }
+.arvore-no[data-fonte="ia"]::after {
+  content: "★";
+  position: absolute;
+  top: 1px;
+  right: 3px;
+  font-size: 10px;
+  color: var(--era-cultura);
+}
+.arvore-no.esmaecido { opacity: 0.25; }
+.arvore-no.destaque { opacity: 1; box-shadow: 0 0 0 2px var(--cor-texto); }
+
+.arvore-legenda {
+  margin: 0;
+  padding: 10px 14px;
+  border-top: 1px solid var(--cor-borda);
+  font-size: 13px;
+  min-height: 1.4em;
+  opacity: 0.9;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arvore-no { transition: none; }
+}

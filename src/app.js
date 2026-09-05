@@ -7,6 +7,7 @@ import { stubDesligado } from './ai/provider.js';
 import { montarCanvas } from './ui/canvas.js';
 import { montarDrawer } from './ui/drawer.js';
 import { mostrarDescoberta } from './ui/descoberta.js';
+import { montarArvore } from './ui/arvore.js';
 import { T } from './data/textos.js';
 
 async function iniciar() {
@@ -34,6 +35,7 @@ async function iniciar() {
   const elCanvas = document.getElementById('canvas');
   const elDrawer = document.getElementById('drawer');
   const elLimpar = document.getElementById('limpar');
+  const elArvore = document.getElementById('arvore');
 
   let drawer;
 
@@ -81,6 +83,15 @@ async function iniciar() {
       canvas.destruirTudo();
     }
   });
+
+  const arvore = montarArvore({
+    raiz: document.getElementById('arvore-raiz'),
+    store,
+    catalogo,
+    T,
+  });
+  elArvore.textContent = T.abrirArvore;
+  elArvore.addEventListener('click', () => arvore.abrir());
 }
 
 iniciar().catch((err) => {

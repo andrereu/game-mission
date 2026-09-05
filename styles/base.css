@@ -34,3 +34,15 @@ body {
   color: var(--cor-texto);
   cursor: pointer;
 }
+.botao-arvore {
+  position: absolute;
+  left: 130px;
+  bottom: 12px;
+  z-index: 5;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--cor-peca-borda);
+  background: var(--cor-peca);
+  color: var(--cor-texto);
+  cursor: pointer;
+}

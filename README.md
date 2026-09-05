@@ -56,9 +56,14 @@ docs/superpowers/   spec de design e plano de implementação
 
 ## Fase 2 (depois dos testes com as crianças)
 
-Árvore de descobertas, service worker / PWA instalável, expansão para ~250 itens,
-endpoint de IA real (sugere combinação quando não existe no código, com mini explicação)
-e seus guard-rails, pinça-zoom no toque, perfis por criança.
+Service worker / PWA instalável, expansão para ~250 itens, endpoint de IA real
+(sugere combinação quando não existe no código, com mini explicação) e seus
+guard-rails, pinça-zoom no toque, perfis por criança.
+
+Feito na fase 2: **árvore de descobertas** (`src/ui/arvore.js`) — grafo em tela
+cheia do que já foi descoberto, layout próprio por profundidade, pan/zoom, clique
+num nó realça pais e filhos e mostra o texto do combo. Botão "Árvore" no canto
+inferior-esquerdo.
 
 ### Ajustes vindos dos testes no notebook (2026-09-05)
 

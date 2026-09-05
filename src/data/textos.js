@@ -5,6 +5,9 @@ export const T = {
   limparCanvas: 'Limpar canvas',
   confirmarLimpar: 'Tirar tudo do canvas? As descobertas continuam na gaveta.',
   nadaAconteceu: 'Nada aconteceu...',
+  abrirArvore: 'Árvore',
+  arvoreTitulo: 'Árvore de descobertas',
+  arvoreDica: 'Toque num item para ver de onde ele veio.',
   contador: (descobertos, total) => `${descobertos} / ${total} descobertos`,
   eras: {
     elementos: 'Elementos',
