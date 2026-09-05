@@ -46,7 +46,7 @@ function listarArquivos(dir, prefixo, acc) {
   return acc;
 }
 
-test('a lista de precache do sw.js cobre todo módulo de src/ e todo CSS ligado', () => {
+test('a lista de precache do sw.js cobre todo módulo de src/ e todo CSS ligado', async () => {
   const sw = ler('sw.js');
   // extrai o array PRECACHE = [ ... ] literal do sw.js
   const bloco = sw.match(/PRECACHE\s*=\s*\[([\s\S]*?)\]/);
@@ -71,5 +71,11 @@ test('a lista de precache do sw.js cobre todo módulo de src/ e todo CSS ligado'
   // o próprio shell
   for (const base of ['index.html', 'manifest.webmanifest']) {
     assert.ok(emCache.has(base), `sw.js precisa pré-cachear ${base}`);
+  }
+
+  // todo SVG declarado em itens.js
+  const { itens } = await import('../src/data/itens.js');
+  for (const it of itens) {
+    if (it.svg) assert.ok(emCache.has(it.svg), `sw.js precisa pré-cachear ${it.svg}`);
   }
 });

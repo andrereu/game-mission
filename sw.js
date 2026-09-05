@@ -34,6 +34,13 @@ const PRECACHE = [
   'assets/icons/icon-192.png',
   'assets/icons/icon-512.png',
   'assets/icons/icon-maskable-512.png',
+
+  'assets/svg/pikachu.svg',
+  'assets/svg/raichu.svg',
+  'assets/svg/pokebola.svg',
+  'assets/svg/homem-aranha.svg',
+  'assets/svg/venom.svg',
+  'assets/svg/duende-verde.svg',
 ];
 
 self.addEventListener('install', (evento) => {
