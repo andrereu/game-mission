@@ -1,0 +1,78 @@
+// Service worker do Mistura!
+// install: pré-cacheia todo o app-shell (HTML, CSS, módulos, dados, ícones).
+// fetch: cache-first para estático mesmo-origem; rede direta para /api/.
+// activate: apaga versões antigas do cache.
+
+const VERSAO = 'mistura-v1';
+
+const PRECACHE = [
+  './',
+  'index.html',
+  'manifest.webmanifest',
+
+  'styles/base.css',
+  'styles/canvas.css',
+  'styles/drawer.css',
+  'styles/overlay.css',
+  'styles/arvore.css',
+
+  'src/app.js',
+  'src/ai/provider.js',
+  'src/data/combos.js',
+  'src/data/itens.js',
+  'src/data/textos.js',
+  'src/engine/catalogo.js',
+  'src/engine/combinar.js',
+  'src/engine/slug.js',
+  'src/engine/state.js',
+  'src/engine/storage.js',
+  'src/ui/arvore.js',
+  'src/ui/canvas.js',
+  'src/ui/descoberta.js',
+  'src/ui/drawer.js',
+
+  'assets/icons/icon-192.png',
+  'assets/icons/icon-512.png',
+  'assets/icons/icon-maskable-512.png',
+];
+
+self.addEventListener('install', (evento) => {
+  evento.waitUntil(
+    caches.open(VERSAO).then((cache) => cache.addAll(PRECACHE)).then(() => self.skipWaiting()),
+  );
+});
+
+self.addEventListener('activate', (evento) => {
+  evento.waitUntil(
+    caches.keys()
+      .then((chaves) => Promise.all(
+        chaves.filter((c) => c !== VERSAO).map((c) => caches.delete(c)),
+      ))
+      .then(() => self.clients.claim()),
+  );
+});
+
+self.addEventListener('fetch', (evento) => {
+  const req = evento.request;
+  if (req.method !== 'GET') return;
+
+  const url = new URL(req.url);
+  if (url.origin !== self.location.origin) return; // deixa a rede cuidar
+  if (url.pathname.startsWith('/api/')) return; // IA (fase 2): sempre rede
+
+  evento.respondWith(
+    caches.match(req).then((achado) => {
+      if (achado) return achado;
+      return fetch(req)
+        .then((resp) => {
+          // guarda cópias de estático que apareça em runtime
+          if (resp.ok && resp.type === 'basic') {
+            const copia = resp.clone();
+            caches.open(VERSAO).then((cache) => cache.put(req, copia));
+          }
+          return resp;
+        })
+        .catch(() => caches.match('index.html')); // navegação offline sem cache exato
+    }),
+  );
+});

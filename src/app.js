@@ -97,3 +97,12 @@ async function iniciar() {
 iniciar().catch((err) => {
   console.error(err);
 });
+
+// PWA: registra o service worker (não bloqueia o jogo se falhar).
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch((err) => {
+      console.warn('service worker não registrou:', err);
+    });
+  });
+}
