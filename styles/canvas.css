@@ -4,3 +4,26 @@
 .peca .peca-icone { font-size: 28px; line-height: 1; }
 .peca .peca-nome { font-size: 12px; }
 .peca.arrastando { cursor: grabbing; opacity: 0.85; }
+
+/* aviso acessível de "nada aconteceu": lido por leitor de tela, invisível na tela */
+.canvas-aviso { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* resultado de fusão: "junta e brilha" */
+.peca.surgindo { animation: peca-surgindo 320ms ease-out; }
+@keyframes peca-surgindo {
+  0%   { transform: scale(0.4); opacity: 0; box-shadow: 0 0 0 rgba(255, 236, 160, 0); }
+  55%  { transform: scale(1.18); opacity: 1; box-shadow: 0 0 22px 6px rgba(255, 236, 160, 0.85); }
+  100% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 rgba(255, 236, 160, 0); }
+}
+
+/* fusão sem resultado: quique de volta ao lugar */
+.peca.quique { animation: peca-quique 260ms ease-in-out; }
+@keyframes peca-quique {
+  0%, 100% { transform: translateY(0) scale(1); }
+  30%      { transform: translateY(-6px) scale(1.06); }
+  60%      { transform: translateY(2px) scale(0.97); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .peca.surgindo, .peca.quique { animation: none; }
+}

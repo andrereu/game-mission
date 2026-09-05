@@ -50,7 +50,7 @@ export function criarStore(save) {
     },
 
     clearInstances() {
-      save.canvas = [];
+      save.canvas.length = 0;
       emit('canvas:limpo', null);
     },
 

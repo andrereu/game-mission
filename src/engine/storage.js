@@ -11,8 +11,17 @@ function temIndexedDB() {
   }
 }
 
+// Uma única conexão por página: abrir() em toda leitura/escrita vazava conexões.
+let dbPromise = null;
+let dbFactory = null;
+
 function abrir() {
-  return new Promise((resolve, reject) => {
+  // se o indexedDB do ambiente trocou (testes), descarta a conexão memoizada
+  if (dbFactory !== indexedDB) {
+    dbPromise = null;
+    dbFactory = indexedDB;
+  }
+  dbPromise ??= new Promise((resolve, reject) => {
     const req = indexedDB.open(DB_NOME, 1);
     req.onupgradeneeded = () => {
       if (!req.result.objectStoreNames.contains(STORE)) {
@@ -21,35 +30,64 @@ function abrir() {
     };
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
+    req.onblocked = () => reject(new Error('indexedDB bloqueado'));
+  }).catch((err) => {
+    dbPromise = null; // permite nova tentativa depois
+    throw err;
   });
+  return dbPromise;
 }
 
-async function lerCru() {
-  if (!temIndexedDB()) {
-    const txt = localStorage.getItem(DB_NOME);
-    return txt ? JSON.parse(txt) : null;
-  }
-  const db = await abrir();
-  return new Promise((resolve, reject) => {
+function lerIDB() {
+  return abrir().then((db) => new Promise((resolve, reject) => {
     const tx = db.transaction(STORE, 'readonly');
     const req = tx.objectStore(STORE).get(CHAVE);
     req.onsuccess = () => resolve(req.result ?? null);
     req.onerror = () => reject(req.error);
-  });
+  }));
+}
+
+function lerLocal() {
+  try {
+    const txt = localStorage.getItem(DB_NOME);
+    if (!txt) return null;
+    return JSON.parse(txt);
+  } catch {
+    return null; // sem storage ou JSON corrompido: trata como "sem save"
+  }
+}
+
+async function lerCru() {
+  if (temIndexedDB()) {
+    try {
+      return await lerIDB();
+    } catch {
+      /* private browsing, cota, bloqueio: cai no localStorage */
+    }
+  }
+  return lerLocal();
 }
 
 async function escreverCru(save) {
-  if (!temIndexedDB()) {
-    localStorage.setItem(DB_NOME, JSON.stringify(save));
-    return;
+  if (temIndexedDB()) {
+    try {
+      const db = await abrir();
+      await new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE, 'readwrite');
+        tx.objectStore(STORE).put(save, CHAVE);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+      });
+      return;
+    } catch {
+      /* cai no localStorage */
+    }
   }
-  const db = await abrir();
-  await new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE, 'readwrite');
-    tx.objectStore(STORE).put(save, CHAVE);
-    tx.oncomplete = () => resolve();
-    tx.onerror = () => reject(tx.error);
-  });
+  try {
+    localStorage.setItem(DB_NOME, JSON.stringify(save));
+  } catch {
+    /* nada a fazer: o jogo continua só em memória */
+  }
 }
 
 export function saveInicial(catalogo) {
@@ -83,10 +121,15 @@ function migrar(save) {
   return atual;
 }
 
+// Nunca rejeita: no pior caso devolve um save novo em folha.
 export async function carregar(catalogo) {
-  const cru = await lerCru();
-  if (!cru) return saveInicial(catalogo);
-  return migrar(cru);
+  try {
+    const cru = await lerCru();
+    if (!cru || typeof cru !== 'object') return saveInicial(catalogo);
+    return migrar(cru);
+  } catch {
+    return saveInicial(catalogo);
+  }
 }
 
 export async function salvar(save) {

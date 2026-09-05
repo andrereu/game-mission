@@ -76,6 +76,82 @@ test('carregar aplica migração de versão antiga', async () => {
   }
 });
 
+test('carregar resolve mesmo se indexedDB.open explodir', async () => {
+  resetDB();
+  const orig = globalThis.indexedDB;
+  try {
+    globalThis.indexedDB = {
+      open() { throw new Error('storage bloqueado'); },
+    };
+    const cat = criarCatalogo();
+    const s = await carregar(cat);
+    assert.ok(s.descobertos.agua, 'devia cair no save inicial');
+    assert.equal(s.versao, VERSAO_ATUAL);
+  } finally {
+    globalThis.indexedDB = orig;
+    globalThis.localStorage.clear();
+  }
+});
+
+test('carregar resolve quando a abertura do indexedDB rejeita', async () => {
+  resetDB();
+  const orig = globalThis.indexedDB;
+  try {
+    globalThis.indexedDB = {
+      open() {
+        const req = { result: null, error: new Error('cota') };
+        setTimeout(() => req.onerror && req.onerror(), 0);
+        return req;
+      },
+    };
+    const cat = criarCatalogo();
+    const s = await carregar(cat);
+    assert.ok(s.descobertos.agua);
+  } finally {
+    globalThis.indexedDB = orig;
+    globalThis.localStorage.clear();
+  }
+});
+
+test('localStorage corrompido vira save inicial', async () => {
+  resetDB();
+  const orig = globalThis.indexedDB;
+  try {
+    globalThis.indexedDB = undefined;
+    globalThis.localStorage.setItem('mistura', '{isso não é json');
+    const cat = criarCatalogo();
+    const s = await carregar(cat);
+    assert.ok(s.descobertos.agua);
+    assert.deepEqual(s.canvas, []);
+  } finally {
+    globalThis.indexedDB = orig;
+    globalThis.localStorage.clear();
+  }
+});
+
+test('abrir reutiliza a mesma conexão IndexedDB', async () => {
+  resetDB();
+  const real = globalThis.indexedDB;
+  let aberturas = 0;
+  try {
+    globalThis.indexedDB = {
+      open(...args) {
+        aberturas += 1;
+        return real.open(...args);
+      },
+    };
+    const cat = criarCatalogo();
+    const s = saveInicial(cat);
+    await salvar(s);
+    await carregar(cat);
+    await salvar(s);
+    assert.equal(aberturas, 1, `abriu ${aberturas} conexões`);
+  } finally {
+    globalThis.indexedDB = real;
+    globalThis.localStorage.clear();
+  }
+});
+
 test('agendador de salvar faz debounce', async () => {
   resetDB();
   let chamadas = 0;

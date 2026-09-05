@@ -1,6 +1,6 @@
 // src/app.js
 import { criarCatalogo } from './engine/catalogo.js';
-import { carregar, criarAgendadorSalvar } from './engine/storage.js';
+import { carregar, criarAgendadorSalvar, saveInicial } from './engine/storage.js';
 import { criarStore } from './engine/state.js';
 import { criarCombinador } from './engine/combinar.js';
 import { stubDesligado } from './ai/provider.js';
@@ -11,17 +11,24 @@ import { T } from './data/textos.js';
 
 async function iniciar() {
   const catalogo = criarCatalogo();
-  const save = await carregar(catalogo);
+  let save;
+  try {
+    save = await carregar(catalogo);
+  } catch (err) {
+    console.error(err);
+    save = saveInicial(catalogo); // boot com save novo em vez de página em branco
+  }
   const store = criarStore(save);
 
   const agendarSalvar = criarAgendadorSalvar(() => store.getSave(), 400);
   store.on('estado:mudou', agendarSalvar);
 
-  // Nesta fase a IA fica desligada: stub + estaOnline sempre false.
+  // Fase 1: provider é o stub. O gate segue o ajuste + rede (spec §5.2/§9);
+  // como iaLigada nasce false, a IA continua desligada.
   const combinar = criarCombinador({
     catalogo,
     aiProvider: stubDesligado,
-    estaOnline: () => false,
+    estaOnline: () => store.getSave().ajustes.iaLigada === true && navigator.onLine,
   });
 
   const elCanvas = document.getElementById('canvas');
@@ -74,8 +81,8 @@ async function iniciar() {
       canvas.destruirTudo();
     }
   });
-
-  canvas.render();
 }
 
-iniciar();
+iniciar().catch((err) => {
+  console.error(err);
+});
