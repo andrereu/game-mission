@@ -64,26 +64,34 @@ test('carregar aplica migração de versão antiga', async () => {
   resetDB();
   const cat = criarCatalogo();
   const antigo = { versao: 0, descobertos: {}, canvas: [], ajustes: {} };
-  globalThis.localStorage.clear();
-  globalThis.indexedDB = undefined;
-  await salvar(antigo);
-  const lido = await carregar(cat);
-  assert.equal(lido.versao, VERSAO_ATUAL);
-  globalThis.indexedDB = new IDBFactory();
+  const semIDB = globalThis.indexedDB;
+  try {
+    globalThis.indexedDB = undefined;
+    await salvar(antigo);
+    const lido = await carregar(cat);
+    assert.equal(lido.versao, VERSAO_ATUAL);
+  } finally {
+    globalThis.indexedDB = new IDBFactory();
+    globalThis.localStorage.clear();
+  }
 });
 
 test('agendador de salvar faz debounce', async () => {
   resetDB();
   let chamadas = 0;
   const orig = globalThis.indexedDB;
-  globalThis.indexedDB = undefined;
-  const save = { versao: VERSAO_ATUAL, descobertos: {}, canvas: [], ajustes: {} };
-  const agendar = criarAgendadorSalvar(() => {
-    chamadas += 1;
-    return save;
-  }, 50);
-  agendar(); agendar(); agendar();
-  await new Promise((r) => setTimeout(r, 120));
-  assert.equal(chamadas, 1);
-  globalThis.indexedDB = orig;
+  try {
+    globalThis.indexedDB = undefined;
+    const save = { versao: VERSAO_ATUAL, descobertos: {}, canvas: [], ajustes: {} };
+    const agendar = criarAgendadorSalvar(() => {
+      chamadas += 1;
+      return save;
+    }, 50);
+    agendar(); agendar(); agendar();
+    await new Promise((r) => setTimeout(r, 120));
+    assert.equal(chamadas, 1);
+  } finally {
+    globalThis.indexedDB = new IDBFactory();
+    globalThis.localStorage.clear();
+  }
 });

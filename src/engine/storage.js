@@ -75,7 +75,7 @@ function migrar(save) {
     const fn = MIGRACOES[atual.versao ?? 0];
     if (!fn) {
       atual.versao = VERSAO_ATUAL;
-      if (!atual.ajustes) atual.ajustes = { som: true, iaLigada: false };
+      atual.ajustes = { som: true, iaLigada: false, ...atual.ajustes };
       break;
     }
     atual = fn(atual);
