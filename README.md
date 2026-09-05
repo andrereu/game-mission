@@ -59,3 +59,16 @@ docs/superpowers/   spec de design e plano de implementação
 Árvore de descobertas, service worker / PWA instalável, expansão para ~250 itens,
 endpoint de IA real (sugere combinação quando não existe no código, com mini explicação)
 e seus guard-rails, pinça-zoom no toque, perfis por criança.
+
+### Ajustes vindos dos testes no notebook (2026-09-05)
+
+- **Canvas com fundo mais claro.** Hoje `--cor-canvas: #121d31` (azul bem escuro).
+  Clarear notavelmente. Cuidado: a peça no canvas usa fundo `#1b2942` e borda `#24344f`;
+  se o canvas passar desses tons, a peça fica mais escura que o fundo (invertido). Então
+  é um miniajuste de paleta: clarear o canvas E clarear/re-tonalizar a peça e a borda
+  juntos, mantendo contraste do texto `#eaf0ff`. Feito junto com o passe visual da fase 2.
+- **Arrastar e soltar no mobile não foi testado.** Só notebook até agora. O canvas usa
+  Pointer Events (funciona em toque), mas falta: validar o drag de card da gaveta para o
+  canvas no celular, o toque-longo (500 ms) para apagar sem conflitar com scroll, e a
+  ausência de pinça-zoom (`touch-action: none` + `user-scalable=no`). Testar em um
+  aparelho real no início da fase 2, antes da pinça-zoom.
