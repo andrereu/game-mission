@@ -62,11 +62,11 @@ e seus guard-rails, pinça-zoom no toque, perfis por criança.
 
 ### Ajustes vindos dos testes no notebook (2026-09-05)
 
-- **Canvas com fundo mais claro.** Hoje `--cor-canvas: #121d31` (azul bem escuro).
-  Clarear notavelmente. Cuidado: a peça no canvas usa fundo `#1b2942` e borda `#24344f`;
-  se o canvas passar desses tons, a peça fica mais escura que o fundo (invertido). Então
-  é um miniajuste de paleta: clarear o canvas E clarear/re-tonalizar a peça e a borda
-  juntos, mantendo contraste do texto `#eaf0ff`. Feito junto com o passe visual da fase 2.
+- **Canvas com fundo mais claro.** _Feito (2026-09-05, commit `9857e44`)._
+  `--cor-canvas` foi de `#121d31` para `#2c3c59`. A peça ganhou variáveis próprias
+  acima desse tom (`--cor-peca: #405682`, `--cor-peca-borda: #5b74a8`) para não
+  ficar mais escura que o fundo; o botão "Limpar canvas" usa as mesmas. Texto
+  segue `#eaf0ff`. Drawer e corpo continuam escuros, emoldurando o canvas.
 - **Arrastar e soltar no mobile não foi testado.** Só notebook até agora. O canvas usa
   Pointer Events (funciona em toque), mas falta: validar o drag de card da gaveta para o
   canvas no celular, o toque-longo (500 ms) para apagar sem conflitar com scroll, e a
