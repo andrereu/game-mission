@@ -32,6 +32,17 @@ test('provider de endpoint devolve null em resposta ruim', async () => {
   }
 });
 
+test('provider de endpoint devolve null quando resp.ok é falso', async () => {
+  const orig = globalThis.fetch;
+  globalThis.fetch = async () => ({ ok: false, json: async () => ({ resultadoNome: 'X' }) });
+  try {
+    const p = criarProviderEndpoint('/api/combinar');
+    assert.equal(await p.sugerirCombo({ nome: 'A' }, { nome: 'B' }), null);
+  } finally {
+    globalThis.fetch = orig;
+  }
+});
+
 test('provider de endpoint devolve null quando fetch falha', async () => {
   const orig = globalThis.fetch;
   globalThis.fetch = async () => { throw new Error('rede'); };
