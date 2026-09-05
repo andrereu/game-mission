@@ -1,9 +1,11 @@
 :root {
   --cor-fundo: #0e1726;
-  --cor-canvas: #121d31;
+  --cor-canvas: #2c3c59;
   --cor-drawer: #0b1220;
   --cor-texto: #eaf0ff;
-  --cor-borda: #24344f;
+  --cor-borda: #33456a;
+  --cor-peca: #405682;
+  --cor-peca-borda: #5b74a8;
   --era-elementos: #4aa3ff;
   --era-natureza: #45c26b;
   --era-vida: #ff8a5c;
@@ -27,8 +29,8 @@ body {
   z-index: 5;
   padding: 8px 12px;
   border-radius: 8px;
-  border: 1px solid var(--cor-borda);
-  background: #1b2942;
+  border: 1px solid var(--cor-peca-borda);
+  background: var(--cor-peca);
   color: var(--cor-texto);
   cursor: pointer;
 }
