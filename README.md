@@ -58,8 +58,8 @@ docs/superpowers/   spec de design e plano de implementação
 
 Ainda pendente: endpoint de IA real (sugere combinação quando não existe no
 código, com mini explicação) e seus guard-rails; pinça-zoom no toque; perfis por
-criança; validação de arrastar/soltar em celular; SVGs de Pokémon e Homem-Aranha;
-mais conteúdo rumo a ~250 itens / ~700 combos.
+criança; validação de arrastar/soltar em celular; mais conteúdo rumo a ~250
+itens / ~700 combos.
 
 ### Feito na fase 2
 
@@ -74,6 +74,9 @@ mais conteúdo rumo a ~250 itens / ~700 combos.
   navegador de preview embutido bloqueia service worker.
 - **Catálogo maior** — 136 itens / 182 combos curados (era 35 / 40), só emoji,
   todas as seis eras. Integridade garantida por `tests/dados.test.js`.
+- **SVGs de Pokémon e Homem-Aranha** — `assets/svg/` com pikachu, raichu,
+  pokebola, homem-aranha, venom e duende-verde. Ícones flat legíveis de 24px a
+  96px; a UI troca emoji por `<img>` quando o item tem `svg`.
 
 ### Ajustes vindos dos testes no notebook (2026-09-05)
 
