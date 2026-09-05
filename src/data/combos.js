@@ -37,7 +37,6 @@ export const combos = [
   { a: 'nuvem', b: 'energia', resultado: 'raio-eletrico', texto: 'Energia na nuvem desce como raio.' },
   { a: 'oceano', b: 'fogo', resultado: 'vapor', texto: 'O fogo no oceano levanta muito vapor.' },
   { a: 'montanha', b: 'fogo', resultado: 'lava', texto: 'A montanha acorda como vulcão e escorre lava.' },
-  { a: 'arvore', b: 'ferramenta', resultado: 'historia', texto: 'Da madeira sai o papel onde a história é escrita.' },
   { a: 'humano', b: 'metal', resultado: 'ferramenta', texto: 'O humano molda o metal em ferramentas melhores.' },
   { a: 'robo', b: 'historia', resultado: 'heroi', texto: 'Nas histórias, até um robô vira herói.' },
 ];
