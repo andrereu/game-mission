@@ -4,8 +4,9 @@ Jogo de descobertas no estilo Infinite Craft, em português, para jogar online e
 Arraste dois itens no canvas para descobrir um terceiro. Cada descoberta nova ganha um
 destaque em tela cheia antes de virar um card na gaveta.
 
-Fase 1 (esta): jogo jogável offline — canvas, gaveta com busca e filtro, destaque de
-descoberta, 35 itens e 40 combinações em pt_BR (com Pikachu e Homem-Aranha), IA desligada.
+Jogo jogável offline — canvas, gaveta com busca e filtro, destaque de descoberta,
+árvore de descobertas, PWA instalável, 136 itens e 182 combinações em pt_BR
+(com Pikachu e Homem-Aranha e SVGs próprios), IA desligada.
 
 ## Como jogar (Windows)
 
@@ -28,12 +29,44 @@ Depois abra **http://localhost:4173** no navegador. Para parar o servidor: `Ctrl
 
 Depois de abrir uma vez, o jogo funciona sem internet — é só rodar `npm start` de novo.
 O progresso (itens descobertos e o que está no canvas) fica salvo no próprio navegador,
-por navegador/computador. (O modo instalável/PWA vem na fase 2.)
+por navegador/computador.
+
+**Instalar como app:** com o jogo aberto no Chrome ou Edge, use o ícone de instalar na
+barra de endereço (ou menu → "Instalar Mistura!"). Vira um app com janela e ícone
+próprios e funciona offline pelo cache. Nos aparelhos dos filhos, o caminho é publicar
+(abaixo) e usar "Adicionar à tela inicial".
 
 ### Cada filho no seu navegador
 
 O save fica preso ao navegador. Para saves separados, use perfis do Chrome ou navegadores
-diferentes por criança. (Perfis dentro do jogo vêm na fase 2.)
+diferentes por criança. (Perfis dentro do jogo vêm depois.)
+
+## Publicar e atualizar (Netlify)
+
+O site publicado é só a pasta `dist/`, montada por `scripts/build.mjs` (index.html,
+`sw.js`, `manifest.webmanifest`, `styles/`, `src/`, `assets/` — sem testes nem
+`node_modules`). `netlify.toml` marca a página como `noindex` (não aparece em buscador).
+
+Uma vez só:
+
+```
+npm install -g netlify-cli
+netlify login
+netlify link
+```
+
+No `netlify link`, escolha o site que já existe.
+
+Cada atualização do jogo:
+
+```
+npm run deploy
+```
+
+Esse comando sobe a versão do cache no `sw.js` (`mistura-v1` → `v2` → ...), monta o
+`dist/` e publica. A troca da versão é o que faz os aparelhos já instalados baixarem os
+arquivos novos — sem isso, eles continuam na versão velha. Depois do deploy, faça o
+commit do `sw.js` alterado.
 
 ## Rodar os testes
 

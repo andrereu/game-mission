@@ -1,0 +1,17 @@
+# Publica só o dist/ montado por scripts/build.mjs.
+[build]
+  publish = "dist"
+  command = "node scripts/build.mjs"
+
+# Site "privado" por obscuridade: não aparece em buscador nenhum.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
+# O service worker nunca deve ser servido de cache do navegador/CDN,
+# senão um update do jogo demora a chegar nos aparelhos.
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache"

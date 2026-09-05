@@ -6,7 +6,9 @@
   "engines": { "node": ">=20.6" },
   "scripts": {
     "start": "node servidor.mjs",
-    "test": "node --test --import ./tests/_setup.js"
+    "test": "node --test --import ./tests/_setup.js",
+    "build": "node scripts/build.mjs",
+    "deploy": "node scripts/bump-sw.mjs && npm run build && netlify deploy --prod --dir=dist"
   },
   "devDependencies": {
     "fake-indexeddb": "^6.0.0",
