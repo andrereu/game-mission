@@ -56,14 +56,24 @@ docs/superpowers/   spec de design e plano de implementação
 
 ## Fase 2 (depois dos testes com as crianças)
 
-Service worker / PWA instalável, expansão para ~250 itens, endpoint de IA real
-(sugere combinação quando não existe no código, com mini explicação) e seus
-guard-rails, pinça-zoom no toque, perfis por criança.
+Ainda pendente: endpoint de IA real (sugere combinação quando não existe no
+código, com mini explicação) e seus guard-rails; pinça-zoom no toque; perfis por
+criança; validação de arrastar/soltar em celular; SVGs de Pokémon e Homem-Aranha;
+mais conteúdo rumo a ~250 itens / ~700 combos.
 
-Feito na fase 2: **árvore de descobertas** (`src/ui/arvore.js`) — grafo em tela
-cheia do que já foi descoberto, layout próprio por profundidade, pan/zoom, clique
-num nó realça pais e filhos e mostra o texto do combo. Botão "Árvore" no canto
-inferior-esquerdo.
+### Feito na fase 2
+
+- **Árvore de descobertas** (`src/ui/arvore.js`) — grafo em tela cheia do que já
+  foi descoberto, layout próprio por profundidade, pan/zoom, clique num nó realça
+  pais e filhos e mostra o texto do combo. Botão "Árvore" no canto inferior-esquerdo.
+- **PWA instalável e offline** — `manifest.webmanifest` + `sw.js` (cache
+  `mistura-v1`, pré-cache do app-shell inteiro no `install`, cache-first no
+  `fetch`, limpeza de caches antigos no `activate`). Registro em `app.js` atrás
+  de `'serviceWorker' in navigator`. Ícones gerados por `scripts/gerar-icones.mjs`
+  (sem dependência). Falta validar o registro em Chrome real / celular — o
+  navegador de preview embutido bloqueia service worker.
+- **Catálogo maior** — 136 itens / 182 combos curados (era 35 / 40), só emoji,
+  todas as seis eras. Integridade garantida por `tests/dados.test.js`.
 
 ### Ajustes vindos dos testes no notebook (2026-09-05)
 
