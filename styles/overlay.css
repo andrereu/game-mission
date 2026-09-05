@@ -1,0 +1,12 @@
+.descoberta-overlay { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; background: rgba(4, 8, 16, 0.82); animation: aparecer 0.2s ease; }
+@keyframes aparecer { from { opacity: 0; } to { opacity: 1; } }
+.descoberta-cartao { text-align: center; max-width: 320px; padding: 24px; }
+.descoberta-icone { font-size: 96px; line-height: 1; filter: drop-shadow(0 0 24px rgba(120, 180, 255, 0.8)); animation: pulsar 1s ease infinite alternate; }
+img.descoberta-icone { width: 120px; height: 120px; }
+@keyframes pulsar { from { transform: scale(1); } to { transform: scale(1.08); } }
+.descoberta-selo { font-weight: 700; letter-spacing: 2px; color: var(--era-cultura); margin: 8px 0 0; }
+.descoberta-nome { font-size: 28px; margin: 4px 0 8px; }
+.descoberta-origem { opacity: 0.85; margin: 0 0 8px; }
+.descoberta-texto { opacity: 0.9; }
+.descoberta-fechar { margin-top: 16px; padding: 8px 16px; border-radius: 8px; border: 1px solid var(--cor-borda); background: #1b2942; color: var(--cor-texto); cursor: pointer; }
+.icone-mini { width: 18px; height: 18px; vertical-align: middle; }
