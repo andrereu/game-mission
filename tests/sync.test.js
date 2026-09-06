@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { IDBFactory } from 'fake-indexeddb';
 import {
   gerarCodigo, carregarSync, definirCodigo, desativar,
-  mesclarDescobertos, mesclarPerfis, puxar, empurrar, sincronizar,
+  mesclarDescobertos, mesclarMapaIA, mesclarPerfis, puxar, empurrar, sincronizar,
 } from '../src/engine/sync.js';
 
 function reset() {
@@ -42,6 +42,17 @@ test('mesclarDescobertos faz união e mantém o "em" mais antigo', () => {
   assert.deepEqual(Object.keys(m).sort(), ['agua', 'lava', 'vapor']);
   assert.equal(m.vapor.em, 50, 'fica com o registro mais antigo');
   assert.equal(m.lava.em, 30);
+});
+
+test('mesclarMapaIA faz união, mantendo o local em caso de conflito', () => {
+  const a = { 'nuvem-quente': { nome: 'Nuvem Quente', emoji: '🌫️', era: 'natureza' } };
+  const b = {
+    'nuvem-quente': { nome: 'Outra Coisa', emoji: '❓', era: 'ficcao' },
+    'robo-musical': { nome: 'Robô Musical', emoji: '🎸', era: 'tecnologia' },
+  };
+  const m = mesclarMapaIA(a, b);
+  assert.deepEqual(Object.keys(m).sort(), ['nuvem-quente', 'robo-musical']);
+  assert.equal(m['nuvem-quente'].nome, 'Nuvem Quente', 'conflito: fica com o local');
 });
 
 test('mesclarPerfis une por id, mantendo o local em caso de conflito', () => {
@@ -147,6 +158,55 @@ test('sincronizar mescla perfis e descobertas nos dois sentidos', async () => {
       'descobertas locais + remotas',
     );
     assert.deepEqual(Object.keys(enviados.x.descobertos).sort(), ['agua', 'gelo', 'vapor']);
+  } finally {
+    globalThis.fetch = orig;
+  }
+});
+
+test('sincronizar mescla itensIA e combosIA (o criado num aparelho aparece no outro)', async () => {
+  const orig = globalThis.fetch;
+  const remoto = {
+    x: {
+      descobertos: {},
+      itensIA: { 'nuvem-quente': { nome: 'Nuvem Quente', emoji: '🌫️', era: 'natureza' } },
+      combosIA: { 'calor+vapor': { a: 'vapor', b: 'calor', resultado: 'nuvem-quente', texto: 'x' } },
+    },
+  };
+  const enviados = {};
+  globalThis.fetch = async (u, opc) => {
+    const chave = u.match(/family_saves\/COD-1234\/(.+)\.json$/)[1];
+    if (!opc || opc.method !== 'PUT') {
+      return { ok: true, json: async () => remoto[chave] ?? null };
+    }
+    enviados[chave] = JSON.parse(opc.body);
+    return { ok: true };
+  };
+
+  const savesSalvos = {};
+  const saveLocal = {
+    versao: 1,
+    descobertos: {},
+    canvas: [],
+    ajustes: {},
+    itensIA: { 'robo-musical': { nome: 'Robô Musical', emoji: '🎸', era: 'tecnologia' } },
+    combosIA: { 'musica+robo': { a: 'robo', b: 'musica', resultado: 'robo-musical', texto: 'y' } },
+  };
+
+  try {
+    await sincronizar('COD-1234', {
+      carregarPerfis: async () => ({ lista: [{ id: 'x', nome: 'Ana' }], ativo: 'x' }),
+      salvarPerfis: async () => {},
+      carregarSave: async () => saveLocal,
+      salvarSave: async (id, s) => { savesSalvos[id] = s; },
+      ativo: 'x',
+    });
+
+    assert.deepEqual(
+      Object.keys(savesSalvos.x.itensIA).sort(), ['nuvem-quente', 'robo-musical'],
+      'item da IA do outro aparelho entrou no local',
+    );
+    assert.deepEqual(Object.keys(savesSalvos.x.combosIA).sort(), ['calor+vapor', 'musica+robo']);
+    assert.deepEqual(Object.keys(enviados.x.itensIA).sort(), ['nuvem-quente', 'robo-musical']);
   } finally {
     globalThis.fetch = orig;
   }

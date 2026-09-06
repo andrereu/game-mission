@@ -1,7 +1,9 @@
 // Sincronização entre aparelhos via Firebase Realtime Database.
 // Sem dependência: fetch direto na REST do RTDB. Sem credencial no cliente —
 // as rules do RTDB exigem um código de família >= 8 chars.
-// Só sincroniza `descobertos` (união) e a lista de perfis (união por id).
+// Sincroniza `descobertos` (união), `itensIA`/`combosIA` (união, sem isso o
+// aparelho B mostra ❔ pro que a IA criou no aparelho A) e a lista de perfis
+// (união por id).
 import { FIREBASE_DB_URL } from '../data/config.js';
 import { lerChave, escreverChave, apagarChave } from './storage.js';
 
@@ -48,6 +50,13 @@ export function mesclarDescobertos(a = {}, b = {}) {
     }
   }
   return fora;
+}
+
+// itensIA/combosIA não têm "quando" pra desempatar (não é uma descoberta,
+// é a definição do que a IA inventou): local tem prioridade, só complementa
+// com o que o outro aparelho tem e o local ainda não viu.
+export function mesclarMapaIA(a = {}, b = {}) {
+  return { ...b, ...a };
 }
 
 export function mesclarPerfis(a = [], b = []) {
@@ -108,9 +117,13 @@ export async function sincronizar(codigo, {
       local.descobertos || {},
       (remoto && remoto.descobertos) || {},
     );
+    const itensIA = mesclarMapaIA(local.itensIA || {}, (remoto && remoto.itensIA) || {});
+    const combosIA = mesclarMapaIA(local.combosIA || {}, (remoto && remoto.combosIA) || {});
     local.descobertos = descobertos;
+    local.itensIA = itensIA;
+    local.combosIA = combosIA;
     await salvarSave(alvo, local);
-    await empurrar(codigo, alvo, { descobertos });
+    await empurrar(codigo, alvo, { descobertos, itensIA, combosIA });
   }
 
   return { ok: true, perfis: lista };

@@ -207,17 +207,24 @@ async function iniciar() {
   });
   elAjustes.addEventListener('click', () => ajustes.abrir());
 
-  // com sync ativo, empurra as descobertas do perfil ativo pouco depois de cada nova
+  // com sync ativo, empurra descobertas + criações da IA do perfil ativo pouco
+  // depois de cada novidade (sem itensIA/combosIA, o outro aparelho só saberia
+  // o id descoberto, sem saber o que a IA inventou — o mesmo bug do ❔ só que
+  // entre aparelhos em vez de entre sessões)
   if (sync.codigo) {
     let tPush = null;
-    store.on('descoberta:nova', () => {
+    const empurrarLogo = () => {
       clearTimeout(tPush);
       tPush = setTimeout(() => {
         if (!navigator.onLine) return;
-        empurrar(sync.codigo, perfis.ativo, { descobertos: store.getSave().descobertos })
-          .catch(() => {});
+        const s = store.getSave();
+        empurrar(sync.codigo, perfis.ativo, {
+          descobertos: s.descobertos, itensIA: s.itensIA, combosIA: s.combosIA,
+        }).catch(() => {});
       }, 2000);
-    });
+    };
+    store.on('descoberta:nova', empurrarLogo);
+    store.on('itemIA:novo', empurrarLogo);
   }
 
   // botão de trocar de perfil, com nome e cor do perfil ativo
