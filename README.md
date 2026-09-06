@@ -107,7 +107,9 @@ eras (linha do tempo "Eras", comemoração "NOVA ERA!", fundo do canvas por era)
 Feito também: era do item da IA (herda dos pais) · barra de topo · limpar sem
 alerta, com "Desfazer".
 
-A seguir: passe sensorial (parallax/partículas/trilha por era) · árvore como mapa
+Feito também: passe sensorial visual (fundo vivo por era + bob nos ícones).
+
+A seguir: áudio por era · árvore como mapa
 principal · álbum/figurinhas · dioramas por era · pedido do dia.
 
 ### Feito na fase 2
