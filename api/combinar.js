@@ -6,9 +6,9 @@ import {
   PROMPT_SISTEMA, montarPrompt, entradaValida, passaNoFiltro, parseRespostaGemini,
 } from './_guardrails.js';
 
-// id estável do Generative Language API (v1beta). Trocável por env var sem
-// mexer no código: GEMINI_MODELO = gemini-2.0-flash, gemini-2.5-flash, ...
-const MODELO = process.env.GEMINI_MODELO || 'gemini-2.0-flash-lite';
+// Alias auto-atualizado para o flash-lite atual (v1beta). Trocável por env var
+// sem mexer no código: GEMINI_MODELO = gemini-2.5-flash, gemini-flash-latest, ...
+const MODELO = process.env.GEMINI_MODELO || 'gemini-flash-lite-latest';
 const ENDPOINT =
   `https://generativelanguage.googleapis.com/v1beta/models/${MODELO}:generateContent`;
 
