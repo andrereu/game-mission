@@ -1,4 +1,4 @@
-// Servidor estático mínimo para jogar o Mistura! localmente.
+// Servidor estático mínimo para rodar a Misturária localmente.
 // Sem dependências: usa só a biblioteca padrão do Node. Funciona 100% offline.
 //   node servidor.mjs
 // Depois abra http://localhost:4173 no navegador.
@@ -58,6 +58,6 @@ servidor.on('error', (err) => {
 });
 
 servidor.listen(PORTA, () => {
-  console.log(`\n  Mistura! rodando em  http://localhost:${PORTA}\n`);
+  console.log(`\n  Misturária rodando em  http://localhost:${PORTA}\n`);
   console.log('  Abra esse endereço no navegador. Para parar: Ctrl+C.\n');
 });

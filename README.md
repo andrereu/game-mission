@@ -1,6 +1,6 @@
-# Mistura!
+# Misturária
 
-Jogo de descobertas no estilo Infinite Craft, em português, para jogar online e offline.
+Jogo de descobertas estilo Infinite Craft, pt-BR, para jogar online e offline.
 Arraste dois itens no canvas para descobrir um terceiro. Cada descoberta nova ganha um
 destaque em tela cheia antes de virar um card na gaveta.
 
@@ -12,7 +12,7 @@ Jogo jogável offline — canvas, gaveta com busca e filtro, destaque de descobe
 
 Você precisa do **Node.js** instalado (https://nodejs.org — versão 20.6 ou mais nova).
 
-**Opção fácil:** dê dois cliques em **`Jogar Mistura.bat`**. Ele abre o navegador e liga o jogo.
+**Opção fácil:** dê dois cliques em **`Jogar Misturaria.bat`**. Ele abre o navegador e liga o jogo.
 
 **Pelo terminal:**
 
@@ -32,7 +32,7 @@ O progresso (itens descobertos e o que está no canvas) fica salvo no próprio n
 por navegador/computador.
 
 **Instalar como app:** com o jogo aberto no Chrome ou Edge, use o ícone de instalar na
-barra de endereço (ou menu → "Instalar Mistura!"). Vira um app com janela e ícone
+barra de endereço (ou menu → "Instalar Misturária"). Vira um app com janela e ícone
 próprios e funciona offline pelo cache. Nos aparelhos dos filhos, o caminho é publicar
 (abaixo) e usar "Adicionar à tela inicial".
 
@@ -98,9 +98,7 @@ docs/superpowers/   spec de design e plano de implementação
 ## Fase 2 (depois dos testes com as crianças)
 
 Ainda pendente: validar toque num aparelho real; manter o Realtime Database
-"acordado" (o free pausa sozinho? um ping via GitHub Actions resolve se
-precisar). Roadmap com sabor Cell to Singularity em `docs/superpowers/` /
-memória — próximo é a espinha de progressão de eras.
+"acordado" (o free pausa sozinho? um ping via GitHub Actions resolve se precisar).
 
 ### Roadmap (sabor Cell to Singularity)
 

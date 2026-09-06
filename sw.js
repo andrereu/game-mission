@@ -1,4 +1,4 @@
-// Service worker do Mistura!
+// Service worker da Misturária
 // install: pré-cacheia todo o app-shell (HTML, CSS, módulos, dados, ícones).
 // fetch: cache-first para estático mesmo-origem; rede direta para /api/.
 // activate: apaga versões antigas do cache.
@@ -46,6 +46,7 @@ const PRECACHE = [
   'src/ui/perfis.js',
   'src/ui/rede.js',
 
+  'assets/icons/icon.svg',
   'assets/icons/icon-192.png',
   'assets/icons/icon-512.png',
   'assets/icons/icon-maskable-512.png',

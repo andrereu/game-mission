@@ -8,7 +8,7 @@ const ler = (rel) => readFileSync(raiz + rel, 'utf8');
 
 test('manifest.webmanifest é JSON válido com as chaves exigidas', () => {
   const m = JSON.parse(ler('manifest.webmanifest'));
-  assert.equal(m.name, 'Mistura!');
+  assert.equal(m.name, 'Misturária');
   assert.ok(m.short_name);
   assert.equal(m.start_url, './');
   assert.equal(m.display, 'standalone');

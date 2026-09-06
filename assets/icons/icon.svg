@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="fundo" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1a2140"/>
+      <stop offset="1" stop-color="#0e1430"/>
+    </linearGradient>
+    <linearGradient id="blob" x1="0.05" y1="0.15" x2="0.95" y2="0.85">
+      <stop offset="0" stop-color="#2f63e0"/>
+      <stop offset="0.46" stop-color="#3d63d8"/>
+      <stop offset="0.54" stop-color="#e63b3b"/>
+      <stop offset="0.8" stop-color="#ff9a34"/>
+      <stop offset="1" stop-color="#ffd25c"/>
+    </linearGradient>
+    <radialGradient id="nucleo" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#fff8e0"/>
+      <stop offset="1" stop-color="#fff8e0" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect x="2" y="2" width="60" height="60" rx="14" fill="url(#fundo)"/>
+
+  <!-- corpo do blob: forma orgânica e amigável -->
+  <path d="M32 9
+           C43 9 52 17 53 29
+           C54 39 51 47 44 52
+           C39 56 34 57 32 57
+           C30 57 25 56 20 52
+           C13 47 10 39 11 29
+           C12 17 21 9 32 9 Z"
+        fill="url(#blob)"/>
+
+  <!-- núcleo de galáxia no lado azul -->
+  <circle cx="23" cy="26" r="8" fill="url(#nucleo)" opacity="0.5"/>
+  <circle cx="23" cy="26" r="2.2" fill="#fff8e0"/>
+  <path d="M23 26 C19.5 22 25 18.5 29 22.5" fill="none" stroke="#dbe6ff" stroke-width="1.3" stroke-linecap="round" opacity="0.75"/>
+
+  <!-- rosto -->
+  <ellipse cx="27" cy="34" rx="5.4" ry="5.9" fill="#ffffff"/>
+  <ellipse cx="39" cy="34" rx="5.4" ry="5.9" fill="#ffffff"/>
+  <circle cx="28.3" cy="35" r="2.6" fill="#16224a"/>
+  <circle cx="40.3" cy="35" r="2.6" fill="#16224a"/>
+  <circle cx="29.3" cy="34" r="0.9" fill="#fff"/>
+  <circle cx="41.3" cy="34" r="0.9" fill="#fff"/>
+  <path d="M27 43 Q33 50 40 43" fill="none" stroke="#16224a" stroke-width="2.6" stroke-linecap="round"/>
+</svg>
