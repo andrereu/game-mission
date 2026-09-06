@@ -15,6 +15,7 @@ const PRECACHE = [
   'styles/drawer.css',
   'styles/overlay.css',
   'styles/arvore.css',
+  'styles/perfis.css',
 
   'src/app.js',
   'src/ai/provider.js',
@@ -23,6 +24,7 @@ const PRECACHE = [
   'src/data/textos.js',
   'src/engine/catalogo.js',
   'src/engine/combinar.js',
+  'src/engine/perfis.js',
   'src/engine/slug.js',
   'src/engine/state.js',
   'src/engine/storage.js',
@@ -30,6 +32,7 @@ const PRECACHE = [
   'src/ui/canvas.js',
   'src/ui/descoberta.js',
   'src/ui/drawer.js',
+  'src/ui/perfis.js',
 
   'assets/icons/icon-192.png',
   'assets/icons/icon-512.png',

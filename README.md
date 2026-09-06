@@ -36,10 +36,12 @@ barra de endereço (ou menu → "Instalar Mistura!"). Vira um app com janela e �
 próprios e funciona offline pelo cache. Nos aparelhos dos filhos, o caminho é publicar
 (abaixo) e usar "Adicionar à tela inicial".
 
-### Cada filho no seu navegador
+### Um perfil por filho
 
-O save fica preso ao navegador. Para saves separados, use perfis do Chrome ou navegadores
-diferentes por criança. (Perfis dentro do jogo vêm depois.)
+No primeiro acesso o jogo pergunta "Quem vai jogar?" e você cria um perfil por criança
+(nome + cor). Cada perfil tem o save próprio (descobertas, canvas, ajustes). O jogo abre
+direto no último perfil usado; o botão no canto superior-esquerdo troca de perfil ou cria
+outro. Tudo continua no mesmo navegador/aparelho — não sincroniza entre aparelhos.
 
 ## Publicar e atualizar (Vercel)
 
@@ -115,6 +117,10 @@ itens / ~700 combos.
 - **SVGs de Pokémon e Homem-Aranha** — `assets/svg/` com pikachu, raichu,
   pokebola, homem-aranha, venom e duende-verde. Ícones flat legíveis de 24px a
   96px; a UI troca emoji por `<img>` quando o item tem `svg`.
+- **Perfis por criança** (`src/engine/perfis.js`, `src/ui/perfis.js`) — save
+  separado por perfil na chave `save:<id>`; índice em `perfis`. Migra o save
+  antigo `principal` sem perder progresso. Seletor "Quem vai jogar?" no primeiro
+  acesso e no botão do canto.
 
 ### Ajustes vindos dos testes no notebook (2026-09-05)
 

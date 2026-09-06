@@ -1,6 +1,6 @@
 const DB_NOME = 'mistura';
 const STORE = 'save';
-const CHAVE = 'principal';
+const CHAVE_PADRAO = 'principal';
 export const VERSAO_ATUAL = 1;
 
 function temIndexedDB() {
@@ -9,6 +9,12 @@ function temIndexedDB() {
   } catch {
     return false;
   }
+}
+
+// localStorage guarda um item por chave. A chave 'principal' mantém o nome
+// histórico ('mistura') para não quebrar saves já gravados; o resto é prefixado.
+function chaveLocal(chave) {
+  return chave === CHAVE_PADRAO ? DB_NOME : `${DB_NOME}:${chave}`;
 }
 
 // Uma única conexão por página: abrir() em toda leitura/escrita vazava conexões.
@@ -38,18 +44,36 @@ function abrir() {
   return dbPromise;
 }
 
-function lerIDB() {
+function lerIDB(chave) {
   return abrir().then((db) => new Promise((resolve, reject) => {
     const tx = db.transaction(STORE, 'readonly');
-    const req = tx.objectStore(STORE).get(CHAVE);
+    const req = tx.objectStore(STORE).get(chave);
     req.onsuccess = () => resolve(req.result ?? null);
     req.onerror = () => reject(req.error);
   }));
 }
 
-function lerLocal() {
+function escreverIDB(chave, valor) {
+  return abrir().then((db) => new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, 'readwrite');
+    tx.objectStore(STORE).put(valor, chave);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  }));
+}
+
+function apagarIDB(chave) {
+  return abrir().then((db) => new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, 'readwrite');
+    tx.objectStore(STORE).delete(chave);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  }));
+}
+
+function lerLocal(chave) {
   try {
-    const txt = localStorage.getItem(DB_NOME);
+    const txt = localStorage.getItem(chaveLocal(chave));
     if (!txt) return null;
     return JSON.parse(txt);
   } catch {
@@ -57,36 +81,48 @@ function lerLocal() {
   }
 }
 
-async function lerCru() {
+// --- API crua por chave (usada por perfis.js; sem catálogo, sem migração) ---
+
+export async function lerChave(chave) {
   if (temIndexedDB()) {
     try {
-      return await lerIDB();
+      return await lerIDB(chave);
     } catch {
       /* private browsing, cota, bloqueio: cai no localStorage */
     }
   }
-  return lerLocal();
+  return lerLocal(chave);
 }
 
-async function escreverCru(save) {
+export async function escreverChave(chave, valor) {
   if (temIndexedDB()) {
     try {
-      const db = await abrir();
-      await new Promise((resolve, reject) => {
-        const tx = db.transaction(STORE, 'readwrite');
-        tx.objectStore(STORE).put(save, CHAVE);
-        tx.oncomplete = () => resolve();
-        tx.onerror = () => reject(tx.error);
-      });
+      await escreverIDB(chave, valor);
       return;
     } catch {
       /* cai no localStorage */
     }
   }
   try {
-    localStorage.setItem(DB_NOME, JSON.stringify(save));
+    localStorage.setItem(chaveLocal(chave), JSON.stringify(valor));
   } catch {
     /* nada a fazer: o jogo continua só em memória */
+  }
+}
+
+export async function apagarChave(chave) {
+  if (temIndexedDB()) {
+    try {
+      await apagarIDB(chave);
+      return;
+    } catch {
+      /* cai no localStorage */
+    }
+  }
+  try {
+    localStorage.removeItem(chaveLocal(chave));
+  } catch {
+    /* nada a fazer */
   }
 }
 
@@ -122,9 +158,9 @@ function migrar(save) {
 }
 
 // Nunca rejeita: no pior caso devolve um save novo em folha.
-export async function carregar(catalogo) {
+export async function carregar(catalogo, chave = CHAVE_PADRAO) {
   try {
-    const cru = await lerCru();
+    const cru = await lerChave(chave);
     if (!cru || typeof cru !== 'object') return saveInicial(catalogo);
     return migrar(cru);
   } catch {
@@ -132,16 +168,16 @@ export async function carregar(catalogo) {
   }
 }
 
-export async function salvar(save) {
-  await escreverCru(save);
+export async function salvar(save, chave = CHAVE_PADRAO) {
+  await escreverChave(chave, save);
 }
 
-export function criarAgendadorSalvar(getSave, ms = 400) {
+export function criarAgendadorSalvar(getSave, ms = 400, chave = CHAVE_PADRAO) {
   let t = null;
   return () => {
     clearTimeout(t);
     t = setTimeout(() => {
-      Promise.resolve(salvar(getSave())).catch(() => {});
+      Promise.resolve(salvar(getSave(), chave)).catch(() => {});
     }, ms);
   };
 }

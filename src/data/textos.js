@@ -8,6 +8,12 @@ export const T = {
   abrirArvore: 'Árvore',
   arvoreTitulo: 'Árvore de descobertas',
   arvoreDica: 'Toque num item para ver de onde ele veio.',
+  perfilTitulo: 'Quem vai jogar?',
+  perfilNome: 'Nome',
+  perfilCriar: 'Criar',
+  perfilApagar: 'Apagar perfil',
+  perfilConfirmarApagar: (nome) => `Apagar o perfil "${nome}" e tudo que ele descobriu?`,
+  trocarPerfil: 'Trocar',
   contador: (descobertos, total) => `${descobertos} / ${total} descobertos`,
   eras: {
     elementos: 'Elementos',

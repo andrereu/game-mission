@@ -4,6 +4,7 @@ import { IDBFactory } from 'fake-indexeddb';
 import { criarCatalogo } from '../src/engine/catalogo.js';
 import {
   saveInicial, carregar, salvar, criarAgendadorSalvar, VERSAO_ATUAL,
+  lerChave, escreverChave, apagarChave,
 } from '../src/engine/storage.js';
 
 function resetDB() {
@@ -148,6 +149,47 @@ test('abrir reutiliza a mesma conexão IndexedDB', async () => {
     assert.equal(aberturas, 1, `abriu ${aberturas} conexões`);
   } finally {
     globalThis.indexedDB = real;
+    globalThis.localStorage.clear();
+  }
+});
+
+test('carregar e salvar aceitam uma chave e ficam isolados', async () => {
+  resetDB();
+  const cat = criarCatalogo();
+  const a = saveInicial(cat);
+  a.descobertos.vapor = { em: 1, via: ['agua', 'fogo'], fonte: 'local' };
+  const b = saveInicial(cat);
+  b.descobertos.lava = { em: 2, via: ['fogo', 'terra'], fonte: 'local' };
+  await salvar(a, 'save:ana');
+  await salvar(b, 'save:beto');
+  const lidoA = await carregar(cat, 'save:ana');
+  const lidoB = await carregar(cat, 'save:beto');
+  assert.ok(lidoA.descobertos.vapor);
+  assert.ok(!lidoA.descobertos.lava);
+  assert.ok(lidoB.descobertos.lava);
+  assert.ok(!lidoB.descobertos.vapor);
+});
+
+test('lerChave / escreverChave / apagarChave fazem roundtrip cru', async () => {
+  resetDB();
+  assert.equal(await lerChave('perfis'), null);
+  await escreverChave('perfis', { lista: [{ id: 'x', nome: 'Ana' }], ativo: 'x' });
+  assert.deepEqual(await lerChave('perfis'), { lista: [{ id: 'x', nome: 'Ana' }], ativo: 'x' });
+  await apagarChave('perfis');
+  assert.equal(await lerChave('perfis'), null);
+});
+
+test('chaves cruas também funcionam sem indexedDB', async () => {
+  resetDB();
+  const orig = globalThis.indexedDB;
+  try {
+    globalThis.indexedDB = undefined;
+    await escreverChave('save:ze', { versao: 1, descobertos: { agua: {} } });
+    assert.deepEqual(await lerChave('save:ze'), { versao: 1, descobertos: { agua: {} } });
+    await apagarChave('save:ze');
+    assert.equal(await lerChave('save:ze'), null);
+  } finally {
+    globalThis.indexedDB = orig;
     globalThis.localStorage.clear();
   }
 });
