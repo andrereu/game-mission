@@ -12,6 +12,9 @@ import { mostrarDescoberta } from './ui/descoberta.js';
 import { montarArvore } from './ui/arvore.js';
 import { montarAjustes } from './ui/ajustes.js';
 import { montarStatusRede } from './ui/rede.js';
+import { montarLinhaDoTempo } from './ui/eras.js';
+import { mostrarEraNova } from './ui/era-nova.js';
+import { erasAlcancadas, eraMaisAvancada, progressoPorEra } from './engine/eras.js';
 import {
   carregarPerfis, criarPerfil, editarPerfil, apagarPerfil, definirAtivo, salvarPerfis, chaveSave,
 } from './engine/perfis.js';
@@ -79,6 +82,10 @@ async function iniciar() {
   const agendarSalvar = criarAgendadorSalvar(() => store.getSave(), 400, chaveDoSave);
   store.on('estado:mudou', agendarSalvar);
 
+  // Progressão de eras: snapshot das eras já alcançadas + pinta o fundo.
+  const erasVistas = erasAlcancadas(store.getSave().descobertos, catalogo);
+  document.body.dataset.era = eraMaisAvancada(erasVistas);
+
   // A IA só é tentada quando o perfil ligou `iaLigada` E há rede (spec §5.2/§9).
   // Nasce desligada; o painel de ajustes liga.
   const combinar = criarCombinador({
@@ -103,13 +110,26 @@ async function iniciar() {
     margemFusao: configDoModo(modo).margemFusao,
     aoResultado: async (resultado, ctx) => {
       if (resultado.tipo === 'ok' && ctx.novo) {
+        const comSom = store.getSave().ajustes.som;
         await mostrarDescoberta({
           item: resultado.item,
           combo: resultado.combo,
           catalogo,
-          comSom: store.getSave().ajustes.som,
+          comSom,
         });
         drawer.adicionarCard(resultado.item.id);
+
+        // primeira descoberta de uma era ainda não vista: comemora e repinta
+        const eraNova = resultado.item.era;
+        if (eraNova && !erasVistas.has(eraNova)) {
+          erasVistas.add(eraNova);
+          document.body.dataset.era = eraMaisAvancada(erasVistas);
+          await mostrarEraNova({
+            era: eraNova,
+            progresso: progressoPorEra(store.getSave().descobertos, catalogo),
+            comSom,
+          });
+        }
       }
     },
   });
@@ -147,6 +167,16 @@ async function iniciar() {
   });
   elArvore.textContent = T.abrirArvore;
   elArvore.addEventListener('click', () => arvore.abrir());
+
+  const linhaDoTempo = montarLinhaDoTempo({
+    raiz: document.getElementById('eras-raiz'),
+    store,
+    catalogo,
+    T,
+  });
+  const elEras = document.getElementById('eras');
+  elEras.textContent = T.abrirEras;
+  elEras.addEventListener('click', () => linhaDoTempo.abrir());
 
   const ajustes = montarAjustes({
     raiz: document.getElementById('ajustes-raiz'),

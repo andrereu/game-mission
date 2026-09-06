@@ -192,7 +192,7 @@ export function montarCanvas({
     el.addEventListener('pointerdown', (ev) => {
       ev.stopPropagation();
       arrastando = true;
-      el.setPointerCapture?.(ev.pointerId);
+      try { el.setPointerCapture?.(ev.pointerId); } catch { /* ponteiro já inativo */ }
       el.classList.add('arrastando');
       const inst = store.getInstance(uid);
       if (!inst) return;
@@ -225,7 +225,7 @@ export function montarCanvas({
       if (!arrastando) return;
       arrastando = false;
       el.classList.remove('arrastando');
-      el.releasePointerCapture?.(ev.pointerId);
+      try { el.releasePointerCapture?.(ev.pointerId); } catch { /* nada */ }
       const partida = inicio ? { x: inicio.x, y: inicio.y } : null;
       const alvo = alvoSob(uid);
       if (alvo) {
