@@ -5,7 +5,7 @@ Arraste dois itens no canvas para descobrir um terceiro. Cada descoberta nova ga
 destaque em tela cheia antes de virar um card na gaveta.
 
 Jogo jogável offline — canvas, gaveta com busca e filtro, destaque de descoberta,
-árvore de descobertas, PWA instalável, 136 itens e 182 combinações em pt_BR
+árvore de descobertas, PWA instalável, 283 itens e 374 combinações em pt_BR
 (com Pikachu e Homem-Aranha e SVGs próprios), IA desligada.
 
 ## Como jogar (Windows)
@@ -91,9 +91,10 @@ docs/superpowers/   spec de design e plano de implementação
 
 ## Fase 2 (depois dos testes com as crianças)
 
-Ainda pendente: mais conteúdo rumo a ~250 itens / ~700 combos; validar toque num
-aparelho real; manter o Realtime Database "acordado" (o free pausa sozinho? um
-ping periódico via GitHub Actions resolve se precisar).
+Ainda pendente: validar toque num aparelho real; manter o Realtime Database
+"acordado" (o free pausa sozinho? um ping via GitHub Actions resolve se
+precisar). Roadmap com sabor Cell to Singularity em `docs/superpowers/` /
+memória — próximo é a espinha de progressão de eras.
 
 ### Feito na fase 2
 
@@ -106,7 +107,7 @@ ping periódico via GitHub Actions resolve se precisar).
   de `'serviceWorker' in navigator`. Ícones gerados por `scripts/gerar-icones.mjs`
   (sem dependência). Falta validar o registro em Chrome real / celular — o
   navegador de preview embutido bloqueia service worker.
-- **Catálogo maior** — 136 itens / 182 combos curados (era 35 / 40), só emoji,
+- **Catálogo maior** — 283 itens / 374 combos curados (era 35 / 40), só emoji,
   todas as seis eras. Integridade garantida por `tests/dados.test.js`.
 - **SVGs de Pokémon e Homem-Aranha** — `assets/svg/` com pikachu, raichu,
   pokebola, homem-aranha, venom e duende-verde. Ícones flat legíveis de 24px a
