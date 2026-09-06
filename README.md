@@ -45,10 +45,10 @@ outro. Tudo continua no mesmo navegador/aparelho — não sincroniza entre apare
 
 ## Publicar e atualizar (Vercel)
 
-O site publicado é só a pasta `dist/`, montada por `scripts/build.mjs` (index.html,
-`sw.js`, `manifest.webmanifest`, `vercel.json`, `styles/`, `src/`, `assets/` — sem
-testes nem `node_modules`). `vercel.json` marca a página como `noindex` (não aparece
-em buscador) e manda o `/sw.js` não ser cacheado.
+A Vercel roda `scripts/build.mjs` (`vercel.json`: `buildCommand` + `outputDirectory`),
+serve o `dist/` gerado como site estático **e** publica `api/combinar.js` como função.
+`vercel.json` marca a página como `noindex` e manda o `/sw.js` não ser cacheado.
+`.vercelignore` tira `tests/`, `docs/` e o `scratchpad` do upload.
 
 Uma vez só:
 
@@ -57,16 +57,19 @@ npm install -g vercel
 vercel login
 ```
 
+E, para a IA funcionar: no painel da Vercel → projeto → Settings → Environment
+Variables → `GEMINI_API_KEY` = sua chave do Google AI Studio (Production).
+
 Cada atualização do jogo:
 
 ```
 npm run deploy
 ```
 
-Esse comando sobe a versão do cache no `sw.js` (`mistura-v1` → `v2` → ...), monta o
-`dist/` e roda `vercel deploy --prod --yes dist`. A troca da versão é o que faz os
-aparelhos já instalados baixarem os arquivos novos — sem isso, eles continuam na
-versão velha. Depois do deploy, faça o commit do `sw.js` alterado.
+Esse comando sobe a versão do cache no `sw.js` (`mistura-v1` → `v2` → ...) e roda
+`vercel deploy --prod --yes` (a Vercel monta o `dist/`). A troca da versão é o que faz
+os aparelhos já instalados baixarem os arquivos novos. Depois do deploy, faça o commit
+do `sw.js` alterado.
 
 Na primeira vez o `vercel` pergunta o escopo e o nome do projeto e cria tudo; as
 próximas usam o `.vercel/` local (fora do git). O plano Hobby é grátis e não trava
@@ -96,10 +99,9 @@ docs/superpowers/   spec de design e plano de implementação
 
 ## Fase 2 (depois dos testes com as crianças)
 
-Ainda pendente: pinça-zoom no toque e arrastar-da-gaveta em celular; endpoint de
-IA real (sugere combinação quando não existe no código, com mini explicação) e
-seus guard-rails; sincronizar o progresso entre aparelhos (precisa de servidor —
-conta, login e storage); mais conteúdo rumo a ~250 itens / ~700 combos.
+Ainda pendente: sincronizar o progresso entre aparelhos (precisa de servidor —
+Supabase + código de família); mais conteúdo rumo a ~250 itens / ~700 combos;
+validar toque num aparelho real.
 
 ### Feito na fase 2
 
@@ -125,6 +127,12 @@ conta, login e storage); mais conteúdo rumo a ~250 itens / ~700 combos.
   canvas e pela árvore) e arrastar o card da gaveta pro canvas por ponteiro
   (segura ~180 ms, um "fantasma" segue o dedo, solta no tabuleiro). Tocar no card
   segue criando a peça no centro. Falta validar num aparelho real.
+- **IA opcional** (`api/combinar.js`, `api/_guardrails.js`, `src/ui/ajustes.js`) —
+  quando o par não está no catálogo e o perfil ligou a IA no ⚙️, o cliente chama
+  `/api/combinar`; a função serverless pergunta ao Gemini (`gemini-2.5-flash-lite`)
+  e devolve a sugestão só se ela passar nos guard-rails (prompt fixo pt_BR
+  family-friendly, lista de bloqueio, nome curto). Falha/bloqueio/sem chave =
+  "nada aconteceu". Desligada por padrão. Precisa de `GEMINI_API_KEY` na Vercel.
 
 ### Ajustes vindos dos testes no notebook (2026-09-05)
 
