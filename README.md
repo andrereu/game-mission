@@ -43,37 +43,29 @@ No primeiro acesso o jogo pergunta "Quem vai jogar?" e você cria um perfil por 
 direto no último perfil usado; o botão no canto superior-esquerdo troca de perfil ou cria
 outro. Tudo continua no mesmo navegador/aparelho — não sincroniza entre aparelhos.
 
-## Publicar e atualizar (Vercel)
+## Publicar e atualizar (GitHub → Vercel)
 
-A Vercel roda `scripts/build.mjs` (`vercel.json`: `buildCommand` + `outputDirectory`),
-serve o `dist/` gerado como site estático **e** publica `api/combinar.js` como função.
-`vercel.json` marca a página como `noindex` e manda o `/sw.js` não ser cacheado.
-`.vercelignore` tira `tests/`, `docs/` e o `scratchpad` do upload.
+O repositório está conectado à Vercel: **todo `git push` na `main` builda e
+publica sozinho**. A Vercel roda `scripts/build.mjs` (`vercel.json`:
+`buildCommand` + `outputDirectory`), serve o `dist/` gerado **e** publica
+`api/combinar.js` como função. `vercel.json` marca a página como `noindex` e
+manda o `/sw.js` não ser cacheado; `.vercelignore` tira `tests/`, `docs/` e o
+`scratchpad` do upload.
 
-Uma vez só:
-
-```
-npm install -g vercel
-vercel login
-```
-
-E, para a IA funcionar: no painel da Vercel → projeto → Settings → Environment
-Variables → `GEMINI_API_KEY` = sua chave do Google AI Studio (Production).
-
-Cada atualização do jogo:
+Atalho para publicar o que estiver pendente:
 
 ```
 npm run deploy
 ```
 
-Esse comando sobe a versão do cache no `sw.js` (`mistura-v1` → `v2` → ...) e roda
-`vercel deploy --prod --yes` (a Vercel monta o `dist/`). A troca da versão é o que faz
-os aparelhos já instalados baixarem os arquivos novos. Depois do deploy, faça o commit
-do `sw.js` alterado.
+`scripts/deploy.mjs` sobe a versão do cache no `sw.js` (`mistura-v1` → `v2` → ...),
+comita tudo e dá `git push`. A troca da versão é o que faz os aparelhos já
+instalados baixarem os arquivos novos. (Se preferir commitar à mão, lembre de
+bumpar o `sw.js` no mesmo commit quando mudar conteúdo.)
 
-Na primeira vez o `vercel` pergunta o escopo e o nome do projeto e cria tudo; as
-próximas usam o `.vercel/` local (fora do git). O plano Hobby é grátis e não trava
-deploy de produção.
+Configuração feita uma vez: no painel da Vercel → projeto → Settings →
+Environment Variables → `GEMINI_API_KEY` (chave do Google AI Studio) e, opcional,
+`GEMINI_MODELO`. E Settings → Git → repositório conectado, branch de produção `main`.
 
 > `netlify.toml` ficou no repositório como alternativa: a Netlify passou a exigir
 > créditos pra deploy de produção no time grátis.
