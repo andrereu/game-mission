@@ -4,7 +4,7 @@ import { IDBFactory } from 'fake-indexeddb';
 import { criarCatalogo } from '../src/engine/catalogo.js';
 import { carregar, escreverChave, lerChave } from '../src/engine/storage.js';
 import {
-  carregarPerfis, criarPerfil, definirAtivo, apagarPerfil, chaveSave,
+  carregarPerfis, criarPerfil, editarPerfil, definirAtivo, apagarPerfil, chaveSave,
 } from '../src/engine/perfis.js';
 
 function reset() {
@@ -27,6 +27,35 @@ test('criarPerfil grava e aparece no próximo carregamento, com id único', asyn
   const { lista } = await carregarPerfis();
   assert.deepEqual(lista.map((x) => x.nome), ['Ana', 'Beto']);
   assert.equal(lista[0].cor, '#4aa3ff');
+});
+
+test('criarPerfil guarda o modo, com padrão "medio"', async () => {
+  reset();
+  const a = await criarPerfil('Ana', '#4aa3ff');
+  const b = await criarPerfil('Beto', '#45c26b', 'pequenos');
+  const c = await criarPerfil('Caco', '#000', 'inventado');
+  assert.equal(a.modo, 'medio');
+  assert.equal(b.modo, 'pequenos');
+  assert.equal(c.modo, 'medio', 'modo inválido cai no padrão');
+  const { lista } = await carregarPerfis();
+  assert.equal(lista.find((p) => p.id === b.id).modo, 'pequenos');
+});
+
+test('editarPerfil troca o modo (e nome/cor) e persiste', async () => {
+  reset();
+  const a = await criarPerfil('Ana', '#4aa3ff', 'pequenos');
+  const atualizado = await editarPerfil(a.id, { modo: 'completo', nome: 'Aninha' });
+  assert.equal(atualizado.modo, 'completo');
+  assert.equal(atualizado.nome, 'Aninha');
+  const { lista } = await carregarPerfis();
+  assert.equal(lista[0].modo, 'completo');
+  assert.equal(lista[0].nome, 'Aninha');
+});
+
+test('editarPerfil com id inexistente devolve null e não quebra', async () => {
+  reset();
+  await criarPerfil('Ana', '#4aa3ff');
+  assert.equal(await editarPerfil('nao-existe', { modo: 'completo' }), null);
 });
 
 test('definirAtivo persiste e ignora id inexistente', async () => {

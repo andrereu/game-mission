@@ -144,6 +144,48 @@
   cursor: pointer;
 }
 .perfil-swatch.escolhida { border-color: var(--cor-texto); }
+
+.perfil-modos { display: flex; flex-wrap: wrap; gap: 4px; }
+.perfil-modo {
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--cor-borda);
+  background: transparent;
+  color: var(--cor-texto);
+  font-size: 11px;
+  cursor: pointer;
+}
+.perfil-modo.escolhida {
+  background: var(--cor-peca);
+  border-color: var(--cor-peca-borda);
+}
+.perfil-card .perfil-modos {
+  grid-column: 1 / -1;
+  justify-content: center;
+  margin-top: 4px;
+}
+.perfil-modo-tag {
+  font-size: 10px;
+  opacity: 0.65;
+}
+.perfil-editar {
+  position: absolute;
+  top: 2px;
+  left: 4px;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--cor-texto);
+  opacity: 0.5;
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+}
+.perfil-editar:hover { opacity: 1; }
+
 .perfil-novo button[type='submit'] {
   padding: 8px 14px;
   border-radius: 8px;

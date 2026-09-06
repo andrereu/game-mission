@@ -1,0 +1,25 @@
+/* Modo do perfil ativo, via body[data-modo]. "medio" = padrão (sem regras). */
+
+/* Pequenos: menos interface, alvos maiores. */
+body[data-modo="pequenos"] .drawer-busca,
+body[data-modo="pequenos"] .drawer-chips,
+body[data-modo="pequenos"] #arvore {
+  display: none;
+}
+
+body[data-modo="pequenos"] .peca {
+  padding: 12px 14px;
+}
+body[data-modo="pequenos"] .peca .peca-icone { font-size: 40px; }
+body[data-modo="pequenos"] .peca .peca-nome { font-size: 15px; }
+
+body[data-modo="pequenos"] .drawer-grade {
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+body[data-modo="pequenos"] .drawer-card { padding: 14px 10px; }
+body[data-modo="pequenos"] .drawer-card .card-icone { font-size: 34px; }
+body[data-modo="pequenos"] .drawer-card .card-nome { font-size: 14px; }
+
+/* quique mais suave (menos "erro" na cara) */
+body[data-modo="pequenos"] .peca.quique { animation-duration: 200ms; }

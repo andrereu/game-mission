@@ -1,6 +1,7 @@
 // Perfis por criança: cada um tem o save próprio na chave `save:<id>`.
 // O índice fica na chave `perfis` -> { versao, lista: [{id,nome,cor}], ativo }.
 import { lerChave, escreverChave, apagarChave } from './storage.js';
+import { normalizarModo, MODO_PADRAO } from '../data/modos.js';
 
 const CHAVE_INDICE = 'perfis';
 const CHAVE_LEGADA = 'principal';
@@ -39,7 +40,7 @@ export async function carregarPerfis() {
 
   const legado = await lerChave(CHAVE_LEGADA);
   if (legado && typeof legado === 'object') {
-    const perfil = { id: novoId(), nome: 'Jogo 1', cor: '#4aa3ff' };
+    const perfil = { id: novoId(), nome: 'Jogo 1', cor: '#4aa3ff', modo: MODO_PADRAO };
     await escreverChave(chaveSave(perfil.id), legado);
     return gravarIndice({ versao: VERSAO, lista: [perfil], ativo: perfil.id });
   }
@@ -51,10 +52,26 @@ export async function salvarPerfis({ lista = [], ativo = null } = {}) {
   await gravarIndice({ versao: VERSAO, lista, ativo });
 }
 
-export async function criarPerfil(nome, cor) {
+export async function criarPerfil(nome, cor, modo) {
   const estado = await carregarPerfis();
-  const perfil = { id: novoId(), nome: String(nome || 'Sem nome').trim() || 'Sem nome', cor: cor || '#4aa3ff' };
+  const perfil = {
+    id: novoId(),
+    nome: String(nome || 'Sem nome').trim() || 'Sem nome',
+    cor: cor || '#4aa3ff',
+    modo: normalizarModo(modo),
+  };
   estado.lista.push(perfil);
+  await gravarIndice(estado);
+  return perfil;
+}
+
+export async function editarPerfil(id, campos = {}) {
+  const estado = await carregarPerfis();
+  const perfil = estado.lista.find((p) => p.id === id);
+  if (!perfil) return null;
+  if (campos.nome != null) perfil.nome = String(campos.nome).trim() || perfil.nome;
+  if (campos.cor != null) perfil.cor = campos.cor;
+  if (campos.modo != null) perfil.modo = normalizarModo(campos.modo);
   await gravarIndice(estado);
   return perfil;
 }

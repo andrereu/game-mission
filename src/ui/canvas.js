@@ -26,7 +26,9 @@ function tocarNada() {
   }
 }
 
-export function montarCanvas({ raiz, store, catalogo, combinar, aoResultado }) {
+export function montarCanvas({
+  raiz, store, catalogo, combinar, aoResultado, margemFusao = 0,
+}) {
   raiz.innerHTML = '';
   const mundo = document.createElement('div');
   mundo.className = 'canvas-mundo';
@@ -100,9 +102,10 @@ export function montarCanvas({ raiz, store, catalogo, combinar, aoResultado }) {
       if (inst.uid === uidArrastada) continue;
       const el = pecas.get(inst.uid);
       if (!el) continue;
+      const m = margemFusao;
       const dentro =
-        c.x >= inst.x && c.x <= inst.x + el.offsetWidth &&
-        c.y >= inst.y && c.y <= inst.y + el.offsetHeight;
+        c.x >= inst.x - m && c.x <= inst.x + el.offsetWidth + m &&
+        c.y >= inst.y - m && c.y <= inst.y + el.offsetHeight + m;
       if (dentro) return inst.uid;
     }
     return null;
@@ -273,6 +276,7 @@ export function montarCanvas({ raiz, store, catalogo, combinar, aoResultado }) {
       store.clearInstances();
     },
     _fundirParaTeste: fundir,
+    _alvoSobParaTeste: alvoSob,
     _setVistaParaTeste({ x = vista.x, y = vista.y, escala = vista.escala }) {
       vista.x = x;
       vista.y = y;

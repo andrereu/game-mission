@@ -13,8 +13,9 @@ import { montarArvore } from './ui/arvore.js';
 import { montarAjustes } from './ui/ajustes.js';
 import { montarStatusRede } from './ui/rede.js';
 import {
-  carregarPerfis, criarPerfil, apagarPerfil, definirAtivo, salvarPerfis, chaveSave,
+  carregarPerfis, criarPerfil, editarPerfil, apagarPerfil, definirAtivo, salvarPerfis, chaveSave,
 } from './engine/perfis.js';
+import { configDoModo, MODO_PADRAO } from './data/modos.js';
 import { montarSeletorPerfis } from './ui/perfis.js';
 import {
   carregarSync, definirCodigo, desativar as desativarSync, gerarCodigo,
@@ -29,7 +30,8 @@ async function iniciar() {
     raiz: document.getElementById('perfis-raiz'),
     T,
     aoEscolher: async (id) => { await definirAtivo(id); location.reload(); },
-    aoCriar: async (nome, cor) => { await criarPerfil(nome, cor); return carregarPerfis(); },
+    aoCriar: async (nome, cor, modo) => { await criarPerfil(nome, cor, modo); return carregarPerfis(); },
+    aoEditar: async (id, campos) => { await editarPerfil(id, campos); return carregarPerfis(); },
     aoApagar: async (id) => { await apagarPerfil(id); return carregarPerfis(); },
   });
 
@@ -59,6 +61,10 @@ async function iniciar() {
     seletor.abrir(perfis);
     return;
   }
+
+  const perfilAtivo = perfis.lista.find((p) => p.id === perfis.ativo);
+  const modo = (perfilAtivo && perfilAtivo.modo) || MODO_PADRAO;
+  document.body.dataset.modo = modo; // o resto do "modo" é CSS
 
   const chaveDoSave = chaveSave(perfis.ativo);
   let save;
@@ -94,6 +100,7 @@ async function iniciar() {
     store,
     catalogo,
     combinar,
+    margemFusao: configDoModo(modo).margemFusao,
     aoResultado: async (resultado, ctx) => {
       if (resultado.tipo === 'ok' && ctx.novo) {
         await mostrarDescoberta({
@@ -171,7 +178,6 @@ async function iniciar() {
 
   // botão de trocar de perfil, com nome e cor do perfil ativo
   const elPerfil = document.getElementById('perfil');
-  const perfilAtivo = perfis.lista.find((p) => p.id === perfis.ativo);
   elPerfil.textContent = perfilAtivo ? perfilAtivo.nome : T.trocarPerfil;
   if (perfilAtivo) elPerfil.style.borderColor = perfilAtivo.cor;
   elPerfil.addEventListener('click', async () => {

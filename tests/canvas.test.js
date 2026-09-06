@@ -16,6 +16,35 @@ function esperar(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
+function montarComMargem(margemFusao) {
+  document.body.innerHTML = '<section id="canvas" class="canvas"></section>';
+  const store = criarStore({
+    versao: 1, descobertos: { agua: {}, fogo: {} }, canvas: [], ajustes: {},
+  });
+  const api = montarCanvas({
+    raiz: document.getElementById('canvas'), store, catalogo: criarCatalogo(),
+    combinar: async () => ({ tipo: 'nada' }), aoResultado() {}, margemFusao,
+  });
+  const alvo = api.soltarItem('fogo', 0, 0); // caixa 0..40
+  const perto = api.soltarItem('agua', 0, 0);
+  for (const el of document.querySelectorAll('.peca')) {
+    Object.defineProperty(el, 'offsetWidth', { value: 40, configurable: true });
+    Object.defineProperty(el, 'offsetHeight', { value: 40, configurable: true });
+  }
+  store.moveInstance(perto.uid, 50, 50); // centro de "perto" ~70,70
+  return { api, alvo, perto };
+}
+
+test('sem margem, uma peça um pouco fora não encaixa', () => {
+  const { api, perto } = montarComMargem(0);
+  assert.equal(api._alvoSobParaTeste(perto.uid), null);
+});
+
+test('margemFusao infla a área de encaixe da peça-alvo', () => {
+  const { api, alvo, perto } = montarComMargem(40);
+  assert.equal(api._alvoSobParaTeste(perto.uid), alvo.uid);
+});
+
 test('mostra um "pensando" no canvas enquanto a combinação demora', async () => {
   document.body.innerHTML = '<section id="canvas" class="canvas"></section>';
   const cat = criarCatalogo();
