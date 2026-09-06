@@ -87,6 +87,26 @@ test('IA que lança erro cai em nada', async () => {
   assert.deepEqual(await combinar('robo', 'musica'), { tipo: 'nada' });
 });
 
+test('combo criado pela IA é repassado via aoRegistrarIA (pra ser salvo)', async () => {
+  const cat = criarCatalogo();
+  const aiProvider = {
+    async sugerirCombo() {
+      return { resultadoNome: 'Nuvem Quente', emoji: '🌫️', texto: 'Vapor quente.' };
+    },
+  };
+  const chamadas = [];
+  const combinar = criarCombinador({
+    catalogo: cat,
+    aiProvider,
+    estaOnline: () => true,
+    aoRegistrarIA: (item, combo) => chamadas.push({ item, combo }),
+  });
+  const r = await combinar('vapor', 'calor');
+  assert.equal(chamadas.length, 1);
+  assert.equal(chamadas[0].item.id, r.item.id);
+  assert.deepEqual(chamadas[0].combo, r.combo);
+});
+
 test('combo local tem prioridade sobre a IA', async () => {
   const cat = criarCatalogo();
   let chamouIA = false;

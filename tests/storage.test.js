@@ -19,6 +19,8 @@ test('saveInicial marca todos os itens base como descobertos', () => {
   assert.deepEqual(s.canvas, []);
   assert.equal(s.ajustes.som, true);
   assert.equal(s.ajustes.iaLigada, false);
+  assert.deepEqual(s.itensIA, {});
+  assert.deepEqual(s.combosIA, {});
   for (const it of cat.baseItems()) {
     assert.ok(s.descobertos[it.id], `base não descoberto: ${it.id}`);
     assert.equal(s.descobertos[it.id].via, null);
@@ -43,6 +45,38 @@ test('salvar e carregar preservam o estado (IndexedDB)', async () => {
   const lido = await carregar(cat);
   assert.deepEqual(lido.descobertos.vapor, { em: 123, via: ['agua', 'fogo'], fonte: 'local' });
   assert.deepEqual(lido.canvas, [{ uid: 'u_1', id: 'agua', x: 10, y: 20 }]);
+});
+
+test('salvar e carregar preservam itensIA e combosIA (criações da IA sobrevivem à sessão)', async () => {
+  resetDB();
+  const cat = criarCatalogo();
+  const s = saveInicial(cat);
+  s.itensIA['nuvem-quente'] = { nome: 'Nuvem Quente', emoji: '🌫️', era: 'natureza' };
+  s.combosIA['calor+vapor'] = {
+    a: 'vapor', b: 'calor', resultado: 'nuvem-quente', texto: 'x',
+  };
+  await salvar(s);
+  const lido = await carregar(cat);
+  assert.deepEqual(lido.itensIA, s.itensIA);
+  assert.deepEqual(lido.combosIA, s.combosIA);
+});
+
+test('carregar preenche itensIA/combosIA em saves antigos que não tinham esses campos', async () => {
+  resetDB();
+  const cat = criarCatalogo();
+  const semIDB = globalThis.indexedDB;
+  try {
+    globalThis.indexedDB = undefined;
+    await salvar({
+      versao: VERSAO_ATUAL, descobertos: {}, canvas: [], ajustes: { som: true, iaLigada: false },
+    });
+    const lido = await carregar(cat);
+    assert.deepEqual(lido.itensIA, {});
+    assert.deepEqual(lido.combosIA, {});
+  } finally {
+    globalThis.indexedDB = semIDB;
+    globalThis.localStorage.clear();
+  }
 });
 
 test('fallback para localStorage quando não há indexedDB', async () => {

@@ -40,5 +40,26 @@ export function criarCatalogo() {
     registrarComboIA(idA, idB, resultadoId, texto) {
       combos.set(comboKey(idA, idB), { a: idA, b: idB, resultado: resultadoId, texto });
     },
+    // Repõe no catálogo (recriado do zero a cada boot) as criações da IA
+    // gravadas no save, senão elas somem ao trocar de sessão.
+    hidratarIA(itensIA = {}, combosIA = {}) {
+      for (const [id, dados] of Object.entries(itensIA)) {
+        if (!dados || itens.has(id)) continue;
+        itens.set(id, {
+          id,
+          nome: String(dados.nome ?? id),
+          emoji: dados.emoji || '✨',
+          svg: null,
+          era: ERAS.includes(dados.era) ? dados.era : 'ficcao',
+          base: false,
+          ref: null,
+          ia: true,
+        });
+      }
+      for (const [key, combo] of Object.entries(combosIA)) {
+        if (!combo || combos.has(key)) continue;
+        combos.set(key, { ...combo });
+      }
+    },
   };
 }

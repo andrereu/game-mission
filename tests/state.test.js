@@ -63,6 +63,22 @@ test('todo evento também dispara estado:mudou', () => {
   assert.equal(store.getSave().ajustes.som, false);
 });
 
+test('registrarItemIA grava no save (mesmo sem itensIA/combosIA prévios) e emite estado:mudou', () => {
+  const store = criarStore(saveVazio());
+  let mudou = 0;
+  store.on('estado:mudou', () => { mudou += 1; });
+  const item = { id: 'nuvem-quente', nome: 'Nuvem Quente', emoji: '🌫️', era: 'natureza' };
+  const combo = {
+    a: 'vapor', b: 'calor', resultado: 'nuvem-quente', texto: 'Vapor com calor.',
+  };
+  store.registrarItemIA(item, 'calor+vapor', combo);
+  assert.deepEqual(store.getSave().itensIA['nuvem-quente'], {
+    nome: 'Nuvem Quente', emoji: '🌫️', era: 'natureza',
+  });
+  assert.deepEqual(store.getSave().combosIA['calor+vapor'], combo);
+  assert.ok(mudou >= 1);
+});
+
 test('on devolve função para desinscrever', () => {
   const store = criarStore(saveVazio());
   let n = 0;

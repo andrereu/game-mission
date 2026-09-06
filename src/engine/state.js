@@ -61,6 +61,16 @@ export function criarStore(save) {
       return true;
     },
 
+    // Sem isto, o catálogo (recriado do zero a cada boot) esquece o que a IA
+    // inventou assim que a página recarrega ou muda de sessão.
+    registrarItemIA(item, comboKeyStr, combo) {
+      save.itensIA ??= {};
+      save.combosIA ??= {};
+      save.itensIA[item.id] = { nome: item.nome, emoji: item.emoji, era: item.era };
+      save.combosIA[comboKeyStr] = combo;
+      emit('itemIA:novo', item);
+    },
+
     setAjuste(chave, valor) {
       save.ajustes[chave] = valor;
       emit('ajuste:mudou', { chave, valor });
