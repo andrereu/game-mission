@@ -20,6 +20,7 @@ const PRECACHE = [
   'styles/modos.css',
   'styles/eras.css',
   'styles/barra.css',
+  'styles/carta.css',
 
   'src/app.js',
   'src/ai/provider.js',
@@ -32,12 +33,14 @@ const PRECACHE = [
   'src/engine/combinar.js',
   'src/engine/eras.js',
   'src/engine/perfis.js',
+  'src/engine/raridade.js',
   'src/engine/slug.js',
   'src/engine/state.js',
   'src/engine/storage.js',
   'src/engine/sync.js',
   'src/ui/arvore.js',
   'src/ui/canvas.js',
+  'src/ui/carta.js',
   'src/ui/descoberta.js',
   'src/ui/desfazer.js',
   'src/ui/drawer.js',
@@ -59,6 +62,9 @@ const PRECACHE = [
   'assets/svg/homem-aranha.svg',
   'assets/svg/venom.svg',
   'assets/svg/duende-verde.svg',
+
+  'assets/cartas/logo.png',
+  'assets/cartas/mascote.png',
 ];
 
 self.addEventListener('install', (evento) => {

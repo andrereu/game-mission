@@ -3,11 +3,16 @@
 // igual já não conta pra progressão da era). Descoberto mostra o ícone real;
 // não descoberto vira uma silhueta "?". Era 100% completa ganha um selo.
 import { ERAS } from '../engine/catalogo.js';
+import { montarCartaOverlay } from './carta.js';
 
 export function montarAlbum({ raiz, store, catalogo, T }) {
   let overlay = null;
+  const carta = montarCartaOverlay({
+    raiz, store, catalogo, T,
+  });
 
   function fechar() {
+    carta.fechar();
     if (!overlay) return;
     overlay.remove();
     overlay = null;
@@ -29,7 +34,8 @@ export function montarAlbum({ raiz, store, catalogo, T }) {
     const orbe = descoberta
       ? `<span class="orbe orbe-album" data-era="${item.era}">${icone}</span>`
       : `<span class="orbe orbe-album orbe-oculta">${icone}</span>`;
-    return `<div class="figurinha ${descoberta ? 'descoberta' : 'oculta'}" data-id="${item.id}">
+    const atributosClicaveis = descoberta ? ' role="button" tabindex="0"' : '';
+    return `<div class="figurinha ${descoberta ? 'descoberta' : 'oculta'}" data-id="${item.id}"${atributosClicaveis}>
       ${orbe}<span class="figurinha-nome">${nome}</span>
     </div>`;
   }
@@ -73,6 +79,15 @@ export function montarAlbum({ raiz, store, catalogo, T }) {
     }
 
     overlay.querySelector('.album-fechar').addEventListener('click', fechar);
+    for (const el of overlay.querySelectorAll('.figurinha.descoberta')) {
+      el.addEventListener('click', () => carta.abrir(el.dataset.id));
+      el.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter' || ev.key === ' ') {
+          ev.preventDefault();
+          carta.abrir(el.dataset.id);
+        }
+      });
+    }
     (raiz || document.body).appendChild(overlay);
   }
 

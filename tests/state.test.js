@@ -67,13 +67,15 @@ test('registrarItemIA grava no save (mesmo sem itensIA/combosIA prévios) e emit
   const store = criarStore(saveVazio());
   let mudou = 0;
   store.on('estado:mudou', () => { mudou += 1; });
-  const item = { id: 'nuvem-quente', nome: 'Nuvem Quente', emoji: '🌫️', era: 'natureza' };
+  const item = {
+    id: 'nuvem-quente', nome: 'Nuvem Quente', emoji: '🌫️', era: 'natureza', raridade: 'raro', profundidade: 2,
+  };
   const combo = {
     a: 'vapor', b: 'calor', resultado: 'nuvem-quente', texto: 'Vapor com calor.',
   };
   store.registrarItemIA(item, 'calor+vapor', combo);
   assert.deepEqual(store.getSave().itensIA['nuvem-quente'], {
-    nome: 'Nuvem Quente', emoji: '🌫️', era: 'natureza',
+    nome: 'Nuvem Quente', emoji: '🌫️', era: 'natureza', raridade: 'raro', profundidade: 2,
   });
   assert.deepEqual(store.getSave().combosIA['calor+vapor'], combo);
   assert.ok(mudou >= 1);

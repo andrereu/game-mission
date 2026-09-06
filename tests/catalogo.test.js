@@ -89,3 +89,47 @@ test('hidratarIA não sobrescreve itens/combos já existentes', () => {
 test('ERAS tem as seis eras', () => {
   assert.deepEqual(ERAS, ['elementos', 'natureza', 'vida', 'tecnologia', 'cultura', 'ficcao']);
 });
+
+test('getRaridade: item com ref é sempre lendário', () => {
+  const cat = criarCatalogo();
+  assert.equal(cat.getRaridade('homem-aranha'), 'lendario');
+  assert.equal(cat.getRaridade('pikachu'), 'lendario');
+});
+
+test('getRaridade: item base é comum', () => {
+  const cat = criarCatalogo();
+  assert.equal(cat.getRaridade('agua'), 'comum');
+});
+
+test('getRaridade: item da IA usa a raridade calculada na criação (registrarItemIA)', () => {
+  const cat = criarCatalogo();
+  const item = cat.registrarItemIA({
+    nome: 'Nuvem Quente', emoji: '☁️', era: 'elementos', idA: 'agua', idB: 'fogo',
+  });
+  assert.equal(cat.getRaridade(item.id), item.raridade);
+});
+
+test('getRaridade: item da IA hidratado usa a raridade persistida, não recalcula', () => {
+  const cat = criarCatalogo();
+  cat.hidratarIA({
+    forjado: {
+      nome: 'Forjado', emoji: '✨', era: 'elementos', raridade: 'lendario', profundidade: 0,
+    },
+  }, {});
+  // se recalculasse pela fórmula, um item de era "elementos" e profundidade 0
+  // teria saído "comum" — a raridade persistida tem que prevalecer.
+  assert.equal(cat.getRaridade('forjado'), 'lendario');
+});
+
+test('getDescricao: item base tem descrição genérica; item combinado usa o texto do combo', () => {
+  const cat = criarCatalogo();
+  assert.equal(cat.getDescricao('agua').length > 0, true);
+  const combo = cat.findCombo('agua', 'fogo');
+  assert.equal(cat.getDescricao('vapor'), combo.texto);
+});
+
+test('getComboDoResultado acha a receita que gera um item', () => {
+  const cat = criarCatalogo();
+  const combo = cat.getComboDoResultado('vapor');
+  assert.deepEqual([combo.a, combo.b].sort(), ['agua', 'fogo']);
+});

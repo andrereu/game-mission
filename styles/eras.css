@@ -165,6 +165,7 @@ body[data-era="ficcao"]   { --ceu-1: #2e2b46; --ceu-2: #331e33; --ceu-brilho: rg
   gap: 5px;
   padding: 6px 4px;
 }
+.figurinha.descoberta { cursor: pointer; }
 .figurinha-icone { font-size: 22px; line-height: 1; }
 img.figurinha-icone { width: 24px; height: 24px; }
 .figurinha-nome { font-size: 10px; text-align: center; word-break: break-word; }

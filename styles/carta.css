@@ -1,0 +1,189 @@
+/* Cartas de Descoberta: figurinha do álbum vira uma carta colecionável ao
+   tocar num item já descoberto. Reaproveita a linguagem de "orbe" (base.css)
+   pro ícone central — só a moldura e o selo variam por raridade. */
+:root {
+  --raro-comum: #7fa8d9;
+  --raro-raro: #4ad0e6;
+  --raro-epico: #b06bff;
+  --raro-lendario: #ffc94a;
+}
+
+.carta-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(4, 8, 16, 0.86);
+  padding: 20px;
+  overflow-y: auto;
+  animation: carta-aparecer 0.2s ease;
+}
+@keyframes carta-aparecer { from { opacity: 0; } to { opacity: 1; } }
+
+.carta {
+  position: relative;
+  width: 300px;
+  max-width: 100%;
+  border-radius: 26px;
+  overflow: hidden;
+  padding: 18px 18px 22px;
+  isolation: isolate;
+  margin: auto;
+  background:
+    radial-gradient(circle at 22% 12%, color-mix(in srgb, var(--cor-raro) 30%, transparent), transparent 45%),
+    radial-gradient(circle at 82% 78%, color-mix(in srgb, var(--cor-raro) 22%, transparent), transparent 50%),
+    radial-gradient(circle at 50% 100%, color-mix(in srgb, var(--cor-raro) 14%, transparent), transparent 60%),
+    linear-gradient(160deg, #0b1024 0%, #070a18 55%, #040611 100%);
+  box-shadow:
+    0 0 0 1.5px color-mix(in srgb, var(--cor-raro) 70%, transparent),
+    0 0 22px 3px color-mix(in srgb, var(--cor-raro) 45%, transparent),
+    0 0 60px 10px color-mix(in srgb, var(--cor-raro) 22%, transparent),
+    0 18px 40px -12px rgba(0, 0, 0, 0.75);
+}
+.carta.raridade-lendario {
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--cor-raro) 85%, transparent),
+    0 0 30px 6px color-mix(in srgb, var(--cor-raro) 60%, transparent),
+    0 0 90px 18px color-mix(in srgb, var(--cor-raro) 35%, transparent),
+    0 18px 40px -12px rgba(0, 0, 0, 0.8);
+  animation: carta-pulsar-lendario 3.2s ease-in-out infinite;
+}
+@keyframes carta-pulsar-lendario {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.12); }
+}
+
+.carta::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(1.6px 1.6px at 14% 22%, #fff, transparent),
+    radial-gradient(1.2px 1.2px at 78% 14%, #fff, transparent),
+    radial-gradient(1.4px 1.4px at 40% 8%, #cfe0ff, transparent),
+    radial-gradient(1px 1px at 62% 30%, #fff, transparent),
+    radial-gradient(1.6px 1.6px at 88% 44%, #fff, transparent),
+    radial-gradient(1px 1px at 10% 55%, #cfe0ff, transparent),
+    radial-gradient(1.3px 1.3px at 30% 68%, #fff, transparent),
+    radial-gradient(1px 1px at 70% 72%, #fff, transparent),
+    radial-gradient(1.5px 1.5px at 92% 82%, #cfe0ff, transparent),
+    radial-gradient(1px 1px at 20% 90%, #fff, transparent);
+  opacity: 0.7;
+}
+.carta.raridade-lendario::before { opacity: 1; }
+.carta > * { position: relative; z-index: 1; }
+
+.carta-topo { display: flex; align-items: center; justify-content: center; margin-bottom: 2px; }
+.carta-logo { height: 40px; opacity: 0.97; }
+
+.selo-raridade {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 2;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  padding: 3px 9px;
+  border-radius: 999px;
+  color: #08101f;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--cor-raro) 92%, white 8%), var(--cor-raro));
+  box-shadow: 0 0 10px 1px color-mix(in srgb, var(--cor-raro) 60%, transparent);
+}
+
+.carta-orbe-area { display: flex; align-items: center; justify-content: center; padding: 14px 0 18px; position: relative; }
+.anel-orbita {
+  position: absolute;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  border: 1px dashed color-mix(in srgb, var(--cor-raro) 55%, transparent);
+  opacity: 0.55;
+  animation: carta-girar 18s linear infinite;
+}
+.anel-orbita::after {
+  content: "";
+  position: absolute;
+  top: -3px;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  margin-left: -3px;
+  border-radius: 50%;
+  background: var(--cor-raro);
+  box-shadow: 0 0 8px 2px var(--cor-raro);
+}
+@keyframes carta-girar { to { transform: rotate(360deg); } }
+.carta:not(.raridade-lendario) .anel-orbita { display: none; }
+
+/* órbita maior/mais brilhante que as outras telas — a carta é o "close-up" */
+.orbe-carta {
+  --orbe-tam: 132px;
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--cor-orbe) 70%, transparent),
+    0 0 26px 6px color-mix(in srgb, var(--cor-orbe) 55%, transparent),
+    0 0 60px 16px color-mix(in srgb, var(--cor-orbe) 30%, transparent),
+    inset 0 -10px 24px rgba(0, 0, 0, 0.5);
+}
+.orbe-carta[data-fonte="ia"] {
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--cor-orbe) 70%, transparent),
+    0 0 0 4.5px color-mix(in srgb, var(--cor-orbe-ia) 70%, transparent),
+    0 0 26px 6px color-mix(in srgb, var(--cor-orbe) 55%, transparent),
+    0 0 60px 16px color-mix(in srgb, var(--cor-orbe-ia) 30%, transparent),
+    inset 0 -10px 24px rgba(0, 0, 0, 0.5);
+}
+.carta-orbe-icone { font-size: 60px; line-height: 1; }
+img.carta-orbe-icone { width: 64%; height: 64%; object-fit: contain; filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.5)); }
+
+.carta-nome { text-align: center; font-size: 22px; font-weight: 800; margin: 2px 0 2px; text-shadow: 0 0 18px color-mix(in srgb, var(--cor-raro) 70%, transparent); }
+.carta-era { text-align: center; font-size: 11px; color: #a9bce0; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 14px; }
+
+.carta-bloco {
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 9px 11px;
+  margin-bottom: 8px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: #cdd8f5;
+}
+.carta-bloco b { display: block; font-size: 10px; letter-spacing: 0.07em; text-transform: uppercase; color: #8fa3d6; margin-bottom: 3px; font-weight: 700; }
+
+.carta-rodape { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 14px; }
+.carta-mascote { width: 34px; opacity: 0.95; }
+.carta-botoes { display: flex; gap: 8px; }
+.carta-btn {
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  padding: 8px 14px;
+  border-radius: 999px;
+}
+.carta-btn-exportar {
+  color: #08101f;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--cor-raro) 92%, white 8%), var(--cor-raro));
+  box-shadow: 0 0 10px 1px color-mix(in srgb, var(--cor-raro) 55%, transparent);
+}
+.carta-btn-exportar:active { transform: scale(0.96); }
+.carta-btn-fechar {
+  color: var(--cor-texto);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+.carta-status { font-size: 11px; color: #8fa3d6; margin-top: 8px; text-align: center; min-height: 14px; }
+
+.carta-canvas-export { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .carta.raridade-lendario { animation: none; }
+  .anel-orbita { animation: none; }
+}

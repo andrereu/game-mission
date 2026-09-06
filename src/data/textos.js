@@ -18,6 +18,13 @@ export const T = {
   albumTitulo: 'Álbum de figurinhas',
   albumOculto: '???',
   albumSeloCompleto: 'COMPLETO!',
+  cartaSobre: 'Sobre',
+  cartaOrigem: 'Origem',
+  cartaOrigemBase: 'Item base — descoberto desde o início.',
+  cartaVimDisso: 'Vim disso',
+  cartaCrieiIsso: 'Criei isso',
+  cartaCriadoPelaIA: 'criado pela IA',
+  cartaSalvarImagem: 'Salvar imagem',
   eraNovaSelo: 'NOVA ERA!',
   erasIcone: {
     elementos: '💧',

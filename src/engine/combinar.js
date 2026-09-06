@@ -31,6 +31,8 @@ export function criarCombinador({
           era: ERAS.includes(sugestao.era)
             ? sugestao.era
             : eraHerdada(itemA && itemA.era, itemB && itemB.era),
+          idA,
+          idB,
         });
         catalogo.registrarComboIA(idA, idB, item.id, sugestao.texto || '');
         const combo = { a: idA, b: idB, resultado: item.id, texto: sugestao.texto || '' };

@@ -66,7 +66,15 @@ export function criarStore(save) {
     registrarItemIA(item, comboKeyStr, combo) {
       save.itensIA ??= {};
       save.combosIA ??= {};
-      save.itensIA[item.id] = { nome: item.nome, emoji: item.emoji, era: item.era };
+      save.itensIA[item.id] = {
+        nome: item.nome,
+        emoji: item.emoji,
+        era: item.era,
+        // raridade calculada uma vez na criação; nunca recalculada ao
+        // reidratar o catálogo, pra não mudar de figura depois de gerada.
+        raridade: item.raridade,
+        profundidade: item.profundidade,
+      };
       save.combosIA[comboKeyStr] = combo;
       emit('itemIA:novo', item);
     },
