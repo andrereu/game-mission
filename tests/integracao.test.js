@@ -1,6 +1,6 @@
 // tests/integracao.test.js
-// Costura o caminho real: canvas -> fusão -> overlay de descoberta -> drawer,
-// com a mesma fiação que src/app.js usa.
+// Costura o caminho real: canvas -> fusão -> carta de recompensa -> voo até
+// o Álbum -> drawer, com a mesma fiação que src/app.js usa.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { criarCatalogo } from '../src/engine/catalogo.js';
@@ -9,7 +9,8 @@ import { criarCombinador } from '../src/engine/combinar.js';
 import { stubDesligado } from '../src/ai/provider.js';
 import { montarCanvas } from '../src/ui/canvas.js';
 import { montarDrawer } from '../src/ui/drawer.js';
-import { mostrarDescoberta } from '../src/ui/descoberta.js';
+import { mostrarRecompensaDescoberta } from '../src/ui/descoberta-carta.js';
+import { T } from '../src/data/textos.js';
 
 function ponteiro(tipo, clientX, clientY) {
   return new window.MouseEvent(tipo, { clientX, clientY, bubbles: true });
@@ -43,7 +44,9 @@ test('fusão real no canvas abre o overlay e o card entra na drawer', async () =
     document.body.innerHTML = `
       <section id="canvas" class="canvas"></section>
       <aside id="drawer" class="drawer"></aside>
+      <button id="eras">Álbum</button>
       <div id="overlay-raiz"></div>`;
+    const elEras = document.getElementById('eras');
 
     const catalogo = criarCatalogo();
     const store = criarStore({
@@ -68,16 +71,20 @@ test('fusão real no canvas abre o overlay e o card entra na drawer', async () =
       store,
       catalogo,
       combinar,
-      // mesma fiação de app.js
+      // mesma fiação de app.js: o card já entra na drawer antes da
+      // animação de recompensa (não depende dela pra existir)
       aoResultado: async (resultado, ctx) => {
         if (resultado.tipo === 'ok' && ctx.novo) {
-          await mostrarDescoberta({
-            item: resultado.item,
-            combo: resultado.combo,
-            catalogo,
-            comSom: store.getSave().ajustes.som,
-          });
           drawer.adicionarCard(resultado.item.id);
+          await mostrarRecompensaDescoberta({
+            id: resultado.item.id,
+            store,
+            catalogo,
+            T,
+            destinoEl: elEras,
+            comSom: store.getSave().ajustes.som,
+            ms: 20,
+          });
         }
       },
     });
@@ -100,21 +107,28 @@ test('fusão real no canvas abre o overlay e o card entra na drawer', async () =
     elB.dispatchEvent(ponteiro('pointerdown', 130, 130));
     elB.dispatchEvent(ponteiro('pointerup', 130, 130));
 
-    const abriu = await ate(() => document.querySelector('.descoberta-overlay'));
-    assert.ok(abriu, 'o overlay de descoberta não apareceu');
-    assert.equal(document.querySelectorAll('.descoberta-overlay').length, 1);
+    const abriu = await ate(() => document.querySelector('.descoberta-carta-overlay'));
+    assert.ok(abriu, 'a carta de recompensa não apareceu');
+    assert.equal(document.querySelectorAll('.descoberta-carta-overlay').length, 1);
+    assert.ok(document.querySelector('.descoberta-carta-overlay .carta'), 'reaproveita o mesmo componente de carta');
     assert.ok(store.isDiscovered('vapor'));
     assert.equal(store.getInstance(a.uid), undefined);
     assert.equal(store.listInstances().map((i) => i.id).join(), 'vapor');
 
-    // dispensa o overlay: o card só entra na drawer depois disso
-    document.querySelector('.descoberta-overlay')
+    // o card já está na drawer mesmo com a carta de recompensa ainda na tela
+    // (não espera a animação terminar pra existir)
+    assert.ok(
+      elDrawer.querySelector('.drawer-card[data-id="vapor"]'),
+      'o card de vapor devia estar na drawer imediatamente, sem esperar a animação',
+    );
+
+    // dispensa a carta no toque: dispara o voo até o Álbum
+    document.querySelector('.descoberta-carta-overlay')
       .dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
 
-    const temCard = await ate(
-      () => elDrawer.querySelector('.drawer-card[data-id="vapor"]'),
-    );
-    assert.ok(temCard, 'o card de vapor não entrou na drawer');
-    assert.equal(document.querySelectorAll('.descoberta-overlay').length, 0);
+    const sumiu = await ate(() => !document.querySelector('.descoberta-carta-overlay'), 400);
+    assert.ok(sumiu, 'a carta de recompensa devia sumir ao terminar o voo');
+    const pulsou = await ate(() => elEras.classList.contains('recebendo-carta'), 400);
+    assert.ok(pulsou, 'o botão do Álbum devia pulsar ao receber a carta');
   });
 });

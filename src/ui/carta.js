@@ -11,6 +11,97 @@ const RARO_LABEL = {
 const LOGO_SRC = 'assets/cartas/logo.png';
 const MASCOTE_SRC = 'assets/cartas/mascote.png';
 
+function nomesDe(ids, catalogo) {
+  return ids.map((id) => catalogo.getItem(id)?.nome).filter(Boolean);
+}
+
+function filhosDe(id, descobertos) {
+  return Object.keys(descobertos).filter((outro) => {
+    const via = descobertos[outro] && descobertos[outro].via;
+    return Array.isArray(via) && via.includes(id);
+  });
+}
+
+function iconeHTML(item) {
+  return item.svg
+    ? `<img class="carta-orbe-icone" src="${item.svg}" alt="" />`
+    : `<span class="carta-orbe-icone">${item.emoji}</span>`;
+}
+
+// Dados prontos pra desenhar a carta de um item já descoberto — usado tanto
+// pelo Álbum quanto pela animação de recompensa da 1ª descoberta (ver
+// src/ui/descoberta-carta.js). Sem-spoiler: null se o item não foi descoberto.
+export function calcularDadosCarta(id, { store, catalogo }) {
+  const item = catalogo.getItem(id);
+  if (!item) return null;
+  const descobertos = store.getSave().descobertos;
+  const meta = descobertos[id];
+  if (!meta) return null;
+
+  const raridade = catalogo.getRaridade(id);
+  const descricao = catalogo.getDescricao(id);
+  const pais = Array.isArray(meta.via) ? nomesDe(meta.via, catalogo) : null;
+  const filhosIds = filhosDe(id, descobertos);
+  const filhos = filhosIds.length ? nomesDe(filhosIds, catalogo) : null;
+  return {
+    item, meta, raridade, descricao, pais, filhos,
+  };
+}
+
+function blocoVia({ pais }, T) {
+  if (!pais || !pais.length) {
+    return `<div class="carta-bloco"><b>${T.cartaOrigem}</b>${T.cartaOrigemBase}</div>`;
+  }
+  return `<div class="carta-bloco"><b>${T.cartaVimDisso}</b>${pais.join(' + ')}</div>`;
+}
+
+function blocoCriei({ filhos }, T) {
+  if (!filhos || !filhos.length) return '';
+  return `<div class="carta-bloco"><b>${T.cartaCrieiIsso}</b>${filhos.join(', ')}</div>`;
+}
+
+// Constrói o elemento `.carta` — o MESMO componente/markup em qualquer
+// contexto (Álbum ou animação de recompensa). `comRodape:false` omite os
+// botões (usado no flash de 1ª descoberta, que é efêmero e voa antes que dê
+// tempo de exportar imagem).
+export function criarElementoCarta(dados, { T, comRodape = true }) {
+  const {
+    item, meta, raridade, descricao,
+  } = dados;
+
+  const carta = document.createElement('div');
+  carta.className = `carta raridade-${raridade}`;
+  carta.style.setProperty('--cor-raro', RARO_COR[raridade]);
+  carta.innerHTML = `
+    <span class="selo-raridade">${RARO_LABEL[raridade]}</span>
+    <div class="carta-topo"><img class="carta-logo" src="${LOGO_SRC}" alt="Misturária" /></div>
+    <div class="carta-orbe-area">
+      <div class="anel-orbita"></div>
+      <span class="orbe orbe-carta" data-era="${item.era}"${meta.fonte === 'ia' ? ' data-fonte="ia"' : ''}>${iconeHTML(item)}</span>
+    </div>
+    <div class="carta-nome">${item.nome}</div>
+    <div class="carta-era">${(T.eras[item.era] || item.era)}${meta.fonte === 'ia' ? ` · ${T.cartaCriadoPelaIA}` : ''}</div>
+    <div class="carta-bloco"><b>${T.cartaSobre}</b>${descricao}</div>
+    ${blocoVia(dados, T)}
+    ${blocoCriei(dados, T)}
+    ${comRodape ? `
+    <div class="carta-rodape">
+      <img class="carta-mascote" src="${MASCOTE_SRC}" alt="" />
+      <div class="carta-botoes">
+        <button type="button" class="carta-btn carta-btn-exportar">${T.cartaSalvarImagem}</button>
+        <button type="button" class="carta-btn carta-btn-fechar">${T.fechar}</button>
+      </div>
+    </div>
+    <div class="carta-status"></div>` : ''}
+  `;
+
+  if (comRodape) {
+    carta.querySelector('.carta-btn-exportar')
+      .addEventListener('click', () => exportarImagem(dados, carta));
+  }
+  return carta;
+}
+
 export function montarCartaOverlay({ raiz, store, catalogo, T }) {
   let overlay = null;
 
@@ -25,91 +116,20 @@ export function montarCartaOverlay({ raiz, store, catalogo, T }) {
     if (ev.key === 'Escape') fechar();
   }
 
-  function nomesDe(ids) {
-    return ids.map((id) => catalogo.getItem(id)?.nome).filter(Boolean);
-  }
-
-  function filhosDe(id, descobertos) {
-    return Object.keys(descobertos).filter((outro) => {
-      const via = descobertos[outro] && descobertos[outro].via;
-      return Array.isArray(via) && via.includes(id);
-    });
-  }
-
-  function iconeHTML(item) {
-    return item.svg
-      ? `<img class="carta-orbe-icone" src="${item.svg}" alt="" />`
-      : `<span class="carta-orbe-icone">${item.emoji}</span>`;
-  }
-
-  function dadosCarta(id) {
-    const item = catalogo.getItem(id);
-    if (!item) return null;
-    const descobertos = store.getSave().descobertos;
-    const meta = descobertos[id];
-    if (!meta) return null; // no-spoiler: carta só existe pra quem já foi descoberto
-
-    const raridade = catalogo.getRaridade(id);
-    const descricao = catalogo.getDescricao(id);
-    const pais = Array.isArray(meta.via) ? nomesDe(meta.via) : null;
-    const filhosIds = filhosDe(id, descobertos);
-    const filhos = filhosIds.length ? nomesDe(filhosIds) : null;
-    return {
-      item, meta, raridade, descricao, pais, filhos,
-    };
-  }
-
-  function blocoVia({ pais }) {
-    if (!pais || !pais.length) {
-      return `<div class="carta-bloco"><b>${T.cartaOrigem}</b>${T.cartaOrigemBase}</div>`;
-    }
-    return `<div class="carta-bloco"><b>${T.cartaVimDisso}</b>${pais.join(' + ')}</div>`;
-  }
-
-  function blocoCriei({ filhos }) {
-    if (!filhos || !filhos.length) return '';
-    return `<div class="carta-bloco"><b>${T.cartaCrieiIsso}</b>${filhos.join(', ')}</div>`;
-  }
-
   function abrir(id) {
-    const dados = dadosCarta(id);
+    const dados = calcularDadosCarta(id, { store, catalogo });
     if (!dados) return;
-    const {
-      item, meta, raridade, descricao,
-    } = dados;
 
     fechar();
     overlay = document.createElement('div');
     overlay.className = 'carta-overlay';
     overlay.setAttribute('role', 'dialog');
-    overlay.setAttribute('aria-label', item.nome);
-    overlay.innerHTML = `
-      <div class="carta raridade-${raridade}" style="--cor-raro:${RARO_COR[raridade]}">
-        <span class="selo-raridade">${RARO_LABEL[raridade]}</span>
-        <div class="carta-topo"><img class="carta-logo" src="${LOGO_SRC}" alt="Misturária" /></div>
-        <div class="carta-orbe-area">
-          <div class="anel-orbita"></div>
-          <span class="orbe orbe-carta" data-era="${item.era}"${meta.fonte === 'ia' ? ' data-fonte="ia"' : ''}>${iconeHTML(item)}</span>
-        </div>
-        <div class="carta-nome">${item.nome}</div>
-        <div class="carta-era">${(T.eras[item.era] || item.era)}${meta.fonte === 'ia' ? ` · ${T.cartaCriadoPelaIA}` : ''}</div>
-        <div class="carta-bloco"><b>${T.cartaSobre}</b>${descricao}</div>
-        ${blocoVia(dados)}
-        ${blocoCriei(dados)}
-        <div class="carta-rodape">
-          <img class="carta-mascote" src="${MASCOTE_SRC}" alt="" />
-          <div class="carta-botoes">
-            <button type="button" class="carta-btn carta-btn-exportar">${T.cartaSalvarImagem}</button>
-            <button type="button" class="carta-btn carta-btn-fechar">${T.fechar}</button>
-          </div>
-        </div>
-        <div class="carta-status"></div>
-      </div>`;
+    overlay.setAttribute('aria-label', dados.item.nome);
+    const cartaEl = criarElementoCarta(dados, { T, comRodape: true });
+    overlay.appendChild(cartaEl);
 
     overlay.querySelector('.carta-btn-fechar').addEventListener('click', fechar);
     overlay.addEventListener('click', (ev) => { if (ev.target === overlay) fechar(); });
-    overlay.querySelector('.carta-btn-exportar')
-      .addEventListener('click', () => exportarImagem(dados, overlay));
     document.addEventListener('keydown', aoTeclar);
     (raiz || document.body).appendChild(overlay);
   }

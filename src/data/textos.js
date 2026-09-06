@@ -28,6 +28,7 @@ export const T = {
   atualizacaoTitulo: '🌟 O universo evoluiu!',
   atualizacaoTexto: 'Tem coisas novas esperando para serem descobertas.',
   atualizacaoBotao: 'Atualizar',
+  novaDescobertaFaixa: '✨ Nova descoberta!',
   eraNovaSelo: 'NOVA ERA!',
   erasIcone: {
     elementos: '💧',

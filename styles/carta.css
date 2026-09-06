@@ -187,3 +187,59 @@ img.carta-orbe-icone { width: 64%; height: 64%; object-fit: contain; filter: dro
   .carta.raridade-lendario { animation: none; }
   .anel-orbita { animation: none; }
 }
+
+/* ---------- recompensa da 1ª descoberta: carta em destaque + voo ---------- */
+.descoberta-carta-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 65;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 12px;
+  overflow-y: auto;
+  background: rgba(4, 8, 16, 0.82);
+  transition: background 250ms ease;
+}
+/* depois do toque/tempo: o fundo se abre e só a carta segue visível voando */
+.descoberta-carta-overlay.descoberta-carta-voando {
+  background: transparent;
+  pointer-events: none;
+}
+.descoberta-carta-faixa {
+  margin: 0;
+  font-weight: 800;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  color: #ffe9a8;
+  text-shadow: 0 0 12px rgba(255, 210, 92, 0.6);
+  animation: descoberta-carta-faixa-entra 260ms ease;
+}
+@keyframes descoberta-carta-faixa-entra {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: none; }
+}
+.descoberta-carta-overlay .carta { animation: descoberta-carta-surge 260ms ease; }
+@keyframes descoberta-carta-surge {
+  from { opacity: 0; transform: scale(0.85); }
+  to { opacity: 1; transform: none; }
+}
+
+/* pulso curto de "recebido" — no botão do Álbum ou, no Modo Pequenos, no
+   cabeçalho do inventário. Nunca aumenta o glow de forma permanente. */
+.recebendo-carta {
+  animation: recebendo-carta-pulso 550ms ease;
+}
+@keyframes recebendo-carta-pulso {
+  0% { box-shadow: 0 0 0 0 rgba(255, 210, 92, 0); transform: scale(1); }
+  35% { box-shadow: 0 0 16px 4px rgba(255, 210, 92, 0.65); transform: scale(1.12); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 210, 92, 0); transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .descoberta-carta-overlay .carta { animation: none; }
+  .descoberta-carta-faixa { animation: none; }
+  .recebendo-carta { animation: none; }
+}

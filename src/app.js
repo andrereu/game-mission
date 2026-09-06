@@ -8,7 +8,7 @@ import { criarCombinador } from './engine/combinar.js';
 import { criarProviderEndpoint } from './ai/provider.js';
 import { montarCanvas } from './ui/canvas.js';
 import { montarDrawer } from './ui/drawer.js';
-import { mostrarDescoberta } from './ui/descoberta.js';
+import { mostrarRecompensaDescoberta } from './ui/descoberta-carta.js';
 import { montarArvore } from './ui/arvore.js';
 import { montarAjustes } from './ui/ajustes.js';
 import { montarStatusRede } from './ui/rede.js';
@@ -105,9 +105,21 @@ async function iniciar() {
   const elDrawer = document.getElementById('drawer');
   const elLimpar = document.getElementById('limpar');
   const elArvore = document.getElementById('arvore');
+  const elEras = document.getElementById('eras');
   const elAjustes = document.getElementById('ajustes');
+  const modoPequenos = modo === 'pequenos';
 
   let drawer;
+
+  // destino da carta que "voa" na 1ª descoberta: o botão do Álbum — ou,
+  // quando ele está escondido (Modo Pequenos), o cabeçalho do inventário,
+  // pra não mandar a animação pra um alvo invisível. Resolvido de novo a
+  // cada descoberta (nunca coordenada fixa) via getBoundingClientRect
+  // dentro de animarVooParaDestino.
+  function destinoRecompensa() {
+    if (modoPequenos) return elDrawer.querySelector('.drawer-cabecalho');
+    return elEras;
+  }
 
   const canvas = montarCanvas({
     raiz: elCanvas,
@@ -116,27 +128,32 @@ async function iniciar() {
     combinar,
     margemFusao: configDoModo(modo).margemFusao,
     aoResultado: async (resultado, ctx) => {
-      if (resultado.tipo === 'ok' && ctx.novo) {
-        const comSom = store.getSave().ajustes.som;
-        await mostrarDescoberta({
-          item: resultado.item,
-          combo: resultado.combo,
-          catalogo,
+      if (resultado.tipo !== 'ok' || !ctx.novo) return;
+      const comSom = store.getSave().ajustes.som;
+
+      // já disponível no drawer/álbum: não espera a animação de recompensa
+      drawer.adicionarCard(resultado.item.id);
+
+      await mostrarRecompensaDescoberta({
+        id: resultado.item.id,
+        store,
+        catalogo,
+        T,
+        destinoEl: destinoRecompensa(),
+        comSom,
+      });
+
+      // primeira descoberta de uma era ainda não vista: comemora e repinta
+      // (só depois da carta+voo — as duas celebrações não se sobrepõem)
+      const eraNova = resultado.item.era;
+      if (eraNova && !erasVistas.has(eraNova)) {
+        erasVistas.add(eraNova);
+        document.body.dataset.era = eraMaisAvancada(erasVistas);
+        await mostrarEraNova({
+          era: eraNova,
+          progresso: progressoPorEra(store.getSave().descobertos, catalogo),
           comSom,
         });
-        drawer.adicionarCard(resultado.item.id);
-
-        // primeira descoberta de uma era ainda não vista: comemora e repinta
-        const eraNova = resultado.item.era;
-        if (eraNova && !erasVistas.has(eraNova)) {
-          erasVistas.add(eraNova);
-          document.body.dataset.era = eraMaisAvancada(erasVistas);
-          await mostrarEraNova({
-            era: eraNova,
-            progresso: progressoPorEra(store.getSave().descobertos, catalogo),
-            comSom,
-          });
-        }
       }
     },
   });

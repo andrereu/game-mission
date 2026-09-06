@@ -13,7 +13,7 @@ function iconeMini(item) {
   return `<span>${item.emoji}</span>`;
 }
 
-function tocarBipe() {
+export function tocarBipe() {
   try {
     const Ctx = window.AudioContext || window.webkitAudioContext;
     const ctx = new Ctx();
