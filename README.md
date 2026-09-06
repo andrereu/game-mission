@@ -41,21 +41,19 @@ próprios e funciona offline pelo cache. Nos aparelhos dos filhos, o caminho é 
 O save fica preso ao navegador. Para saves separados, use perfis do Chrome ou navegadores
 diferentes por criança. (Perfis dentro do jogo vêm depois.)
 
-## Publicar e atualizar (Netlify)
+## Publicar e atualizar (Vercel)
 
 O site publicado é só a pasta `dist/`, montada por `scripts/build.mjs` (index.html,
-`sw.js`, `manifest.webmanifest`, `styles/`, `src/`, `assets/` — sem testes nem
-`node_modules`). `netlify.toml` marca a página como `noindex` (não aparece em buscador).
+`sw.js`, `manifest.webmanifest`, `vercel.json`, `styles/`, `src/`, `assets/` — sem
+testes nem `node_modules`). `vercel.json` marca a página como `noindex` (não aparece
+em buscador) e manda o `/sw.js` não ser cacheado.
 
 Uma vez só:
 
 ```
-npm install -g netlify-cli
-netlify login
-netlify link
+npm install -g vercel
+vercel login
 ```
-
-No `netlify link`, escolha o site que já existe.
 
 Cada atualização do jogo:
 
@@ -64,9 +62,16 @@ npm run deploy
 ```
 
 Esse comando sobe a versão do cache no `sw.js` (`mistura-v1` → `v2` → ...), monta o
-`dist/` e publica. A troca da versão é o que faz os aparelhos já instalados baixarem os
-arquivos novos — sem isso, eles continuam na versão velha. Depois do deploy, faça o
-commit do `sw.js` alterado.
+`dist/` e roda `vercel deploy --prod --yes dist`. A troca da versão é o que faz os
+aparelhos já instalados baixarem os arquivos novos — sem isso, eles continuam na
+versão velha. Depois do deploy, faça o commit do `sw.js` alterado.
+
+Na primeira vez o `vercel` pergunta o escopo e o nome do projeto e cria tudo; as
+próximas usam o `.vercel/` local (fora do git). O plano Hobby é grátis e não trava
+deploy de produção.
+
+> `netlify.toml` ficou no repositório como alternativa: a Netlify passou a exigir
+> créditos pra deploy de produção no time grátis.
 
 ## Rodar os testes
 

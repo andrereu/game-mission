@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 const raiz = fileURLToPath(new URL('../', import.meta.url));
 const dist = `${raiz}dist`;
 
-const ARQUIVOS = ['index.html', 'manifest.webmanifest', 'sw.js'];
+const ARQUIVOS = ['index.html', 'manifest.webmanifest', 'sw.js', 'vercel.json'];
 const PASTAS = ['styles', 'src', 'assets'];
 
 rmSync(dist, { recursive: true, force: true });

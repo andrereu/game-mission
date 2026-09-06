@@ -13,6 +13,7 @@ test('build monta dist/ com o runtime e sem lixo', () => {
     'dist/index.html',
     'dist/manifest.webmanifest',
     'dist/sw.js',
+    'dist/vercel.json',
     'dist/src/app.js',
     'dist/styles/base.css',
     'dist/assets/icons/icon-192.png',

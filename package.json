@@ -8,7 +8,7 @@
     "start": "node servidor.mjs",
     "test": "node --test --import ./tests/_setup.js",
     "build": "node scripts/build.mjs",
-    "deploy": "node scripts/bump-sw.mjs && npm run build && netlify deploy --prod --dir=dist"
+    "deploy": "node scripts/bump-sw.mjs && npm run build && vercel deploy --prod --yes dist"
   },
   "devDependencies": {
     "fake-indexeddb": "^6.0.0",
