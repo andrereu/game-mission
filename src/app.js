@@ -87,16 +87,14 @@ async function iniciar() {
       const r = elCanvas.getBoundingClientRect();
       canvas.soltarItem(id, r.width / 2, r.height / 2);
     },
-  });
-
-  // soltar card no canvas via drag-and-drop nativo
-  elCanvas.addEventListener('dragover', (ev) => ev.preventDefault());
-  elCanvas.addEventListener('drop', (ev) => {
-    ev.preventDefault();
-    const id = ev.dataTransfer.getData('text/mistura-id');
-    if (!id) return;
-    const r = elCanvas.getBoundingClientRect();
-    canvas.soltarItem(id, ev.clientX - r.left, ev.clientY - r.top);
+    // arrastar o card (ponteiro: toque + mouse) e soltar em cima do canvas
+    aoSoltarItem: (id, clientX, clientY) => {
+      const r = elCanvas.getBoundingClientRect();
+      const dentro = clientX >= r.left && clientX <= r.right
+        && clientY >= r.top && clientY <= r.bottom;
+      if (!dentro) return; // soltou fora do tabuleiro: ignora
+      canvas.soltarItem(id, clientX - r.left, clientY - r.top);
+    },
   });
 
   elLimpar.textContent = T.limparCanvas;

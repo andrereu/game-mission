@@ -2,7 +2,73 @@ import { T } from '../data/textos.js';
 import { ERAS } from '../engine/catalogo.js';
 import { slug } from '../engine/slug.js';
 
-export function montarDrawer({ raiz, store, catalogo, aoEscolherItem }) {
+const LIMIAR_MOV = 8; // px de movimento antes do "segurar" = virou scroll
+const SEGURAR_MS = 180; // hold pra "pegar" o card e começar a arrastar
+
+export function montarDrawer({ raiz, store, catalogo, aoEscolherItem, aoSoltarItem }) {
+  const soltar = aoSoltarItem || (() => {});
+
+  function posicionarFantasma(el, x, y) {
+    el.style.left = `${x - 30}px`;
+    el.style.top = `${y - 30}px`;
+  }
+
+  function ligarArrasto(card, id) {
+    let inicio = null;
+    let timer = null;
+    let fantasma = null;
+    let arrastando = false;
+
+    function encerrar() {
+      clearTimeout(timer);
+      timer = null;
+      if (fantasma) { fantasma.remove(); fantasma = null; }
+      arrastando = false;
+      inicio = null;
+    }
+
+    card.addEventListener('pointerdown', (ev) => {
+      if (ev.button != null && ev.button !== 0) return;
+      inicio = { x: ev.clientX, y: ev.clientY, pid: ev.pointerId };
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        arrastando = true;
+        fantasma = document.createElement('div');
+        fantasma.className = 'drawer-ghost';
+        fantasma.setAttribute('aria-hidden', 'true');
+        fantasma.innerHTML = card.innerHTML;
+        posicionarFantasma(fantasma, inicio.x, inicio.y);
+        document.body.appendChild(fantasma);
+        try { card.setPointerCapture?.(inicio.pid); } catch { /* ponteiro já inativo */ }
+      }, SEGURAR_MS);
+    });
+
+    card.addEventListener('pointermove', (ev) => {
+      if (!inicio) return;
+      if (!arrastando) {
+        const dist = Math.hypot(ev.clientX - inicio.x, ev.clientY - inicio.y);
+        if (dist > LIMIAR_MOV) { clearTimeout(timer); timer = null; } // é scroll
+        return;
+      }
+      ev.preventDefault();
+      posicionarFantasma(fantasma, ev.clientX, ev.clientY);
+    });
+
+    card.addEventListener('pointerup', (ev) => {
+      const foiArrasto = arrastando;
+      const { clientX, clientY } = ev;
+      try { card.releasePointerCapture?.(ev.pointerId); } catch { /* nada */ }
+      encerrar();
+      if (foiArrasto) {
+        card.__ignorarClique = true; // o click sintético vem logo depois
+        setTimeout(() => { card.__ignorarClique = false; }, 0);
+        soltar(id, clientX, clientY);
+      }
+    });
+
+    card.addEventListener('pointercancel', encerrar);
+  }
+
   raiz.innerHTML = `
     <input class="drawer-busca" type="search" placeholder="${T.buscar}" />
     <div class="drawer-chips"></div>
@@ -71,15 +137,15 @@ export function montarDrawer({ raiz, store, catalogo, aoEscolherItem }) {
       card.dataset.id = item.id;
       card.dataset.era = item.era;
       card.dataset.fonte = meta.fonte;
-      card.draggable = true;
       const icone = item.svg
         ? `<img class="card-icone" src="${item.svg}" alt="" />`
         : `<span class="card-icone">${item.emoji}</span>`;
       card.innerHTML = `${icone}<span class="card-nome">${item.nome}</span>`;
-      card.addEventListener('click', () => aoEscolherItem(item.id));
-      card.addEventListener('dragstart', (ev) => {
-        ev.dataTransfer.setData('text/mistura-id', item.id);
+      card.addEventListener('click', () => {
+        if (card.__ignorarClique) return;
+        aoEscolherItem(item.id);
       });
+      ligarArrasto(card, item.id);
       elGrade.appendChild(card);
     }
   }

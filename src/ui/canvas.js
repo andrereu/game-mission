@@ -1,5 +1,6 @@
 // src/ui/canvas.js
 import { T } from '../data/textos.js';
+import { ligarPanZoom } from './panzoom.js';
 
 const ZOOM_MIN = 0.4;
 const ZOOM_MAX = 2.5;
@@ -219,25 +220,15 @@ export function montarCanvas({ raiz, store, catalogo, combinar, aoResultado }) {
     el.addEventListener('lostpointercapture', abortar);
   }
 
-  // pan e zoom no fundo
-  let panInicio = null;
-  raiz.addEventListener('pointerdown', (ev) => {
-    if (ev.target !== raiz && ev.target !== mundo) return;
-    panInicio = { mx: ev.clientX, my: ev.clientY, x: vista.x, y: vista.y };
+  // pan (1 dedo), zoom por scroll e pinça de 2 dedos — só quando o gesto começa no fundo
+  ligarPanZoom({
+    alvo: raiz,
+    vista,
+    aplicar: aplicarVista,
+    permitePan: (ev) => ev.target === raiz || ev.target === mundo,
+    zoomMin: ZOOM_MIN,
+    zoomMax: ZOOM_MAX,
   });
-  raiz.addEventListener('pointermove', (ev) => {
-    if (!panInicio) return;
-    vista.x = panInicio.x + (ev.clientX - panInicio.mx);
-    vista.y = panInicio.y + (ev.clientY - panInicio.my);
-    aplicarVista();
-  });
-  raiz.addEventListener('pointerup', () => { panInicio = null; });
-  raiz.addEventListener('wheel', (ev) => {
-    ev.preventDefault();
-    const passo = ev.deltaY < 0 ? 1.1 : 1 / 1.1;
-    vista.escala = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, vista.escala * passo));
-    aplicarVista();
-  }, { passive: false });
 
   render();
   aplicarVista();

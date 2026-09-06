@@ -2,6 +2,7 @@
 // Tela cheia, só-visualização: o grafo do que já foi descoberto.
 // Nós = ids em save.descobertos. Arestas = de cada pai em `via` para o filho.
 // Layout próprio por profundidade (nível = 1 + max(nível dos pais descobertos)).
+import { ligarPanZoom } from './panzoom.js';
 
 const NO_LARG = 110; // passo horizontal entre nós do mesmo nível
 const NIVEL_ALT = 130; // passo vertical entre níveis
@@ -114,34 +115,28 @@ export function montarArvore({ raiz, store, catalogo, T }) {
       `translate(${vista.x}px, ${vista.y}px) scale(${vista.escala})`;
   }
 
-  function ligarPanZoom() {
+  function ligarGestos() {
     const palco = overlay.querySelector('.arvore-palco');
-    let pan = null;
-    let moveu = false;
+    ligarPanZoom({
+      alvo: palco,
+      vista,
+      aplicar: aplicarVista,
+      permitePan: (ev) => !ev.target.closest('.arvore-no'),
+      zoomMin: ZOOM_MIN,
+      zoomMax: ZOOM_MAX,
+    });
 
+    // clicar no vazio limpa o realce — mas não logo depois de arrastar
+    let baixouEm = null;
     palco.addEventListener('pointerdown', (ev) => {
-      if (ev.target.closest('.arvore-no')) return;
-      pan = { mx: ev.clientX, my: ev.clientY, x: vista.x, y: vista.y };
-      moveu = false;
+      baixouEm = { x: ev.clientX, y: ev.clientY };
     });
-    palco.addEventListener('pointermove', (ev) => {
-      if (!pan) return;
-      vista.x = pan.x + (ev.clientX - pan.mx);
-      vista.y = pan.y + (ev.clientY - pan.my);
-      moveu = true;
-      aplicarVista();
-    });
-    palco.addEventListener('pointerup', () => { pan = null; });
     palco.addEventListener('click', (ev) => {
-      if (moveu) return;
-      if (!ev.target.closest('.arvore-no')) limparRealce();
+      if (ev.target.closest('.arvore-no')) return;
+      const arrastou = baixouEm
+        && Math.hypot(ev.clientX - baixouEm.x, ev.clientY - baixouEm.y) > 6;
+      if (!arrastou) limparRealce();
     });
-    palco.addEventListener('wheel', (ev) => {
-      ev.preventDefault();
-      const passo = ev.deltaY < 0 ? 1.1 : 1 / 1.1;
-      vista.escala = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, vista.escala * passo));
-      aplicarVista();
-    }, { passive: false });
   }
 
   function desenhar() {
@@ -237,7 +232,7 @@ export function montarArvore({ raiz, store, catalogo, T }) {
     vista.x = 0;
     vista.y = 0;
     vista.escala = 1;
-    ligarPanZoom();
+    ligarGestos();
     desenhar();
     aplicarVista();
   }

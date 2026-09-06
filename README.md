@@ -96,10 +96,10 @@ docs/superpowers/   spec de design e plano de implementação
 
 ## Fase 2 (depois dos testes com as crianças)
 
-Ainda pendente: endpoint de IA real (sugere combinação quando não existe no
-código, com mini explicação) e seus guard-rails; pinça-zoom no toque; perfis por
-criança; validação de arrastar/soltar em celular; mais conteúdo rumo a ~250
-itens / ~700 combos.
+Ainda pendente: pinça-zoom no toque e arrastar-da-gaveta em celular; endpoint de
+IA real (sugere combinação quando não existe no código, com mini explicação) e
+seus guard-rails; sincronizar o progresso entre aparelhos (precisa de servidor —
+conta, login e storage); mais conteúdo rumo a ~250 itens / ~700 combos.
 
 ### Feito na fase 2
 
@@ -121,6 +121,10 @@ itens / ~700 combos.
   separado por perfil na chave `save:<id>`; índice em `perfis`. Migra o save
   antigo `principal` sem perder progresso. Seletor "Quem vai jogar?" no primeiro
   acesso e no botão do canto.
+- **Toque no celular** — pinça-zoom (`src/ui/panzoom.js`, compartilhado pelo
+  canvas e pela árvore) e arrastar o card da gaveta pro canvas por ponteiro
+  (segura ~180 ms, um "fantasma" segue o dedo, solta no tabuleiro). Tocar no card
+  segue criando a peça no centro. Falta validar num aparelho real.
 
 ### Ajustes vindos dos testes no notebook (2026-09-05)
 
