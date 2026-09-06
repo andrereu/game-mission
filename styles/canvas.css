@@ -24,6 +24,20 @@
   60%      { transform: translateY(2px) scale(0.97); }
 }
 
+/* espera de combinação (normalmente = consultando a IA) */
+.peca-pensando {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  margin: -9px 0 0 -9px;
+  border-radius: 50%;
+  border: 3px solid var(--cor-peca-borda);
+  border-top-color: var(--era-cultura);
+  animation: peca-pensando-gira 0.7s linear infinite;
+}
+@keyframes peca-pensando-gira { to { transform: rotate(360deg); } }
+
 @media (prefers-reduced-motion: reduce) {
   .peca.surgindo, .peca.quique { animation: none; }
+  .peca-pensando { animation: none; }
 }

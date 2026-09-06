@@ -17,6 +17,8 @@ export const T = {
   ajustesTitulo: 'Ajustes',
   ajusteSom: 'Som',
   ajusteIA: 'IA: sugerir combinações novas',
+  online: 'online',
+  offline: 'offline',
   contador: (descobertos, total) => `${descobertos} / ${total} descobertos`,
   eras: {
     elementos: 'Elementos',

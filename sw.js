@@ -36,6 +36,7 @@ const PRECACHE = [
   'src/ui/ajustes.js',
   'src/ui/panzoom.js',
   'src/ui/perfis.js',
+  'src/ui/rede.js',
 
   'assets/icons/icon-192.png',
   'assets/icons/icon-512.png',

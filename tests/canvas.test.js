@@ -16,6 +16,48 @@ function esperar(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
+test('mostra um "pensando" no canvas enquanto a combinação demora', async () => {
+  document.body.innerHTML = '<section id="canvas" class="canvas"></section>';
+  const cat = criarCatalogo();
+  const store = criarStore({
+    versao: 1, descobertos: { agua: {}, fogo: {} }, canvas: [], ajustes: { som: false },
+  });
+  const api = montarCanvas({
+    raiz: document.getElementById('canvas'),
+    store,
+    catalogo: cat,
+    combinar: async () => { await esperar(300); return { tipo: 'nada' }; },
+    aoResultado: () => {},
+  });
+  const a = api.soltarItem('agua', 10, 10);
+  const b = api.soltarItem('fogo', 12, 12);
+  const p = api._fundirParaTeste(a.uid, b.uid, { x: 10, y: 10 });
+  await esperar(280);
+  assert.ok(document.querySelector('.peca-pensando'), 'apareceu o indicador de espera');
+  await p;
+  assert.equal(document.querySelector('.peca-pensando'), null, 'sumiu ao terminar');
+});
+
+test('combinação rápida não chega a mostrar o "pensando"', async () => {
+  document.body.innerHTML = '<section id="canvas" class="canvas"></section>';
+  const cat = criarCatalogo();
+  const store = criarStore({
+    versao: 1, descobertos: { agua: {}, fogo: {} }, canvas: [], ajustes: { som: false },
+  });
+  const api = montarCanvas({
+    raiz: document.getElementById('canvas'),
+    store,
+    catalogo: cat,
+    combinar: async () => ({ tipo: 'nada' }),
+    aoResultado: () => {},
+  });
+  const a = api.soltarItem('agua', 10, 10);
+  const b = api.soltarItem('fogo', 12, 12);
+  await api._fundirParaTeste(a.uid, b.uid, { x: 10, y: 10 });
+  await esperar(0);
+  assert.equal(document.querySelector('.peca-pensando'), null);
+});
+
 function ambiente() {
   document.body.innerHTML = '<section id="canvas" class="canvas"></section>';
   const cat = criarCatalogo();

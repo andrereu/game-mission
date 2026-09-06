@@ -126,7 +126,27 @@ export function montarCanvas({ raiz, store, catalogo, combinar, aoResultado }) {
     if (!a || !b) return;
     const px = (a.x + b.x) / 2;
     const py = (a.y + b.y) / 2;
-    const resultado = await combinar(a.id, b.id);
+
+    // se a combinação demorar (geralmente = foi consultar a IA), mostra um
+    // ponto de "pensando" no lugar da fusão
+    const pensando = document.createElement('div');
+    pensando.className = 'peca-pensando';
+    pensando.style.left = `${px}px`;
+    pensando.style.top = `${py}px`;
+    let mostrouPensando = false;
+    const timerPensando = setTimeout(() => {
+      mundo.appendChild(pensando);
+      mostrouPensando = true;
+    }, 250);
+
+    let resultado;
+    try {
+      resultado = await combinar(a.id, b.id);
+    } finally {
+      clearTimeout(timerPensando);
+      if (mostrouPensando) pensando.remove();
+    }
+
     if (resultado.tipo === 'ok') {
       const novo = !store.isDiscovered(resultado.item.id);
       store.removeInstance(uidArrastada);

@@ -9,6 +9,7 @@ import { montarDrawer } from './ui/drawer.js';
 import { mostrarDescoberta } from './ui/descoberta.js';
 import { montarArvore } from './ui/arvore.js';
 import { montarAjustes } from './ui/ajustes.js';
+import { montarStatusRede } from './ui/rede.js';
 import {
   carregarPerfis, criarPerfil, apagarPerfil, definirAtivo, chaveSave,
 } from './engine/perfis.js';
@@ -131,6 +132,8 @@ async function iniciar() {
   elPerfil.addEventListener('click', async () => {
     seletor.abrir(await carregarPerfis());
   });
+
+  montarStatusRede({ el: document.getElementById('rede'), T });
 }
 
 iniciar().catch((err) => {
