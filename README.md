@@ -99,9 +99,9 @@ docs/superpowers/   spec de design e plano de implementação
 
 ## Fase 2 (depois dos testes com as crianças)
 
-Ainda pendente: sincronizar o progresso entre aparelhos (precisa de servidor —
-Supabase + código de família); mais conteúdo rumo a ~250 itens / ~700 combos;
-validar toque num aparelho real.
+Ainda pendente: mais conteúdo rumo a ~250 itens / ~700 combos; validar toque num
+aparelho real; manter o Realtime Database "acordado" (o free pausa sozinho? um
+ping periódico via GitHub Actions resolve se precisar).
 
 ### Feito na fase 2
 
@@ -129,10 +129,19 @@ validar toque num aparelho real.
   segue criando a peça no centro. Falta validar num aparelho real.
 - **IA opcional** (`api/combinar.js`, `api/_guardrails.js`, `src/ui/ajustes.js`) —
   quando o par não está no catálogo e o perfil ligou a IA no ⚙️, o cliente chama
-  `/api/combinar`; a função serverless pergunta ao Gemini (`gemini-2.5-flash-lite`)
-  e devolve a sugestão só se ela passar nos guard-rails (prompt fixo pt_BR
-  family-friendly, lista de bloqueio, nome curto). Falha/bloqueio/sem chave =
-  "nada aconteceu". Desligada por padrão. Precisa de `GEMINI_API_KEY` na Vercel.
+  `/api/combinar`; a função serverless pergunta ao Gemini (`gemini-flash-lite-latest`,
+  trocável por `GEMINI_MODELO`) e devolve a sugestão só se ela passar nos
+  guard-rails (prompt fixo pt_BR family-friendly, lista de bloqueio, nome curto).
+  Falha/bloqueio/sem chave = "nada aconteceu". Desligada por padrão. Precisa de
+  `GEMINI_API_KEY` na Vercel. `?debug=1` na URL devolve o erro no corpo.
+- **Sincronizar entre aparelhos** (`src/engine/sync.js`, `src/data/config.js`) —
+  no ⚙️ → "Ativar" gera um **código de família** (`ABCD-2345`); digite o mesmo
+  código no ⚙️ dos outros aparelhos. Ao abrir o jogo (online), puxa e mescla do
+  Firebase Realtime Database: lista de perfis (união por id) e `descobertos`
+  (união, mantém a descoberta mais antiga). Canvas e ajustes ficam por aparelho.
+  Empurra as descobertas ~2 s depois de cada uma nova. Sem credencial no cliente
+  — as rules do RTDB (`firebase-rules.json`) exigem o código com 8+ caracteres.
+  URL do banco em `src/data/config.js`.
 
 ### Ajustes vindos dos testes no notebook (2026-09-05)
 

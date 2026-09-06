@@ -1,6 +1,8 @@
 // src/app.js
 import { criarCatalogo } from './engine/catalogo.js';
-import { carregar, criarAgendadorSalvar, saveInicial } from './engine/storage.js';
+import {
+  carregar, salvar, criarAgendadorSalvar, saveInicial,
+} from './engine/storage.js';
 import { criarStore } from './engine/state.js';
 import { criarCombinador } from './engine/combinar.js';
 import { criarProviderEndpoint } from './ai/provider.js';
@@ -11,9 +13,13 @@ import { montarArvore } from './ui/arvore.js';
 import { montarAjustes } from './ui/ajustes.js';
 import { montarStatusRede } from './ui/rede.js';
 import {
-  carregarPerfis, criarPerfil, apagarPerfil, definirAtivo, chaveSave,
+  carregarPerfis, criarPerfil, apagarPerfil, definirAtivo, salvarPerfis, chaveSave,
 } from './engine/perfis.js';
 import { montarSeletorPerfis } from './ui/perfis.js';
+import {
+  carregarSync, definirCodigo, desativar as desativarSync, gerarCodigo,
+  sincronizar, empurrar,
+} from './engine/sync.js';
 import { T } from './data/textos.js';
 
 async function iniciar() {
@@ -27,7 +33,26 @@ async function iniciar() {
     aoApagar: async (id) => { await apagarPerfil(id); return carregarPerfis(); },
   });
 
-  const perfis = await carregarPerfis();
+  let perfis = await carregarPerfis();
+
+  // Sincronização entre aparelhos (se ativa + online): puxa e mescla ANTES de
+  // decidir o perfil ativo e de carregar o save.
+  const sync = await carregarSync();
+  if (sync.codigo && navigator.onLine) {
+    try {
+      await sincronizar(sync.codigo, {
+        carregarPerfis,
+        salvarPerfis,
+        carregarSave: (id) => carregar(catalogo, chaveSave(id)),
+        salvarSave: (id, s) => salvar(s, chaveSave(id)),
+        ativo: perfis.ativo,
+      });
+      perfis = await carregarPerfis();
+    } catch (err) {
+      console.warn('sync falhou:', err);
+    }
+  }
+
   if (!perfis.ativo) {
     // Primeira vez (ou todos apagados): não inicia o jogo até escolher.
     // aoEscolher recarrega a página, então o boot recomeça já com um ativo.
@@ -121,8 +146,28 @@ async function iniciar() {
     T,
     get: (chave) => store.getSave().ajustes[chave],
     set: (chave, valor) => store.setAjuste(chave, valor),
+    sync: {
+      carregar: carregarSync,
+      ativar: async () => { await definirCodigo(gerarCodigo()); return carregarSync(); },
+      usar: async (c) => { await definirCodigo(c); location.reload(); },
+      desativar: async () => { await desativarSync(); return carregarSync(); },
+      agora: () => location.reload(),
+    },
   });
   elAjustes.addEventListener('click', () => ajustes.abrir());
+
+  // com sync ativo, empurra as descobertas do perfil ativo pouco depois de cada nova
+  if (sync.codigo) {
+    let tPush = null;
+    store.on('descoberta:nova', () => {
+      clearTimeout(tPush);
+      tPush = setTimeout(() => {
+        if (!navigator.onLine) return;
+        empurrar(sync.codigo, perfis.ativo, { descobertos: store.getSave().descobertos })
+          .catch(() => {});
+      }, 2000);
+    });
+  }
 
   // botão de trocar de perfil, com nome e cor do perfil ativo
   const elPerfil = document.getElementById('perfil');

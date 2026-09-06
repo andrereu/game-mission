@@ -59,3 +59,31 @@
   cursor: pointer;
 }
 .ajuste-linha input { width: 20px; height: 20px; }
+
+.ajustes-sync {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--cor-borda);
+}
+.ajustes-sync h3 { margin: 0 0 8px; font-size: 14px; }
+.ajustes-sync p { margin: 4px 0; font-size: 14px; }
+.ajustes-sync strong { font-size: 18px; letter-spacing: 1px; }
+.ajustes-sync small { display: block; opacity: 0.7; margin-bottom: 10px; }
+.ajustes-sync button {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--cor-peca-borda);
+  background: var(--cor-peca);
+  color: var(--cor-texto);
+  cursor: pointer;
+}
+.sync-acoes { display: flex; gap: 8px; flex-wrap: wrap; }
+.sync-entrar { display: flex; gap: 8px; margin-top: 8px; }
+.sync-entrar input {
+  flex: 1;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid var(--cor-borda);
+  background: #0e1930;
+  color: var(--cor-texto);
+}

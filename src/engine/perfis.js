@@ -47,6 +47,10 @@ export async function carregarPerfis() {
   return { versao: VERSAO, lista: [], ativo: null };
 }
 
+export async function salvarPerfis({ lista = [], ativo = null } = {}) {
+  await gravarIndice({ versao: VERSAO, lista, ativo });
+}
+
 export async function criarPerfil(nome, cor) {
   const estado = await carregarPerfis();
   const perfil = { id: novoId(), nome: String(nome || 'Sem nome').trim() || 'Sem nome', cor: cor || '#4aa3ff' };

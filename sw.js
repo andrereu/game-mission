@@ -3,7 +3,7 @@
 // fetch: cache-first para estático mesmo-origem; rede direta para /api/.
 // activate: apaga versões antigas do cache.
 
-const VERSAO = 'mistura-v6';
+const VERSAO = 'mistura-v9';
 
 const PRECACHE = [
   './',
@@ -21,6 +21,7 @@ const PRECACHE = [
   'src/app.js',
   'src/ai/provider.js',
   'src/data/combos.js',
+  'src/data/config.js',
   'src/data/itens.js',
   'src/data/textos.js',
   'src/engine/catalogo.js',
@@ -29,6 +30,7 @@ const PRECACHE = [
   'src/engine/slug.js',
   'src/engine/state.js',
   'src/engine/storage.js',
+  'src/engine/sync.js',
   'src/ui/arvore.js',
   'src/ui/canvas.js',
   'src/ui/descoberta.js',
