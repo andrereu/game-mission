@@ -12,6 +12,7 @@ import { mostrarDescoberta } from './ui/descoberta.js';
 import { montarArvore } from './ui/arvore.js';
 import { montarAjustes } from './ui/ajustes.js';
 import { montarStatusRede } from './ui/rede.js';
+import { mostrarDesfazer } from './ui/desfazer.js';
 import { montarLinhaDoTempo } from './ui/eras.js';
 import { mostrarEraNova } from './ui/era-nova.js';
 import { erasAlcancadas, eraMaisAvancada, progressoPorEra } from './engine/eras.js';
@@ -152,11 +153,22 @@ async function iniciar() {
     },
   });
 
-  elLimpar.textContent = T.limparCanvas;
+  // limpar sem alerta bloqueante: some tudo e oferece "Desfazer" por alguns segundos
+  let desfazerAtivo = null;
   elLimpar.addEventListener('click', () => {
-    if (window.confirm(T.confirmarLimpar)) {
-      canvas.destruirTudo();
-    }
+    const antes = store.listInstances(); // cópia
+    if (antes.length === 0) return;
+    canvas.destruirTudo();
+    desfazerAtivo?.fechar();
+    desfazerAtivo = mostrarDesfazer({
+      raiz: elCanvas,
+      T,
+      ms: 5000,
+      aoDesfazer: () => {
+        for (const inst of antes) store.addInstance(inst.id, inst.x, inst.y);
+        canvas.render();
+      },
+    });
   });
 
   const arvore = montarArvore({
@@ -165,8 +177,7 @@ async function iniciar() {
     catalogo,
     T,
   });
-  elArvore.textContent = T.abrirArvore;
-  elArvore.addEventListener('click', () => arvore.abrir());
+  elArvore.addEventListener('click', () => arvore.abrir()); // rótulo já está no HTML
 
   const linhaDoTempo = montarLinhaDoTempo({
     raiz: document.getElementById('eras-raiz'),
@@ -174,9 +185,7 @@ async function iniciar() {
     catalogo,
     T,
   });
-  const elEras = document.getElementById('eras');
-  elEras.textContent = T.abrirEras;
-  elEras.addEventListener('click', () => linhaDoTempo.abrir());
+  document.getElementById('eras').addEventListener('click', () => linhaDoTempo.abrir());
 
   const ajustes = montarAjustes({
     raiz: document.getElementById('ajustes-raiz'),

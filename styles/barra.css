@@ -1,0 +1,120 @@
+/* Barra de topo: perfil + rede à esquerda, ações à direita. */
+#jogo { padding-top: 46px; }
+
+.barra {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 46px;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  background: rgba(11, 18, 32, 0.9);
+  border-bottom: 1px solid var(--cor-borda);
+}
+.barra-espaco { flex: 1; }
+
+.barra-perfil {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 2px solid var(--cor-peca-borda);
+  background: var(--cor-peca);
+  color: var(--cor-texto);
+  font: inherit;
+  font-size: 13px;
+  max-width: 40vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.barra-botao {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--cor-borda);
+  background: transparent;
+  color: var(--cor-texto);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.barra-botao:hover { background: var(--cor-peca); }
+
+/* indicador de rede: dot + texto, agora inline na barra */
+.rede-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  opacity: 0.75;
+  user-select: none;
+}
+.rede-status::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--era-natureza);
+}
+.rede-status[data-online="nao"] { opacity: 0.95; }
+.rede-status[data-online="nao"]::before { background: var(--era-vida); }
+
+/* Limpar como controle do canvas: botão redondo discreto no canto. */
+.botao-limpar {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  z-index: 5;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid var(--cor-peca-borda);
+  background: rgba(27, 41, 66, 0.7);
+  color: var(--cor-texto);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.65;
+  transition: opacity 120ms ease;
+}
+.botao-limpar:hover { opacity: 1; }
+
+.desfazer-chip {
+  position: absolute;
+  right: 12px;
+  bottom: 60px;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(11, 18, 32, 0.95);
+  border: 1px solid var(--cor-peca-borda);
+  font-size: 13px;
+  animation: desfazer-entra 160ms ease;
+}
+@keyframes desfazer-entra { from { transform: translateY(6px); opacity: 0; } to { transform: none; opacity: 1; } }
+.desfazer-btn {
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--cor-peca-borda);
+  background: var(--cor-peca);
+  color: var(--cor-texto);
+  cursor: pointer;
+}
+
+@media (max-width: 520px) {
+  .barra-botao span { display: none; } /* só o ícone no estreito */
+}

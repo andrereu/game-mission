@@ -1,16 +1,3 @@
-.botao-eras {
-  position: absolute;
-  left: 208px;
-  bottom: 12px;
-  z-index: 5;
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: 1px solid var(--cor-peca-borda);
-  background: var(--cor-peca);
-  color: var(--cor-texto);
-  cursor: pointer;
-}
-
 /* Fundo do canvas conforme a era mais avançada alcançada. Tons sutis e
    escuros pra não atrapalhar a leitura das peças. */
 body[data-era="natureza"] .canvas { background: linear-gradient(160deg, #263a4f, #24422f); }

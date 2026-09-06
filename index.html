@@ -19,16 +19,20 @@
     <link rel="stylesheet" href="styles/ajustes.css" />
     <link rel="stylesheet" href="styles/modos.css" />
     <link rel="stylesheet" href="styles/eras.css" />
+    <link rel="stylesheet" href="styles/barra.css" />
   </head>
   <body>
     <main id="jogo">
+      <div id="barra" class="barra">
+        <button id="perfil" class="barra-perfil" type="button"></button>
+        <span id="rede" class="rede-status" data-online="sim"></span>
+        <span class="barra-espaco"></span>
+        <button id="arvore" class="barra-botao" type="button">🌳 <span>Árvore</span></button>
+        <button id="eras" class="barra-botao" type="button">🗺️ <span>Eras</span></button>
+        <button id="ajustes" class="barra-botao" type="button" aria-label="Ajustes">⚙️</button>
+      </div>
       <section id="canvas" class="canvas"></section>
-      <button id="perfil" class="botao-perfil" type="button"></button>
-      <span id="rede" class="rede-status" data-online="sim"></span>
-      <button id="limpar" class="botao-limpar" type="button">Limpar canvas</button>
-      <button id="arvore" class="botao-arvore" type="button">Árvore</button>
-      <button id="eras" class="botao-eras" type="button">Eras</button>
-      <button id="ajustes" class="botao-ajustes" type="button" aria-label="Ajustes">⚙️</button>
+      <button id="limpar" class="botao-limpar" type="button" aria-label="Limpar canvas">🗑️</button>
       <aside id="drawer" class="drawer"></aside>
     </main>
     <div id="overlay-raiz"></div>

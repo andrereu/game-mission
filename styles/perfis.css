@@ -1,42 +1,4 @@
-.botao-perfil {
-  position: absolute;
-  left: 12px;
-  top: 12px;
-  z-index: 5;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border-radius: 999px;
-  border: 2px solid var(--cor-peca-borda);
-  background: var(--cor-peca);
-  color: var(--cor-texto);
-  font: inherit;
-  font-size: 13px;
-  cursor: pointer;
-}
-
-.rede-status {
-  position: absolute;
-  left: 14px;
-  top: 52px;
-  z-index: 5;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 11px;
-  opacity: 0.75;
-  user-select: none;
-}
-.rede-status::before {
-  content: "";
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--era-natureza);
-}
-.rede-status[data-online="nao"] { opacity: 0.9; }
-.rede-status[data-online="nao"]::before { background: var(--era-vida); }
+/* .barra-perfil e .rede-status agora vivem em styles/barra.css */
 
 .perfis-overlay {
   position: fixed;

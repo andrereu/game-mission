@@ -19,6 +19,7 @@ const PRECACHE = [
   'styles/ajustes.css',
   'styles/modos.css',
   'styles/eras.css',
+  'styles/barra.css',
 
   'src/app.js',
   'src/ai/provider.js',
@@ -38,6 +39,7 @@ const PRECACHE = [
   'src/ui/arvore.js',
   'src/ui/canvas.js',
   'src/ui/descoberta.js',
+  'src/ui/desfazer.js',
   'src/ui/drawer.js',
   'src/ui/era-nova.js',
   'src/ui/eras.js',
