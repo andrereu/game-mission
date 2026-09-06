@@ -36,6 +36,7 @@ export function mostrarDescoberta({ item, combo, catalogo, comSom }) {
     const raiz = document.getElementById('overlay-raiz') || document.body;
     const over = document.createElement('div');
     over.className = 'descoberta-overlay';
+    if (item.ia) over.classList.add('descoberta-ia'); // criação especial: glow galáxia
     over.setAttribute('role', 'dialog');
     over.setAttribute('aria-label', item.nome);
     over.tabIndex = -1;

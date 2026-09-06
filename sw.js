@@ -3,7 +3,7 @@
 // fetch: cache-first para estático mesmo-origem; rede direta para /api/.
 // activate: apaga versões antigas do cache.
 
-const VERSAO = 'mistura-v22';
+const VERSAO = 'mistura-v23';
 
 const PRECACHE = [
   './',
@@ -50,11 +50,14 @@ const PRECACHE = [
   'src/ui/panzoom.js',
   'src/ui/perfis.js',
   'src/ui/rede.js',
+  'src/ui/atualizacao.js',
 
-  'assets/icons/icon.svg',
   'assets/icons/icon-192.png',
   'assets/icons/icon-512.png',
   'assets/icons/icon-maskable-512.png',
+  'assets/icons/apple-touch-icon.png',
+  'assets/icons/favicon-32.png',
+  'assets/icons/favicon-16.png',
 
   'assets/svg/pikachu.svg',
   'assets/svg/raichu.svg',
@@ -65,6 +68,19 @@ const PRECACHE = [
 
   'assets/cartas/logo.png',
   'assets/cartas/mascote.png',
+  'assets/cartas/logo-completo.png',
+  'assets/cartas/mascote-busto.png',
+  'assets/cartas/mascote-feliz.png',
+  'assets/cartas/mascote-pensando.png',
+
+  'assets/decor/nebulosa.png',
+  'assets/decor/planeta.png',
+  'assets/decor/asteroides.png',
+  'assets/decor/estrelas.png',
+  'assets/decor/elementos-decorativos.png',
+  'assets/decor/orbe-dourada.png',
+  'assets/decor/orbe-galaxia.png',
+  'assets/decor/estrela.png',
 ];
 
 self.addEventListener('install', (evento) => {

@@ -1,10 +1,21 @@
+/* mesma família visual do resto do jogo: campo de estrelas bem discreto por
+   trás das faixas de era (que continuam intactas — isto é só acabamento,
+   não mexe na estrutura/comportamento da árvore) */
 .arvore-overlay {
   position: fixed;
   inset: 0;
   z-index: 40;
   display: flex;
   flex-direction: column;
-  background: var(--cor-fundo);
+  background:
+    radial-gradient(1.4px 1.4px at 10% 15%, rgba(255,255,255,0.35), transparent),
+    radial-gradient(1.2px 1.2px at 32% 60%, rgba(255,255,255,0.28), transparent),
+    radial-gradient(1.6px 1.6px at 58% 22%, rgba(255,255,255,0.3), transparent),
+    radial-gradient(1.2px 1.2px at 78% 70%, rgba(255,255,255,0.25), transparent),
+    radial-gradient(1.4px 1.4px at 90% 35%, rgba(255,255,255,0.3), transparent),
+    var(--cor-fundo);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%;
+  background-attachment: fixed;
 }
 
 .arvore-cabecalho {

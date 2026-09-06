@@ -25,6 +25,9 @@ export const T = {
   cartaCrieiIsso: 'Criei isso',
   cartaCriadoPelaIA: 'criado pela IA',
   cartaSalvarImagem: 'Salvar imagem',
+  atualizacaoTitulo: '🌟 O universo evoluiu!',
+  atualizacaoTexto: 'Tem coisas novas esperando para serem descobertas.',
+  atualizacaoBotao: 'Atualizar',
   eraNovaSelo: 'NOVA ERA!',
   erasIcone: {
     elementos: '💧',

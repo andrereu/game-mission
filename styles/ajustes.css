@@ -23,6 +23,8 @@
   gap: 12px;
   margin-bottom: 12px;
 }
+.ajustes-titulo-grupo { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.ajustes-mascote { width: 34px; height: auto; flex-shrink: 0; }
 .ajustes-cabecalho h2 { margin: 0; font-size: 18px; }
 .ajustes-fechar {
   padding: 6px 12px;

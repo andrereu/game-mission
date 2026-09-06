@@ -66,7 +66,10 @@ export function montarAjustes({ raiz, T, get, set, sync }) {
     overlay.innerHTML = `
       <div class="ajustes-cartao">
         <div class="ajustes-cabecalho">
-          <h2>${T.ajustesTitulo}</h2>
+          <div class="ajustes-titulo-grupo">
+            <img class="ajustes-mascote" src="assets/cartas/mascote-busto.png" alt="" />
+            <h2>${T.ajustesTitulo}</h2>
+          </div>
           <button type="button" class="ajustes-fechar">${T.fechar}</button>
         </div>
         <div class="ajustes-lista"></div>

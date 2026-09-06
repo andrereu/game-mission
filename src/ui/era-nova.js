@@ -20,6 +20,7 @@ export function mostrarEraNova({ era, progresso, comSom }) {
 
     over.innerHTML = `
       <div class="era-nova-cartao">
+        <img class="era-nova-mascote" src="assets/cartas/mascote-feliz.png" alt="" />
         <div class="era-nova-icone">${T.erasIcone[era] || '✨'}</div>
         <p class="era-nova-selo">${T.eraNovaSelo}</p>
         <h2 class="era-nova-nome">${T.eras[era] || era}</h2>

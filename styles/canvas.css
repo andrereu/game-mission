@@ -70,21 +70,32 @@
   60%      { transform: translateY(2px) scale(0.97); }
 }
 
-/* espera de combinação (normalmente = consultando a IA) */
+/* espera de combinação (normalmente = consultando a IA): o mascote "pensando"
+   real, com um anel sutil de carregamento ao redor — comunica "processando"
+   sem ser só um spinner genérico. */
 .peca-pensando {
   position: absolute;
-  width: 18px;
-  height: 18px;
-  margin: -9px 0 0 -9px;
+  width: 44px;
+  height: 44px;
+  margin: -22px 0 0 -22px;
   border-radius: 50%;
-  border: 3px solid var(--cor-peca-borda);
+  border: 2px solid color-mix(in srgb, var(--era-cultura) 55%, transparent);
   border-top-color: var(--era-cultura);
-  animation: peca-pensando-gira 0.7s linear infinite;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: peca-pensando-gira 1.1s linear infinite;
+}
+.peca-pensando img {
+  width: 72%;
+  height: 72%;
+  object-fit: contain;
+  animation: peca-pensando-gira 1.1s linear infinite reverse;
 }
 @keyframes peca-pensando-gira { to { transform: rotate(360deg); } }
 
 @media (prefers-reduced-motion: reduce) {
   .peca.surgindo, .peca.quique, .peca.surgindo .orbe-canvas { animation: none; }
-  .peca-pensando { animation: none; }
+  .peca-pensando, .peca-pensando img { animation: none; }
   .orbe-canvas .peca-icone { animation: none; }
 }

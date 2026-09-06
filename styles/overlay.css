@@ -1,8 +1,18 @@
 .descoberta-overlay { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; background: rgba(4, 8, 16, 0.82); animation: aparecer 0.2s ease; }
 @keyframes aparecer { from { opacity: 0; } to { opacity: 1; } }
 .descoberta-cartao { text-align: center; max-width: 320px; padding: 24px; }
-.descoberta-icone { font-size: 96px; line-height: 1; filter: drop-shadow(0 0 24px rgba(120, 180, 255, 0.8)); animation: pulsar 1s ease infinite alternate; }
+.descoberta-icone { position: relative; font-size: 96px; line-height: 1; filter: drop-shadow(0 0 24px rgba(120, 180, 255, 0.8)); animation: pulsar 1s ease infinite alternate; }
 img.descoberta-icone { width: 120px; height: 120px; }
+/* criação especial da IA: um toque de galáxia por trás do ícone, sem
+   substituir o ícone real do item (regra: usar as orbes com seletividade) */
+.descoberta-ia .descoberta-icone::before {
+  content: "";
+  position: absolute;
+  inset: -34px;
+  z-index: -1;
+  background: url("../assets/decor/orbe-galaxia.png") center / contain no-repeat;
+  opacity: 0.6;
+}
 @keyframes pulsar { from { transform: scale(1); } to { transform: scale(1.08); } }
 .descoberta-selo { font-weight: 700; letter-spacing: 2px; color: var(--era-cultura); margin: 8px 0 0; }
 .descoberta-nome { font-size: 28px; margin: 4px 0 8px; }

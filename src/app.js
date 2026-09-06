@@ -15,6 +15,7 @@ import { montarStatusRede } from './ui/rede.js';
 import { mostrarDesfazer } from './ui/desfazer.js';
 import { montarAlbum } from './ui/eras.js';
 import { mostrarEraNova } from './ui/era-nova.js';
+import { mostrarAtualizacaoDisponivel } from './ui/atualizacao.js';
 import { erasAlcancadas, eraMaisAvancada, progressoPorEra } from './engine/eras.js';
 import {
   carregarPerfis, criarPerfil, editarPerfil, apagarPerfil, definirAtivo, salvarPerfis, chaveSave,
@@ -246,9 +247,21 @@ iniciar().catch((err) => {
   console.error(err);
 });
 
-// PWA: registra o service worker (não bloqueia o jogo se falhar).
+// PWA: registra o service worker (não bloqueia o jogo se falhar). O install
+// já chama self.skipWaiting() + clients.claim() (ver sw.js) — a troca de
+// versão em background dispara 'controllerchange'. A primeira vez que a
+// página é controlada (1ª instalação) NÃO é uma atualização; só avisamos a
+// partir da 2ª troca de controlador em diante.
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
+    let jaTinhaControlador = Boolean(navigator.serviceWorker.controller);
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!jaTinhaControlador) {
+        jaTinhaControlador = true;
+        return;
+      }
+      mostrarAtualizacaoDisponivel({ T, aoAtualizar: () => window.location.reload() });
+    });
     navigator.serviceWorker.register('sw.js').catch((err) => {
       console.warn('service worker não registrou:', err);
     });

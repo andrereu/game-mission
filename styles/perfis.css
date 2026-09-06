@@ -1,5 +1,8 @@
 /* .barra-perfil e .rede-status agora vivem em styles/barra.css */
 
+/* entrada no universo do Misturária: nebulosa + estrelas bem discretas atrás
+   do cartão — a marca pode se mostrar por inteiro aqui, é a única tela onde
+   isso faz sentido (ver styles/carta.css e canvas.css pro resto do jogo). */
 .perfis-overlay {
   position: fixed;
   inset: 0;
@@ -7,7 +10,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(4, 8, 16, 0.85);
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgba(120, 140, 255, 0.10), transparent 60%),
+    url('../assets/decor/nebulosa.png') -10% -10% / 55% no-repeat,
+    url('../assets/decor/estrelas.png') 92% 85% / 70px no-repeat,
+    rgba(4, 8, 16, 0.92);
+  background-blend-mode: screen, screen, normal, normal;
   padding: 16px;
 }
 .perfis-cartao {
@@ -17,6 +25,14 @@
   border: 1px solid var(--cor-borda);
   border-radius: 14px;
   padding: 18px;
+  box-shadow: 0 0 40px rgba(90, 120, 255, 0.12);
+}
+.perfis-logo {
+  display: block;
+  width: 100%;
+  max-width: 260px;
+  margin: 0 auto 14px;
+  filter: drop-shadow(0 0 20px rgba(120, 140, 255, 0.25));
 }
 .perfis-cabecalho {
   display: flex;

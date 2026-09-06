@@ -97,6 +97,7 @@ export function montarSeletorPerfis({
     overlay.setAttribute('aria-label', T.perfilTitulo);
     overlay.innerHTML = `
       <div class="perfis-cartao">
+        <img class="perfis-logo" src="assets/cartas/logo-completo.png" alt="Misturária" />
         <div class="perfis-cabecalho">
           <h2>${T.perfilTitulo}</h2>
           <button type="button" class="perfil-fechar" hidden>${T.fechar}</button>

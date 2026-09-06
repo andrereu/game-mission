@@ -139,6 +139,7 @@ export function montarCanvas({
     pensando.className = 'peca-pensando';
     pensando.style.left = `${px}px`;
     pensando.style.top = `${py}px`;
+    pensando.innerHTML = '<img src="assets/cartas/mascote-pensando.png" alt="" />';
     let mostrouPensando = false;
     const timerPensando = setTimeout(() => {
       mundo.appendChild(pensando);
