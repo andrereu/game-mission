@@ -39,9 +39,15 @@ próprios e funciona offline pelo cache. Nos aparelhos dos filhos, o caminho é 
 ### Um perfil por filho
 
 No primeiro acesso o jogo pergunta "Quem vai jogar?" e você cria um perfil por criança
-(nome + cor). Cada perfil tem o save próprio (descobertas, canvas, ajustes). O jogo abre
-direto no último perfil usado; o botão no canto superior-esquerdo troca de perfil ou cria
-outro. Tudo continua no mesmo navegador/aparelho — não sincroniza entre aparelhos.
+(nome + cor + **modo**). Cada perfil tem o save próprio (descobertas, canvas, ajustes).
+O jogo abre direto no último perfil usado; o botão no canto superior-esquerdo troca de
+perfil ou cria outro.
+
+**Modo** (você define, troca pelo lápis no card do perfil, não é dificuldade de jogo):
+- **Pequenos** — sem busca, sem filtros de era, sem Árvore; peças e cards maiores; área
+  de encaixe folgada pra fundir. Pra quem ainda não lê.
+- **Médio** — o padrão.
+- **Completo** — tudo à mostra.
 
 ## Publicar e atualizar (GitHub → Vercel)
 
