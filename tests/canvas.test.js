@@ -129,7 +129,8 @@ test('render ignora instâncias salvas com id desconhecido', () => {
 });
 
 test('fusão sem resultado devolve a peça arrastada para a posição inicial', async () => {
-  const { cat, store, combinar, raiz } = ambiente();
+  const { cat, store, raiz } = ambiente();
+  const combinar = async () => ({ tipo: 'nada' }); // isola do catálogo
   const resultados = [];
   const api = montarCanvas({
     raiz, store, catalogo: cat, combinar,
@@ -157,7 +158,8 @@ test('fusão sem resultado devolve a peça arrastada para a posição inicial', 
 });
 
 test('fusão sem resultado com som ligado não quebra', async () => {
-  const { cat, store, combinar, raiz } = ambiente();
+  const { cat, store, raiz } = ambiente();
+  const combinar = async () => ({ tipo: 'nada' }); // isola do catálogo
   store.getSave().ajustes.som = true;
   const api = montarCanvas({ raiz, store, catalogo: cat, combinar, aoResultado() {} });
   const a = api.soltarItem('agua', 0, 0);
