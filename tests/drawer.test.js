@@ -46,6 +46,16 @@ test('chip de era filtra', () => {
   assert.equal(raiz.querySelectorAll('.drawer-card').length, 0);
 });
 
+test('itens da IA aparecem sempre por último, mesmo descobertos antes e de era mais cedo', () => {
+  const { cat, store, raiz } = ambiente();
+  const item = cat.registrarItemIA({ nome: 'Coisa da IA', emoji: '✨', era: 'elementos' });
+  // 'em: 0' descoberto antes de tudo: sem a regra da IA, viria primeiro na lista
+  store.getSave().descobertos[item.id] = { em: 0, via: null, fonte: 'ia' };
+  montarDrawer({ raiz, store, catalogo: cat, aoEscolherItem() {} });
+  const nomes = [...raiz.querySelectorAll('.drawer-card .card-nome')].map((n) => n.textContent);
+  assert.deepEqual(nomes, ['Água', 'Fogo', 'Vapor', 'Coisa da IA']);
+});
+
 test('clique no card chama aoEscolherItem', () => {
   const { cat, store, raiz } = ambiente();
   let escolhido = null;
