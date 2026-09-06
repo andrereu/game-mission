@@ -110,6 +110,9 @@ export function montarDrawer({ raiz, store, catalogo, aoEscolherItem, aoSoltarIt
       .map((id) => ({ item: catalogo.getItem(id), meta: desc[id] }))
       .filter((x) => x.item)
       .sort((a, b) => {
+        // itens da IA não são canônicos: sempre por último, depois da curadoria
+        const ia = Number(Boolean(a.item.ia)) - Number(Boolean(b.item.ia));
+        if (ia !== 0) return ia;
         const ea = ERAS.indexOf(a.item.era);
         const eb = ERAS.indexOf(b.item.era);
         if (ea !== eb) return ea - eb;

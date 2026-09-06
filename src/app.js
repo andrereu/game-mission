@@ -1,5 +1,5 @@
 // src/app.js
-import { criarCatalogo } from './engine/catalogo.js';
+import { criarCatalogo, comboKey } from './engine/catalogo.js';
 import {
   carregar, salvar, criarAgendadorSalvar, saveInicial,
 } from './engine/storage.js';
@@ -78,6 +78,8 @@ async function iniciar() {
     console.error(err);
     save = saveInicial(catalogo); // boot com save novo em vez de página em branco
   }
+  // catálogo é recriado do zero a cada boot: repõe as criações da IA gravadas no save
+  catalogo.hidratarIA(save.itensIA, save.combosIA);
   const store = criarStore(save);
 
   const agendarSalvar = criarAgendadorSalvar(() => store.getSave(), 400, chaveDoSave);
@@ -93,6 +95,9 @@ async function iniciar() {
     catalogo,
     aiProvider: criarProviderEndpoint('/api/combinar'),
     estaOnline: () => store.getSave().ajustes.iaLigada === true && navigator.onLine,
+    aoRegistrarIA: (item, combo) => {
+      store.registrarItemIA(item, comboKey(combo.a, combo.b), combo);
+    },
   });
 
   const elCanvas = document.getElementById('canvas');

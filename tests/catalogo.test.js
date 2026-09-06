@@ -57,6 +57,35 @@ test('registrarComboIA fica disponível em findCombo', () => {
   assert.equal(cat.findCombo('ar', 'agua').resultado, 'gelo');
 });
 
+test('hidratarIA repõe itens e combos da IA num catálogo novo (troca de sessão)', () => {
+  const original = criarCatalogo();
+  const item = original.registrarItemIA({ nome: 'Nuvem Quente', emoji: '🌫️', era: 'natureza' });
+  original.registrarComboIA('vapor', 'calor', item.id, 'Vapor com calor vira nuvem quente.');
+
+  // simula um novo boot: catálogo recriado do zero, só com os dados base
+  const novo = criarCatalogo();
+  assert.equal(novo.getItem(item.id), undefined);
+  assert.equal(novo.findCombo('vapor', 'calor'), undefined);
+
+  novo.hidratarIA(
+    { [item.id]: { nome: item.nome, emoji: item.emoji, era: item.era } },
+    { [comboKey('vapor', 'calor')]: { a: 'vapor', b: 'calor', resultado: item.id, texto: 'x' } },
+  );
+
+  const repos = novo.getItem(item.id);
+  assert.ok(repos, 'item da IA devia voltar depois de hidratar');
+  assert.equal(repos.ia, true);
+  assert.equal(repos.emoji, '🌫️');
+  assert.equal(novo.findCombo('vapor', 'calor').resultado, item.id);
+});
+
+test('hidratarIA não sobrescreve itens/combos já existentes', () => {
+  const cat = criarCatalogo();
+  const item = cat.registrarItemIA({ nome: 'Coisa', emoji: '✨' });
+  cat.hidratarIA({ [item.id]: { nome: 'Outro nome', emoji: '❓' } }, {});
+  assert.equal(cat.getItem(item.id).nome, 'Coisa');
+});
+
 test('ERAS tem as seis eras', () => {
   assert.deepEqual(ERAS, ['elementos', 'natureza', 'vida', 'tecnologia', 'cultura', 'ficcao']);
 });

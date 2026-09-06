@@ -136,6 +136,8 @@ export function saveInicial(catalogo) {
     versao: VERSAO_ATUAL,
     descobertos,
     canvas: [],
+    itensIA: {},
+    combosIA: {},
     ajustes: { som: true, iaLigada: false },
   };
 }
@@ -162,7 +164,11 @@ export async function carregar(catalogo, chave = CHAVE_PADRAO) {
   try {
     const cru = await lerChave(chave);
     if (!cru || typeof cru !== 'object') return saveInicial(catalogo);
-    return migrar(cru);
+    const save = migrar(cru);
+    // saves gravados antes de existir esse campo (versão já é a atual, não passa pela migração)
+    save.itensIA ??= {};
+    save.combosIA ??= {};
+    return save;
   } catch {
     return saveInicial(catalogo);
   }
