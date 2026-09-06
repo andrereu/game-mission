@@ -231,10 +231,10 @@ async function iniciar() {
     store.on('itemIA:novo', empurrarLogo);
   }
 
-  // botão de trocar de perfil, com nome e cor do perfil ativo
+  // botão de trocar de perfil: a mini-orbe do avatar usa a cor do perfil
   const elPerfil = document.getElementById('perfil');
-  elPerfil.textContent = perfilAtivo ? perfilAtivo.nome : T.trocarPerfil;
-  if (perfilAtivo) elPerfil.style.borderColor = perfilAtivo.cor;
+  elPerfil.querySelector('.barra-perfil-nome').textContent = perfilAtivo ? perfilAtivo.nome : T.trocarPerfil;
+  if (perfilAtivo) elPerfil.querySelector('.barra-avatar').style.setProperty('--cor-orbe', perfilAtivo.cor);
   elPerfil.addEventListener('click', async () => {
     seletor.abrir(await carregarPerfis());
   });

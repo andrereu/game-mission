@@ -1,54 +1,78 @@
-/* Barra de topo: perfil + rede à esquerda, ações à direita. */
-#jogo { padding-top: 46px; }
+/* Barra de topo → HUD leve do jogo: perfil + rede à esquerda, ações à direita.
+   Mesma altura e mesmos 5 elementos de sempre, só a linguagem visual muda:
+   gradiente + friso na cor da era atual (body[data-era]) em vez de retângulo
+   opaco, e os botões viram círculos discretos em vez de toolbar quadrada. */
+#jogo { padding-top: 48px; }
 
 .barra {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  height: 46px;
+  height: 48px;
   z-index: 6;
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 0 10px;
-  background: rgba(11, 18, 32, 0.9);
-  border-bottom: 1px solid var(--cor-borda);
+  background: linear-gradient(180deg, rgba(17, 27, 48, 0.95), rgba(11, 18, 32, 0.85));
+  border-bottom: 1px solid color-mix(in srgb, var(--era-elementos) 28%, var(--cor-borda));
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--era-elementos) 16%, transparent) inset;
 }
+body[data-era="natureza"]   .barra { border-bottom-color: color-mix(in srgb, var(--era-natureza) 28%, var(--cor-borda)); box-shadow: 0 1px 0 color-mix(in srgb, var(--era-natureza) 16%, transparent) inset; }
+body[data-era="vida"]       .barra { border-bottom-color: color-mix(in srgb, var(--era-vida) 28%, var(--cor-borda)); box-shadow: 0 1px 0 color-mix(in srgb, var(--era-vida) 16%, transparent) inset; }
+body[data-era="tecnologia"] .barra { border-bottom-color: color-mix(in srgb, var(--era-tecnologia) 28%, var(--cor-borda)); box-shadow: 0 1px 0 color-mix(in srgb, var(--era-tecnologia) 16%, transparent) inset; }
+body[data-era="cultura"]    .barra { border-bottom-color: color-mix(in srgb, var(--era-cultura) 28%, var(--cor-borda)); box-shadow: 0 1px 0 color-mix(in srgb, var(--era-cultura) 16%, transparent) inset; }
+body[data-era="ficcao"]     .barra { border-bottom-color: color-mix(in srgb, var(--era-ficcao) 28%, var(--cor-borda)); box-shadow: 0 1px 0 color-mix(in srgb, var(--era-ficcao) 16%, transparent) inset; }
+
 .barra-espaco { flex: 1; }
 
 .barra-perfil {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
+  gap: 7px;
+  padding: 5px 12px 5px 5px;
   border-radius: 999px;
-  border: 2px solid var(--cor-peca-borda);
-  background: var(--cor-peca);
+  border: 1px solid var(--cor-borda);
+  background: rgba(255, 255, 255, 0.03);
   color: var(--cor-texto);
   font: inherit;
   font-size: 13px;
   max-width: 40vw;
+  cursor: pointer;
+}
+.barra-avatar { --orbe-tam: 22px; }
+.barra-perfil-nome {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  cursor: pointer;
 }
 
+/* botão vira círculo discreto — ícone já reconhecível, rótulo some visualmente
+   (fica acessível pra leitor de tela, não precisa mais só esconder <520px) */
 .barra-botao {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 50%;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 6px 10px;
-  border-radius: 8px;
+  justify-content: center;
   border: 1px solid var(--cor-borda);
-  background: transparent;
+  background: rgba(255, 255, 255, 0.03);
   color: var(--cor-texto);
-  font: inherit;
-  font-size: 13px;
+  font-size: 15px;
   cursor: pointer;
+  transition: border-color 120ms ease, background 120ms ease;
 }
-.barra-botao:hover { background: var(--cor-peca); }
+.barra-botao:hover, .barra-botao:active { background: rgba(255, 255, 255, 0.08); }
+.barra-botao span {
+  position: absolute;
+  width: 1px; height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
 
 /* indicador de rede: dot + texto, agora inline na barra */
 .rede-status {
@@ -113,8 +137,4 @@
   background: var(--cor-peca);
   color: var(--cor-texto);
   cursor: pointer;
-}
-
-@media (max-width: 520px) {
-  .barra-botao span { display: none; } /* só o ícone no estreito */
 }

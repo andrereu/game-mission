@@ -40,8 +40,7 @@ test('busca filtra sem acento e sem caixa', () => {
 test('chip de era filtra', () => {
   const { cat, store, raiz } = ambiente();
   montarDrawer({ raiz, store, catalogo: cat, aoEscolherItem() {} });
-  const chipVida = [...raiz.querySelectorAll('.drawer-chip')]
-    .find((c) => c.textContent === 'Vida');
+  const chipVida = raiz.querySelector('.drawer-chip[data-era="vida"]');
   chipVida.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
   assert.equal(raiz.querySelectorAll('.drawer-card').length, 0);
 });
@@ -54,6 +53,23 @@ test('itens da IA aparecem sempre por último, mesmo descobertos antes e de era 
   montarDrawer({ raiz, store, catalogo: cat, aoEscolherItem() {} });
   const nomes = [...raiz.querySelectorAll('.drawer-card .card-nome')].map((n) => n.textContent);
   assert.deepEqual(nomes, ['Água', 'Fogo', 'Vapor', 'Coisa da IA']);
+});
+
+test('chip "Todos" limpa os filtros de era ativos', () => {
+  const { cat, store, raiz } = ambiente();
+  montarDrawer({ raiz, store, catalogo: cat, aoEscolherItem() {} });
+  const chipVida = raiz.querySelector('.drawer-chip[data-era="vida"]');
+  chipVida.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+  assert.equal(raiz.querySelectorAll('.drawer-card').length, 0);
+  assert.equal(chipVida.getAttribute('aria-pressed'), 'true');
+
+  const chipTodos = [...raiz.querySelectorAll('.drawer-chip')]
+    .find((c) => !c.dataset.era);
+  assert.equal(chipTodos.getAttribute('aria-pressed'), 'false', 'Todos desativa quando há filtro de era');
+  chipTodos.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+  assert.equal(raiz.querySelectorAll('.drawer-card').length, 3, 'volta a mostrar tudo');
+  assert.equal(chipVida.getAttribute('aria-pressed'), 'false');
+  assert.equal(chipTodos.getAttribute('aria-pressed'), 'true');
 });
 
 test('clique no card chama aoEscolherItem', () => {

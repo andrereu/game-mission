@@ -80,7 +80,7 @@ test('nó de item inventado pela IA leva o marcador de fonte', () => {
   assert.equal(no(raiz, 'gelo').dataset.fonte, 'ia');
 });
 
-test('clicar num nó realça pais e filhos diretos e mostra o texto do combo', () => {
+test('clicar num nó dá destaque a ele, marca pais/filhos e esmaece o resto', () => {
   const raiz = raizLimpa();
   const save = saveCom({
     agua: { em: 1, via: null, fonte: 'base' },
@@ -93,11 +93,44 @@ test('clicar num nó realça pais e filhos diretos e mostra o texto do combo', (
   arv.abrir();
   no(raiz, 'vapor').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
   assert.ok(no(raiz, 'vapor').classList.contains('destaque'), 'o próprio nó');
-  assert.ok(no(raiz, 'agua').classList.contains('destaque'), 'pai');
-  assert.ok(no(raiz, 'fogo').classList.contains('destaque'), 'pai');
-  assert.ok(no(raiz, 'nuvem').classList.contains('destaque'), 'filho');
-  assert.ok(no(raiz, 'ar').classList.contains('esmaecido'), 'fora da relação');
+  assert.ok(no(raiz, 'agua').classList.contains('pai'), 'pai não é mais "destaque", é "pai"');
+  assert.ok(no(raiz, 'fogo').classList.contains('pai'));
+  assert.ok(no(raiz, 'nuvem').classList.contains('filho'));
+  assert.ok(no(raiz, 'ar').classList.contains('esmaecido'), 'fora da relação, mas continua no DOM (não "morto")');
   assert.match(raiz.querySelector('.arvore-legenda').textContent, /vapor/i);
+  assert.match(raiz.querySelector('.arvore-legenda').textContent, /água \+ fogo/i);
+  assert.match(raiz.querySelector('.arvore-legenda').textContent, /nuvem/i);
+});
+
+test('sem foco, nenhuma aresta aparece; focando, só as diretas ficam visíveis', () => {
+  const raiz = raizLimpa();
+  const save = saveCom({
+    agua: { em: 1, via: null, fonte: 'base' },
+    fogo: { em: 1, via: null, fonte: 'base' },
+    ar: { em: 1, via: null, fonte: 'base' },
+    vapor: { em: 2, via: ['agua', 'fogo'], fonte: 'local' },
+    nuvem: { em: 3, via: ['ar', 'vapor'], fonte: 'local' },
+  });
+  const arv = montarArvore({ raiz, store: storeFake(save), catalogo: criarCatalogo(), T });
+  arv.abrir();
+
+  // 4 pares no total: agua>vapor, fogo>vapor, ar>nuvem, vapor>nuvem
+  const arestas = () => [...raiz.querySelectorAll('.arvore-aresta')];
+  assert.equal(arestas().length, 4);
+  assert.equal(arestas().filter((a) => a.classList.contains('ativa')).length, 0, 'nenhuma visível sem foco');
+
+  // foco em vapor: 2 pais (agua, fogo) + 1 filho (nuvem) = 3 arestas diretas
+  no(raiz, 'vapor').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+  const ativasVapor = arestas().filter((a) => a.classList.contains('ativa'));
+  assert.equal(ativasVapor.length, 3);
+  assert.equal(ativasVapor.filter((a) => a.classList.contains('aresta-pai')).length, 2, 'agua->vapor e fogo->vapor');
+  assert.equal(ativasVapor.filter((a) => a.classList.contains('aresta-filho')).length, 1, 'vapor->nuvem');
+
+  // foco em ar: só ar->nuvem (ar não tem pais; nuvem é o único filho direto)
+  no(raiz, 'ar').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+  const ativasAr = arestas().filter((a) => a.classList.contains('ativa'));
+  assert.equal(ativasAr.length, 1);
+  assert.ok(ativasAr[0].classList.contains('aresta-filho'));
 });
 
 test('clicar no fundo limpa o realce', () => {

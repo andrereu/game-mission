@@ -24,12 +24,15 @@
   <body>
     <main id="jogo">
       <div id="barra" class="barra">
-        <button id="perfil" class="barra-perfil" type="button"></button>
+        <button id="perfil" class="barra-perfil" type="button">
+          <span class="barra-avatar orbe"></span>
+          <span class="barra-perfil-nome"></span>
+        </button>
         <span id="rede" class="rede-status" data-online="sim"></span>
         <span class="barra-espaco"></span>
-        <button id="arvore" class="barra-botao" type="button">🌳 <span>Árvore</span></button>
-        <button id="eras" class="barra-botao" type="button">🎴 <span>Álbum</span></button>
-        <button id="ajustes" class="barra-botao" type="button" aria-label="Ajustes">⚙️</button>
+        <button id="arvore" class="barra-botao" type="button" aria-label="Árvore">🌳<span>Árvore</span></button>
+        <button id="eras" class="barra-botao" type="button" aria-label="Álbum">🎴<span>Álbum</span></button>
+        <button id="ajustes" class="barra-botao" type="button" aria-label="Ajustes">⚙️<span>Ajustes</span></button>
       </div>
       <section id="canvas" class="canvas"></section>
       <button id="limpar" class="botao-limpar" type="button" aria-label="Limpar canvas">🗑️</button>

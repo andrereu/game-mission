@@ -69,7 +69,24 @@
   overflow: visible;
   pointer-events: none;
 }
-.arvore-aresta { stroke: var(--cor-peca-borda); stroke-width: 2; opacity: 0.6; }
+/* nenhuma conexão aparece por padrão — só quando o pai ou o filho dela vira
+   o foco (ver realcar() em arvore.js). Pai e filho se diferenciam por mais
+   que a cor: traço contínuo x tracejado, e a seta sempre aponta o sentido
+   real da combinação (pai → foco, foco → filho). */
+.arvore-aresta { stroke-width: 2; opacity: 0; display: none; }
+.arvore-aresta.ativa { display: inline; opacity: 0.95; }
+.arvore-aresta.aresta-pai {
+  stroke: var(--era-cultura);
+  stroke-dasharray: 5 4;
+  marker-end: url(#arvore-seta-pai);
+}
+.arvore-aresta.aresta-filho {
+  stroke: var(--era-elementos);
+  stroke-dasharray: none;
+  marker-end: url(#arvore-seta-filho);
+}
+.arvore-seta-pai-forma { fill: var(--era-cultura); }
+.arvore-seta-filho-forma { fill: var(--era-elementos); }
 .arvore-nos { position: absolute; inset: 0; }
 
 /* nó virou wrapper: a .orbe-arvore carrega cor de era, seleção e estado de segurar */
@@ -110,12 +127,28 @@ img.arvore-no-icone { width: 22px; height: 22px; }
   color: var(--era-cultura);
 }
 
-.arvore-no.esmaecido { opacity: 0.3; }
-/* nó selecionado: o único que ganha destaque de verdade — os demais ficam quietos */
+/* sem foco: item não-relacionado fica secundário, mas continua parte do
+   universo visível — nunca "morto" (opacidade moderada, sem dessaturar) */
+.arvore-no.esmaecido { opacity: 0.55; }
+/* nó selecionado: o único com destaque forte — os demais ficam quietos */
 .arvore-no.destaque .orbe-arvore {
   box-shadow:
     0 0 0 2px var(--cor-texto),
     0 0 14px 3px color-mix(in srgb, var(--cor-orbe) 55%, transparent),
+    inset 0 0 6px rgba(0, 0, 0, 0.35);
+}
+/* origem (pai) e derivação (filho) do foco — mesmas cores das setas/traços
+   das arestas, pra reforçar a relação também no nó */
+.arvore-no.pai .orbe-arvore {
+  box-shadow:
+    0 0 0 2px var(--era-cultura),
+    0 0 8px 2px color-mix(in srgb, var(--era-cultura) 45%, transparent),
+    inset 0 0 6px rgba(0, 0, 0, 0.35);
+}
+.arvore-no.filho .orbe-arvore {
+  box-shadow:
+    0 0 0 2px var(--era-elementos),
+    0 0 8px 2px color-mix(in srgb, var(--era-elementos) 45%, transparent),
     inset 0 0 6px rgba(0, 0, 0, 0.35);
 }
 .arvore-no.segurando .orbe-arvore {
@@ -132,7 +165,12 @@ img.arvore-no-icone { width: 22px; height: 22px; }
   font-size: 13px;
   min-height: 1.4em;
   opacity: 0.9;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
+.arvore-legenda-nome { font-weight: 700; }
+.arvore-legenda-linha { font-size: 12px; opacity: 0.85; }
 
 @media (prefers-reduced-motion: reduce) {
   .arvore-no, .orbe-arvore { transition: none; }

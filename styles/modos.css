@@ -19,7 +19,11 @@ body[data-modo="pequenos"] .drawer-grade {
   gap: 12px;
 }
 body[data-modo="pequenos"] .drawer-card { padding: 14px 10px; }
-body[data-modo="pequenos"] .drawer-card .card-icone { font-size: 34px; }
+/* a orbe da gaveta (rodada anterior) tinha tamanho fixo de 40px — grande
+   o bastante pro emoji "normal", mas pequeno demais pro emoji ampliado dos
+   Pequenos, que estourava a bolha. Corrige só isso, sem tocar no resto. */
+body[data-modo="pequenos"] .orbe-gaveta { --orbe-tam: 64px; }
+body[data-modo="pequenos"] .orbe-gaveta .card-icone { font-size: 30px; }
 body[data-modo="pequenos"] .drawer-card .card-nome { font-size: 14px; }
 
 /* quique mais suave (menos "erro" na cara) */

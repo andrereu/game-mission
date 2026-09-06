@@ -70,9 +70,12 @@ export function montarDrawer({ raiz, store, catalogo, aoEscolherItem, aoSoltarIt
   }
 
   raiz.innerHTML = `
+    <div class="drawer-cabecalho">
+      <span class="drawer-titulo">${T.inventarioTitulo}</span>
+      <span class="drawer-contador"></span>
+    </div>
     <input class="drawer-busca" type="search" placeholder="${T.buscar}" />
-    <div class="drawer-chips"></div>
-    <div class="drawer-contador"></div>
+    <div class="drawer-chips-scroll"><div class="drawer-chips"></div></div>
     <div class="drawer-grade"></div>`;
 
   const elBusca = raiz.querySelector('.drawer-busca');
@@ -81,12 +84,32 @@ export function montarDrawer({ raiz, store, catalogo, aoEscolherItem, aoSoltarIt
   const elGrade = raiz.querySelector('.drawer-grade');
 
   const erasAtivas = new Set();
+  const chipsPorEra = new Map();
+
+  // "Todos" limpa os filtros de era — junto com os chips de era, agora numa
+  // fita com scroll horizontal (não dependem mais de caber numa linha só)
+  const chipTodos = document.createElement('button');
+  chipTodos.type = 'button';
+  chipTodos.className = 'drawer-chip';
+  chipTodos.textContent = T.chipTodos;
+  chipTodos.setAttribute('aria-pressed', 'true');
+  chipTodos.addEventListener('click', () => {
+    erasAtivas.clear();
+    for (const chip of chipsPorEra.values()) chip.setAttribute('aria-pressed', 'false');
+    atualizarChipTodos();
+    render();
+  });
+  elChips.appendChild(chipTodos);
+
+  function atualizarChipTodos() {
+    chipTodos.setAttribute('aria-pressed', String(erasAtivas.size === 0));
+  }
 
   for (const era of ERAS) {
     const chip = document.createElement('button');
     chip.type = 'button';
     chip.className = 'drawer-chip';
-    chip.textContent = T.eras[era];
+    chip.textContent = `${T.erasIcone[era] || ''} ${T.eras[era]}`;
     chip.dataset.era = era;
     chip.setAttribute('aria-pressed', 'false');
     chip.addEventListener('click', () => {
@@ -97,9 +120,11 @@ export function montarDrawer({ raiz, store, catalogo, aoEscolherItem, aoSoltarIt
         erasAtivas.add(era);
         chip.setAttribute('aria-pressed', 'true');
       }
+      atualizarChipTodos();
       render();
     });
     elChips.appendChild(chip);
+    chipsPorEra.set(era, chip);
   }
 
   elBusca.addEventListener('input', render);

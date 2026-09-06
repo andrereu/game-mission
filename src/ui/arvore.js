@@ -1,9 +1,10 @@
 // src/ui/arvore.js
-// Tela cheia: o mapa do que já foi descoberto, em faixas horizontais por era
-// (a mais simples no topo). Nós = ids em save.descobertos. Arestas = de cada
-// pai em `via` para o filho. Tocar num nó realça pais/filhos; segurar manda
-// a peça pro canvas — a árvore virou uma segunda forma de pegar itens, além
-// da gaveta.
+// Mapa navegável do que já foi descoberto, em faixas horizontais por era (a
+// mais simples no topo). Nenhuma conexão aparece por padrão — com o catálogo
+// crescendo, mostrar todas as arestas sempre virava uma teia ilegível. Tocar
+// num nó foca nele e revela só as relações diretas (pais/filhos); o resto do
+// mapa continua visível, só secundário. Segurar manda a peça pro canvas — a
+// árvore é uma segunda forma de pegar itens, além da gaveta.
 import { ligarPanZoom } from './panzoom.js';
 import { ERAS } from '../engine/catalogo.js';
 
@@ -15,6 +16,7 @@ const NO_ALT = 60; // altura nominal do nó, p/ ancorar arestas
 const ZOOM_MIN = 0.3;
 const ZOOM_MAX = 2;
 const SEGURAR_MS = 450; // tempo de toque-e-segure pra mandar a peça pro canvas
+const CENTRALIZAR_MARGEM = 0.18; // % do palco: fora disso, centraliza suave no foco
 
 function icone(item) {
   if (item && item.svg) return `<img class="arvore-no-icone" src="${item.svg}" alt="" />`;
@@ -59,13 +61,16 @@ export function montarArvore({
 }) {
   let overlay = null;
   let selecionado = null;
+  let centralizarTimer = null;
   const posicoes = new Map(); // id -> { x, y } no espaço do mundo
   const elos = new Map(); // id -> elemento .arvore-no
+  const arestas = new Map(); // "pai>filho" -> elemento <line>
   const vista = { x: 0, y: 0, escala: 1 };
 
   function fechar() {
     if (!overlay) return;
     document.removeEventListener('keydown', aoTeclar);
+    clearTimeout(centralizarTimer);
     overlay.remove();
     overlay = null;
     selecionado = null;
@@ -89,30 +94,78 @@ export function montarArvore({
 
   function limparRealce() {
     selecionado = null;
-    for (const el of elos.values()) el.classList.remove('destaque', 'esmaecido');
+    for (const el of elos.values()) el.classList.remove('destaque', 'pai', 'filho', 'esmaecido');
+    for (const linha of arestas.values()) {
+      linha.classList.remove('ativa', 'aresta-pai', 'aresta-filho');
+    }
     const legenda = overlay.querySelector('.arvore-legenda');
     legenda.textContent = T.arvoreDica;
+  }
+
+  // centraliza suavemente o nó focado só quando ele está perto da borda do
+  // palco — evita um "salto" toda vez que já está bem visível
+  function centralizarSeNecessario(id) {
+    const pos = posicoes.get(id);
+    if (!pos) return;
+    const palco = overlay.querySelector('.arvore-palco');
+    const rect = palco.getBoundingClientRect();
+    const telaX = pos.x * vista.escala + vista.x;
+    const telaY = pos.y * vista.escala + vista.y;
+    const margemX = rect.width * CENTRALIZAR_MARGEM;
+    const margemY = rect.height * CENTRALIZAR_MARGEM;
+    const dentro = telaX > margemX && telaX < rect.width - margemX
+      && telaY > margemY && telaY < rect.height - margemY;
+    if (dentro) return;
+    const mundo = overlay.querySelector('.arvore-mundo');
+    vista.x = rect.width / 2 - (pos.x + NO_MEIA_LARG) * vista.escala;
+    vista.y = rect.height / 2 - (pos.y + NO_ALT / 2) * vista.escala;
+    mundo.style.transition = 'transform 240ms ease';
+    aplicarVista();
+    clearTimeout(centralizarTimer);
+    centralizarTimer = setTimeout(() => { mundo.style.transition = ''; }, 260);
   }
 
   function realcar(id) {
     const descobertos = store.getSave().descobertos;
     selecionado = id;
-    const relacionados = new Set([
-      id,
-      ...paisDescobertos(id, descobertos),
-      ...filhosDe(id, descobertos),
-    ]);
-    for (const [outro, el] of elos) {
-      const dentro = relacionados.has(outro);
-      el.classList.toggle('destaque', dentro);
-      el.classList.toggle('esmaecido', !dentro);
-    }
-    const item = catalogo.getItem(id);
     const pais = paisDescobertos(id, descobertos);
-    const combo = pais.length === 2 ? catalogo.findCombo(pais[0], pais[1]) : null;
-    const legenda = overlay.querySelector('.arvore-legenda');
+    const filhos = filhosDe(id, descobertos);
+    const paisSet = new Set(pais);
+    const filhosSet = new Set(filhos);
+
+    for (const [outro, el] of elos) {
+      el.classList.remove('destaque', 'pai', 'filho', 'esmaecido');
+      if (outro === id) el.classList.add('destaque');
+      else if (paisSet.has(outro)) el.classList.add('pai');
+      else if (filhosSet.has(outro)) el.classList.add('filho');
+      else el.classList.add('esmaecido');
+    }
+    // arestas só aparecem pras relações diretas do foco — pai e filho também
+    // se diferenciam por seta/traço, não só pela cor
+    for (const [chave, linha] of arestas) {
+      const [de, para] = chave.split('>');
+      const éPaiDoFoco = para === id;
+      const éFilhoDoFoco = de === id;
+      linha.classList.toggle('ativa', éPaiDoFoco || éFilhoDoFoco);
+      linha.classList.toggle('aresta-pai', éPaiDoFoco);
+      linha.classList.toggle('aresta-filho', éFilhoDoFoco);
+    }
+
+    const item = catalogo.getItem(id);
     const nome = item ? item.nome : id;
-    legenda.textContent = combo && combo.texto ? `${nome}: ${combo.texto}` : nome;
+    const nomesPais = pais.length
+      ? pais.map((p) => (catalogo.getItem(p) ? catalogo.getItem(p).nome : p)).join(' + ')
+      : '—';
+    const nomesFilhos = filhos.length
+      ? filhos.map((f) => (catalogo.getItem(f) ? catalogo.getItem(f).nome : f)).join(', ')
+      : T.arvoreNadaAinda;
+    const legenda = overlay.querySelector('.arvore-legenda');
+    legenda.innerHTML = `
+      <span class="arvore-legenda-nome">${item ? icone(item) : ''} ${nome}</span>
+      <span class="arvore-legenda-linha">${T.arvoreVeioDe(nomesPais)}</span>
+      <span class="arvore-legenda-linha">${T.arvoreJaCriei(nomesFilhos)}</span>`;
+
+    centralizarSeNecessario(id);
   }
 
   // toque curto = realça pais/filhos (como sempre); segurar = manda a peça
@@ -129,6 +182,9 @@ export function montarArvore({
 
     el.addEventListener('pointerdown', (ev) => {
       if (ev.button != null && ev.button !== 0) return;
+      // sem isso, focar o <button> pode fazer o navegador rolar sozinho o
+      // palco (overflow:hidden) pra revelar o nó — some com o pan de verdade
+      ev.preventDefault();
       segurou = false;
       clearTimeout(timer);
       timer = setTimeout(() => {
@@ -153,6 +209,16 @@ export function montarArvore({
   }
 
   function aplicarVista() {
+    const palco = overlay.querySelector('.arvore-palco');
+    // o palco é overflow:hidden; um <button> focado (ao tocar num nó) pode
+    // levar o navegador a rolar esse contêiner sozinho pra revelar o foco —
+    // um scroll nativo que se soma por cima do nosso próprio pan via
+    // transform. Zeramos aqui porque a "câmera" é só o `vista`, nunca o
+    // scroll nativo.
+    if (palco.scrollLeft || palco.scrollTop) {
+      palco.scrollLeft = 0;
+      palco.scrollTop = 0;
+    }
     const mundo = overlay.querySelector('.arvore-mundo');
     mundo.style.transform =
       `translate(${vista.x}px, ${vista.y}px) scale(${vista.escala})`;
@@ -224,11 +290,15 @@ export function montarArvore({
 
     const nos = overlay.querySelector('.arvore-nos');
     const svg = overlay.querySelector('.arvore-arestas');
-    nos.innerHTML = '';
+    const defs = svg.querySelector('defs');
     svg.innerHTML = '';
+    if (defs) svg.appendChild(defs); // preserva os <marker> das setas
+    nos.innerHTML = '';
     elos.clear();
+    arestas.clear();
 
-    // arestas primeiro (ficam atrás dos nós)
+    // arestas primeiro (ficam atrás dos nós). Nenhuma aparece por padrão —
+    // só quando o pai ou o filho dela vira o foco (ver realcar()).
     for (const id of Object.keys(descobertos)) {
       const alvo = posicoes.get(id);
       for (const pai of paisDescobertos(id, descobertos)) {
@@ -241,6 +311,7 @@ export function montarArvore({
         linha.setAttribute('y2', String(alvo.y));
         linha.setAttribute('class', 'arvore-aresta');
         svg.appendChild(linha);
+        arestas.set(`${pai}>${id}`, linha);
       }
     }
 
@@ -284,7 +355,16 @@ export function montarArvore({
       <div class="arvore-palco">
         <div class="arvore-mundo">
           <div class="arvore-faixas"></div>
-          <svg class="arvore-arestas" xmlns="http://www.w3.org/2000/svg"></svg>
+          <svg class="arvore-arestas" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="arvore-seta-pai" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M0,0 L8,4 L0,8 Z" class="arvore-seta-pai-forma" />
+              </marker>
+              <marker id="arvore-seta-filho" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M0,0 L8,4 L0,8 Z" class="arvore-seta-filho-forma" />
+              </marker>
+            </defs>
+          </svg>
           <div class="arvore-nos"></div>
         </div>
       </div>
