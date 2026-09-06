@@ -1,8 +1,8 @@
-// Camada de IA. Nesta fase o app usa SEMPRE `stubDesligado`.
-// `criarProviderEndpoint` fica pronto e documentado para a fase 2,
-// quando existir um endpoint /api/combinar com guard-rails
-// (prompt family-friendly fixo, lista de bloqueio, resposta pt_BR,
-// timeout, fallback "nada aconteceu").
+// Camada de IA do cliente. O app usa `criarProviderEndpoint('/api/combinar')`;
+// a função serverless (api/combinar.js) tem os guard-rails (prompt fixo
+// family-friendly, lista de bloqueio, pt_BR, timeout) e devolve corpo vazio
+// quando não há sugestão — que aqui vira `null` = "nada aconteceu".
+// `stubDesligado` fica para testes.
 
 export const stubDesligado = {
   async sugerirCombo() {

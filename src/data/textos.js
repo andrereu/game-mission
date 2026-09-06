@@ -14,6 +14,9 @@ export const T = {
   perfilApagar: 'Apagar perfil',
   perfilConfirmarApagar: (nome) => `Apagar o perfil "${nome}" e tudo que ele descobriu?`,
   trocarPerfil: 'Trocar',
+  ajustesTitulo: 'Ajustes',
+  ajusteSom: 'Som',
+  ajusteIA: 'IA: sugerir combinações novas',
   contador: (descobertos, total) => `${descobertos} / ${total} descobertos`,
   eras: {
     elementos: 'Elementos',

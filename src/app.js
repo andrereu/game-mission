@@ -3,11 +3,12 @@ import { criarCatalogo } from './engine/catalogo.js';
 import { carregar, criarAgendadorSalvar, saveInicial } from './engine/storage.js';
 import { criarStore } from './engine/state.js';
 import { criarCombinador } from './engine/combinar.js';
-import { stubDesligado } from './ai/provider.js';
+import { criarProviderEndpoint } from './ai/provider.js';
 import { montarCanvas } from './ui/canvas.js';
 import { montarDrawer } from './ui/drawer.js';
 import { mostrarDescoberta } from './ui/descoberta.js';
 import { montarArvore } from './ui/arvore.js';
+import { montarAjustes } from './ui/ajustes.js';
 import {
   carregarPerfis, criarPerfil, apagarPerfil, definirAtivo, chaveSave,
 } from './engine/perfis.js';
@@ -46,11 +47,11 @@ async function iniciar() {
   const agendarSalvar = criarAgendadorSalvar(() => store.getSave(), 400, chaveDoSave);
   store.on('estado:mudou', agendarSalvar);
 
-  // Fase 1: provider é o stub. O gate segue o ajuste + rede (spec §5.2/§9);
-  // como iaLigada nasce false, a IA continua desligada.
+  // A IA só é tentada quando o perfil ligou `iaLigada` E há rede (spec §5.2/§9).
+  // Nasce desligada; o painel de ajustes liga.
   const combinar = criarCombinador({
     catalogo,
-    aiProvider: stubDesligado,
+    aiProvider: criarProviderEndpoint('/api/combinar'),
     estaOnline: () => store.getSave().ajustes.iaLigada === true && navigator.onLine,
   });
 
@@ -58,6 +59,7 @@ async function iniciar() {
   const elDrawer = document.getElementById('drawer');
   const elLimpar = document.getElementById('limpar');
   const elArvore = document.getElementById('arvore');
+  const elAjustes = document.getElementById('ajustes');
 
   let drawer;
 
@@ -112,6 +114,14 @@ async function iniciar() {
   });
   elArvore.textContent = T.abrirArvore;
   elArvore.addEventListener('click', () => arvore.abrir());
+
+  const ajustes = montarAjustes({
+    raiz: document.getElementById('ajustes-raiz'),
+    T,
+    get: (chave) => store.getSave().ajustes[chave],
+    set: (chave, valor) => store.setAjuste(chave, valor),
+  });
+  elAjustes.addEventListener('click', () => ajustes.abrir());
 
   // botão de trocar de perfil, com nome e cor do perfil ativo
   const elPerfil = document.getElementById('perfil');
