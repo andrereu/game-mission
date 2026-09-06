@@ -7,16 +7,59 @@ const CONFIG_LINHA = {
 
 export function montarAjustes({ raiz, T, get, set, sync }) {
   let overlay = null;
+  let aoTelaCheiaMudar = null;
 
   function fechar() {
     if (!overlay) return;
     document.removeEventListener('keydown', aoTeclar);
+    if (aoTelaCheiaMudar) {
+      document.removeEventListener('fullscreenchange', aoTelaCheiaMudar);
+      aoTelaCheiaMudar = null;
+    }
     overlay.remove();
     overlay = null;
   }
 
   function aoTeclar(ev) {
     if (ev.key === 'Escape') fechar();
+  }
+
+  // Não é uma preferência persistida (não passa por get/set): só reflete o
+  // estado real da Fullscreen API, ativado por um toque/clique da pessoa —
+  // nunca sozinho ao abrir os Ajustes. Some da lista quando a API não existe.
+  function linhaTelaCheia() {
+    if (!document.fullscreenEnabled) return null;
+    const l = document.createElement('div');
+    l.className = 'ajuste-linha';
+    l.innerHTML = `
+      <span class="ajuste-icone">⛶</span>
+      <div class="ajuste-texto">
+        <span class="ajuste-titulo"></span>
+        <span class="ajuste-desc"></span>
+      </div>
+      <label class="ajuste-switch">
+        <input type="checkbox" data-chave="telaCheia" />
+        <span class="ajuste-switch-trilho" aria-hidden="true"></span>
+      </label>`;
+    l.querySelector('.ajuste-titulo').textContent = T.ajusteTelaCheia;
+    l.querySelector('.ajuste-desc').textContent = T.ajusteTelaCheiaDesc;
+    const inp = l.querySelector('input');
+    aoTelaCheiaMudar = () => { inp.checked = Boolean(document.fullscreenElement); };
+    aoTelaCheiaMudar();
+    document.addEventListener('fullscreenchange', aoTelaCheiaMudar);
+    inp.addEventListener('change', () => {
+      try {
+        if (inp.checked) {
+          Promise.resolve(document.documentElement.requestFullscreen())
+            .catch(() => { inp.checked = false; });
+        } else {
+          Promise.resolve(document.exitFullscreen()).catch(() => {});
+        }
+      } catch {
+        inp.checked = Boolean(document.fullscreenElement);
+      }
+    });
+    return l;
   }
 
   function linha(chave, rotulo, descricao) {
@@ -109,6 +152,8 @@ export function montarAjustes({ raiz, T, get, set, sync }) {
     const lista = overlay.querySelector('.ajustes-lista');
     lista.appendChild(linha('som', T.ajusteSom, T.ajusteSomDesc));
     lista.appendChild(linha('iaLigada', T.ajusteIA, T.ajusteIADesc));
+    const linhaFS = linhaTelaCheia();
+    if (linhaFS) lista.appendChild(linhaFS);
     overlay.querySelector('.ajustes-fechar').addEventListener('click', fechar);
     overlay.addEventListener('click', (ev) => { if (ev.target === overlay) fechar(); });
     document.addEventListener('keydown', aoTeclar);

@@ -32,14 +32,17 @@ body[data-era="ficcao"]     .barra { border-bottom-color: color-mix(in srgb, var
 
 /* marca discreta na barra — só cabe sem apertar os botões em telas largas;
    nunca disputa espaço com perfil/rede/ações (position: absolute, sem
-   pointer-events, escondida em telas estreitas por padrão). */
+   pointer-events, escondida em telas estreitas por padrão). Usa o recorte
+   "logo-header" (sem a margem transparente do arquivo-mestre) pra que
+   "Misturária" fique de fato legível num selo pequeno, não só um ponto
+   colorido. */
 .barra-logo {
   display: none;
   position: absolute;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  height: 30px;
+  height: 34px;
   width: auto;
   opacity: 0.95;
   pointer-events: none;
@@ -49,6 +52,32 @@ body[data-era="ficcao"]     .barra { border-bottom-color: color-mix(in srgb, var
    espaço com perfil/rede/botões (a marca não precisa dominar o gameplay) */
 @media (min-width: 900px) {
   .barra-logo { display: block; }
+}
+
+/* PWA instalada no desktop com a barra de título sobreposta
+   (window-controls-overlay): a própria barra do jogo vira a titlebar, só
+   respeitando o retângulo seguro (titlebar-area-*) que o Chrome/Edge já
+   calcula sem sobrepor os botões de minimizar/maximizar/fechar. Fallback
+   perfeito pro "standalone" comum: esta regra só existe dentro do media
+   query, então sem WCO nada muda. */
+@media (display-mode: window-controls-overlay) {
+  #jogo { padding-top: env(titlebar-area-height, 48px); }
+  .barra {
+    left: env(titlebar-area-x, 0);
+    top: env(titlebar-area-y, 0);
+    width: env(titlebar-area-width, 100%);
+    height: env(titlebar-area-height, 48px);
+    right: auto;
+    padding-top: 0;
+    app-region: drag;
+    -webkit-app-region: drag;
+  }
+  /* controles clicáveis não podem virar "puxador" da janela */
+  .barra-perfil,
+  .barra-botao {
+    app-region: no-drag;
+    -webkit-app-region: no-drag;
+  }
 }
 
 .barra-perfil {

@@ -57,6 +57,8 @@ export const T = {
   ajusteSomDesc: 'Efeitos sonoros de descoberta e das telas do jogo.',
   ajusteIA: 'Criar combinações novas com IA',
   ajusteIADesc: 'Quando uma mistura não existe no catálogo, a IA é consultada pra inventar um resultado novo.',
+  ajusteTelaCheia: 'Tela cheia',
+  ajusteTelaCheiaDesc: 'Jogue usando toda a tela.',
   online: 'online',
   offline: 'offline',
   syncTitulo: 'Sincronizar entre aparelhos',

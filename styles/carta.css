@@ -77,8 +77,8 @@
 .carta.raridade-lendario::before { opacity: 1; }
 .carta > * { position: relative; z-index: 1; }
 
-.carta-topo { display: flex; align-items: center; justify-content: center; margin-bottom: 2px; }
-.carta-logo { height: 40px; opacity: 0.97; }
+.carta-topo { display: flex; align-items: center; justify-content: center; margin-bottom: 0; }
+.carta-logo { height: 48px; opacity: 0.97; }
 
 .selo-raridade {
   position: absolute;
@@ -96,7 +96,7 @@
   box-shadow: 0 0 10px 1px color-mix(in srgb, var(--cor-raro) 60%, transparent);
 }
 
-.carta-orbe-area { display: flex; align-items: center; justify-content: center; padding: 14px 0 18px; position: relative; }
+.carta-orbe-area { display: flex; align-items: center; justify-content: center; padding: 10px 0 14px; position: relative; }
 .anel-orbita {
   position: absolute;
   width: 180px;
@@ -156,8 +156,8 @@ img.carta-orbe-icone { width: 64%; height: 64%; object-fit: contain; filter: dro
 }
 .carta-bloco b { display: block; font-size: 10px; letter-spacing: 0.07em; text-transform: uppercase; color: #8fa3d6; margin-bottom: 3px; font-weight: 700; }
 
-.carta-rodape { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 14px; }
-.carta-mascote { width: 34px; opacity: 0.95; }
+.carta-rodape { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 12px; }
+.carta-mascote { width: 44px; opacity: 0.95; }
 .carta-botoes { display: flex; gap: 8px; }
 .carta-btn {
   font: inherit;

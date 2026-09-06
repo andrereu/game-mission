@@ -130,3 +130,74 @@ test('digitar um código e clicar em Usar chama sync.usar', async () => {
   await tick();
   assert.equal(usado, 'meu-codigo');
 });
+
+async function comFullscreenApi(disponivel, corpo) {
+  const antesEnabled = document.fullscreenEnabled;
+  const antesRequest = document.documentElement.requestFullscreen;
+  const antesExit = document.exitFullscreen;
+  const antesElemento = document.fullscreenElement;
+  document.fullscreenEnabled = disponivel;
+  if (disponivel) {
+    document.documentElement.requestFullscreen = () => {
+      document.fullscreenElement = document.documentElement;
+      document.dispatchEvent(new window.Event('fullscreenchange'));
+      return Promise.resolve();
+    };
+    document.exitFullscreen = () => {
+      document.fullscreenElement = null;
+      document.dispatchEvent(new window.Event('fullscreenchange'));
+      return Promise.resolve();
+    };
+  }
+  try {
+    // aguarda mesmo um corpo síncrono: sem isso o `finally` desfaria os mocks
+    // antes de um corpo assíncrono terminar de usá-los.
+    return await corpo();
+  } finally {
+    document.fullscreenEnabled = antesEnabled;
+    document.documentElement.requestFullscreen = antesRequest;
+    document.exitFullscreen = antesExit;
+    document.fullscreenElement = antesElemento;
+  }
+}
+
+test('sem Fullscreen API: a opção "Tela cheia" nem aparece', () => {
+  comFullscreenApi(false, () => {
+    const { api, raiz } = ambiente({ som: true, iaLigada: false });
+    api.abrir();
+    assert.equal(raiz.querySelector('input[data-chave="telaCheia"]'), null);
+  });
+});
+
+test('com Fullscreen API: ligar "Tela cheia" entra em tela cheia; fullscreenchange mantém o switch em dia', async () => {
+  await comFullscreenApi(true, async () => {
+    const { api, raiz } = ambiente({ som: true, iaLigada: false });
+    api.abrir();
+    const inp = raiz.querySelector('input[data-chave="telaCheia"]');
+    assert.ok(inp, 'a opção aparece quando a API existe');
+    assert.equal(inp.checked, false);
+
+    inp.checked = true;
+    inp.dispatchEvent(new window.Event('change', { bubbles: true }));
+    await tick();
+    assert.equal(inp.checked, true, 'continua marcado depois de entrar em tela cheia');
+
+    // saída não iniciada pelo switch (ex.: Esc) também deve refletir no visual
+    document.exitFullscreen();
+    await tick();
+    assert.equal(inp.checked, false);
+  });
+});
+
+test('fechar os Ajustes remove o listener de fullscreenchange (sem vazar entre aberturas)', async () => {
+  await comFullscreenApi(true, async () => {
+    const { api, raiz } = ambiente({ som: true, iaLigada: false });
+    api.abrir();
+    api.fechar();
+    // dispara depois de fechado: não deve quebrar nem reabrir nada
+    document.fullscreenElement = document.documentElement;
+    document.dispatchEvent(new window.Event('fullscreenchange'));
+    await tick();
+    assert.equal(raiz.querySelector('.ajustes-overlay'), null);
+  });
+});

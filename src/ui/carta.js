@@ -8,7 +8,9 @@ const RARO_LABEL = {
   comum: 'Comum', raro: 'Raro', epico: 'Épico', lendario: 'Lendário',
 };
 
-const LOGO_SRC = 'assets/cartas/logo.png';
+// recorte sem a margem transparente do arquivo-mestre: dá mais presença
+// visual à marca sem esticar o cartão (mesmo ativo usado na barra superior).
+const LOGO_SRC = 'assets/cartas/logo-header.png';
 const MASCOTE_SRC = 'assets/cartas/mascote.png';
 
 function nomesDe(ids, catalogo) {
@@ -262,7 +264,7 @@ async function exportarImagemInterno(dados, status) {
 
     try {
       const logo = await carregarImagem(LOGO_SRC);
-      const lw = 300;
+      const lw = 360;
       const lh = lw * (logo.height / logo.width);
       ctx.drawImage(logo, W / 2 - lw / 2, 50, lw, lh);
     } catch { /* segue sem o logo se falhar em carregar */ }
@@ -367,7 +369,7 @@ async function exportarImagemInterno(dados, status) {
 
     try {
       const mascote = await carregarImagem(MASCOTE_SRC);
-      const mh = 84;
+      const mh = 104;
       const mw = mh * (mascote.width / mascote.height);
       ctx.drawImage(mascote, 56, H - mh - 46, mw, mh);
     } catch { /* segue sem o mascote se falhar em carregar */ }
