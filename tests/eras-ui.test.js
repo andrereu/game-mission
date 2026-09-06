@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { criarCatalogo, ERAS } from '../src/engine/catalogo.js';
 import { criarStore } from '../src/engine/state.js';
-import { montarLinhaDoTempo } from '../src/ui/eras.js';
+import { montarAlbum } from '../src/ui/eras.js';
 import { mostrarEraNova } from '../src/ui/era-nova.js';
 import { T } from '../src/data/textos.js';
 
@@ -11,7 +11,7 @@ function raizLimpa(id) {
   return document.getElementById(id);
 }
 
-test('linha do tempo mostra as 6 eras com progresso e marca as alcançadas', () => {
+test('álbum mostra uma seção por era, com figurinha por item curado', () => {
   const raiz = raizLimpa('eras-raiz');
   const cat = criarCatalogo();
   const store = criarStore({
@@ -20,25 +20,78 @@ test('linha do tempo mostra as 6 eras com progresso e marca as alcançadas', () 
     canvas: [],
     ajustes: {},
   });
-  const lt = montarLinhaDoTempo({ raiz, store, catalogo: cat, T });
-  lt.abrir();
+  const album = montarAlbum({ raiz, store, catalogo: cat, T });
+  album.abrir();
 
-  const linhas = raiz.querySelectorAll('.era-linha');
-  assert.equal(linhas.length, 6);
-  assert.deepEqual([...linhas].map((l) => l.dataset.era), ERAS);
+  const secoes = raiz.querySelectorAll('.album-era');
+  assert.equal(secoes.length, 6);
+  assert.deepEqual([...secoes].map((s) => s.dataset.era), ERAS);
 
-  const elem = raiz.querySelector('.era-linha[data-era="elementos"]');
-  assert.ok(elem.classList.contains('alcancada'));
+  const elem = raiz.querySelector('.album-era[data-era="elementos"]');
   assert.match(elem.textContent, /5\s*\/\s*\d+/); // 5 descobertos em elementos
 
-  const vida = raiz.querySelector('.era-linha[data-era="vida"]');
-  assert.ok(vida.classList.contains('alcancada'));
+  album.fechar();
+  assert.equal(raiz.querySelector('.album-overlay'), null);
+});
 
-  const nat = raiz.querySelector('.era-linha[data-era="natureza"]');
-  assert.ok(!nat.classList.contains('alcancada'));
+test('figurinha descoberta mostra o nome real; não descoberta vira "???"', () => {
+  const raiz = raizLimpa('eras-raiz');
+  const cat = criarCatalogo();
+  const store = criarStore({
+    versao: 1,
+    descobertos: { agua: {} },
+    canvas: [],
+    ajustes: {},
+  });
+  const album = montarAlbum({ raiz, store, catalogo: cat, T });
+  album.abrir();
 
-  lt.fechar();
-  assert.equal(raiz.querySelector('.eras-overlay'), null);
+  const aguaCard = [...raiz.querySelectorAll('.figurinha')]
+    .find((f) => f.textContent.includes('Água'));
+  assert.ok(aguaCard, 'figurinha da água descoberta aparece com o nome');
+  assert.ok(aguaCard.classList.contains('descoberta'));
+
+  const ocultas = raiz.querySelectorAll('.figurinha.oculta');
+  assert.ok(ocultas.length > 0, 'itens não descobertos viram figurinha oculta');
+  assert.ok([...ocultas].every((f) => f.textContent.includes('???')));
+});
+
+test('itens da IA não entram no álbum (não são conteúdo curado)', () => {
+  const raiz = raizLimpa('eras-raiz');
+  const cat = criarCatalogo();
+  const item = cat.registrarItemIA({ nome: 'Coisa da IA', emoji: '✨', era: 'elementos' });
+  const store = criarStore({
+    versao: 1,
+    descobertos: { agua: {}, [item.id]: {} },
+    canvas: [],
+    ajustes: {},
+  });
+  const album = montarAlbum({ raiz, store, catalogo: cat, T });
+  album.abrir();
+
+  assert.equal(raiz.querySelector(`.figurinha[data-id="${item.id}"]`), null);
+  assert.ok(![...raiz.querySelectorAll('.figurinha')].some((f) => f.textContent.includes('Coisa da IA')));
+});
+
+test('era 100% descoberta ganha o selo de completa', () => {
+  const raiz = raizLimpa('eras-raiz');
+  const cat = criarCatalogo();
+  const todosElementos = cat.allItems().filter((it) => it.era === 'elementos' && !it.ia);
+  const descobertos = {};
+  for (const it of todosElementos) descobertos[it.id] = {};
+  const store = criarStore({
+    versao: 1, descobertos, canvas: [], ajustes: {},
+  });
+  const album = montarAlbum({ raiz, store, catalogo: cat, T });
+  album.abrir();
+
+  const elem = raiz.querySelector('.album-era[data-era="elementos"]');
+  assert.ok(elem.classList.contains('completa'));
+  assert.ok(elem.querySelector('.album-selo'));
+
+  const outra = raiz.querySelector('.album-era[data-era="natureza"]');
+  assert.ok(!outra.classList.contains('completa'));
+  assert.equal(outra.querySelector('.album-selo'), null);
 });
 
 test('mostrarEraNova mostra o nome da era e fecha no clique', async () => {

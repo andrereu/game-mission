@@ -13,7 +13,7 @@ import { montarArvore } from './ui/arvore.js';
 import { montarAjustes } from './ui/ajustes.js';
 import { montarStatusRede } from './ui/rede.js';
 import { mostrarDesfazer } from './ui/desfazer.js';
-import { montarLinhaDoTempo } from './ui/eras.js';
+import { montarAlbum } from './ui/eras.js';
 import { mostrarEraNova } from './ui/era-nova.js';
 import { erasAlcancadas, eraMaisAvancada, progressoPorEra } from './engine/eras.js';
 import {
@@ -181,16 +181,20 @@ async function iniciar() {
     store,
     catalogo,
     T,
+    aoEnviarPraCanvas: (id) => {
+      const r = elCanvas.getBoundingClientRect();
+      canvas.soltarItem(id, r.width / 2, r.height / 2);
+    },
   });
   elArvore.addEventListener('click', () => arvore.abrir()); // rótulo já está no HTML
 
-  const linhaDoTempo = montarLinhaDoTempo({
+  const album = montarAlbum({
     raiz: document.getElementById('eras-raiz'),
     store,
     catalogo,
     T,
   });
-  document.getElementById('eras').addEventListener('click', () => linhaDoTempo.abrir());
+  document.getElementById('eras').addEventListener('click', () => album.abrir());
 
   const ajustes = montarAjustes({
     raiz: document.getElementById('ajustes-raiz'),

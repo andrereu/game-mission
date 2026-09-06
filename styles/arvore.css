@@ -34,6 +34,32 @@
   cursor: grab;
 }
 .arvore-mundo { position: absolute; inset: 0; transform-origin: 0 0; }
+.arvore-faixas { position: absolute; top: 0; left: 0; pointer-events: none; }
+.arvore-faixa {
+  position: absolute;
+  left: 0;
+  border-top: 1px dashed var(--cor-borda);
+  background: color-mix(in srgb, var(--cor-faixa, transparent) 6%, transparent);
+}
+.arvore-faixa-rotulo {
+  position: sticky;
+  left: 8px;
+  top: 4px;
+  display: inline-block;
+  margin: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  opacity: 0.7;
+  background: var(--cor-fundo);
+}
+.arvore-faixa[data-era="elementos"] { --cor-faixa: var(--era-elementos); }
+.arvore-faixa[data-era="natureza"] { --cor-faixa: var(--era-natureza); }
+.arvore-faixa[data-era="vida"] { --cor-faixa: var(--era-vida); }
+.arvore-faixa[data-era="tecnologia"] { --cor-faixa: var(--era-tecnologia); }
+.arvore-faixa[data-era="cultura"] { --cor-faixa: var(--era-cultura); }
+.arvore-faixa[data-era="ficcao"] { --cor-faixa: var(--era-ficcao); }
+
 .arvore-arestas {
   position: absolute;
   top: 0;
@@ -60,7 +86,7 @@
   color: var(--cor-texto);
   font: inherit;
   cursor: pointer;
-  transition: opacity 120ms ease, border-color 120ms ease;
+  transition: opacity 120ms ease, border-color 120ms ease, transform 120ms ease, box-shadow 120ms ease;
 }
 .arvore-no[data-era="elementos"] { border-color: var(--era-elementos); }
 .arvore-no[data-era="natureza"] { border-color: var(--era-natureza); }
@@ -81,6 +107,10 @@ img.arvore-no-icone { width: 24px; height: 24px; }
 }
 .arvore-no.esmaecido { opacity: 0.25; }
 .arvore-no.destaque { opacity: 1; box-shadow: 0 0 0 2px var(--cor-texto); }
+.arvore-no.segurando {
+  transform: scale(1.15);
+  box-shadow: 0 0 0 3px var(--era-cultura);
+}
 
 .arvore-legenda {
   margin: 0;

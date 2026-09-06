@@ -87,8 +87,8 @@ body[data-era="ficcao"]   { --ceu-1: #2e2b46; --ceu-2: #331e33; --ceu-brilho: rg
   cursor: pointer;
 }
 
-/* ---- linha do tempo ---- */
-.eras-overlay {
+/* ---- álbum de figurinhas (substitui a linha do tempo) ---- */
+.album-overlay {
   position: fixed;
   inset: 0;
   z-index: 40;
@@ -96,7 +96,7 @@ body[data-era="ficcao"]   { --ceu-1: #2e2b46; --ceu-2: #331e33; --ceu-brilho: rg
   flex-direction: column;
   background: var(--cor-fundo);
 }
-.eras-cabecalho {
+.album-cabecalho {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -104,8 +104,8 @@ body[data-era="ficcao"]   { --ceu-1: #2e2b46; --ceu-2: #331e33; --ceu-brilho: rg
   padding: 10px 14px;
   border-bottom: 1px solid var(--cor-borda);
 }
-.eras-cabecalho h2 { margin: 0; font-size: 16px; }
-.eras-fechar {
+.album-cabecalho h2 { margin: 0; font-size: 16px; }
+.album-fechar {
   padding: 8px 14px;
   border-radius: 8px;
   border: 1px solid var(--cor-peca-borda);
@@ -113,51 +113,65 @@ body[data-era="ficcao"]   { --ceu-1: #2e2b46; --ceu-2: #331e33; --ceu-brilho: rg
   color: var(--cor-texto);
   cursor: pointer;
 }
-.eras-lista {
+.album-corpo {
   flex: 1;
   overflow-y: auto;
   padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 20px;
 }
-.era-linha {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 14px;
+.album-era {
   border-radius: 12px;
   background: var(--cor-drawer);
   border: 1px solid var(--cor-borda);
-  opacity: 0.45;
+  padding: 12px;
 }
-.era-linha.alcancada { opacity: 1; border-color: var(--cor-peca-borda); }
-.era-linha-icone { font-size: 32px; line-height: 1; }
-.era-linha-corpo { flex: 1; }
-.era-linha-topo {
+.album-era.completa { border-color: var(--cor-era-atual, var(--era-cultura)); }
+.album-era[data-era="elementos"] { --cor-era-atual: var(--era-elementos); }
+.album-era[data-era="natureza"] { --cor-era-atual: var(--era-natureza); }
+.album-era[data-era="vida"] { --cor-era-atual: var(--era-vida); }
+.album-era[data-era="tecnologia"] { --cor-era-atual: var(--era-tecnologia); }
+.album-era[data-era="cultura"] { --cor-era-atual: var(--era-cultura); }
+.album-era[data-era="ficcao"] { --cor-era-atual: var(--era-ficcao); }
+.album-era-cabecalho {
   display: flex;
-  justify-content: space-between;
-  font-size: 14px;
-  margin-bottom: 6px;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
 }
-.era-linha-contagem { opacity: 0.75; }
-.era-barra {
-  height: 8px;
+.album-era-icone { font-size: 24px; line-height: 1; }
+.album-era-nome { margin: 0; font-size: 15px; flex: 1; }
+.album-era-contagem { font-size: 13px; opacity: 0.75; }
+.album-selo {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 3px 8px;
   border-radius: 999px;
-  background: var(--cor-borda);
-  overflow: hidden;
+  background: var(--cor-era-atual, var(--era-cultura));
+  color: #1a1408;
 }
-.era-barra-cheia {
-  display: block;
-  height: 100%;
-  background: var(--era-cultura);
+.album-grade {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  gap: 10px;
 }
-.era-linha[data-era="elementos"] .era-barra-cheia { background: var(--era-elementos); }
-.era-linha[data-era="natureza"] .era-barra-cheia { background: var(--era-natureza); }
-.era-linha[data-era="vida"] .era-barra-cheia { background: var(--era-vida); }
-.era-linha[data-era="tecnologia"] .era-barra-cheia { background: var(--era-tecnologia); }
-.era-linha[data-era="cultura"] .era-barra-cheia { background: var(--era-cultura); }
-.era-linha[data-era="ficcao"] .era-barra-cheia { background: var(--era-ficcao); }
+.figurinha {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 4px;
+  border-radius: 10px;
+  border: 2px solid var(--cor-borda);
+  background: var(--cor-peca);
+}
+.figurinha.oculta { opacity: 0.45; border-style: dashed; }
+.figurinha-icone { font-size: 24px; line-height: 1; }
+img.figurinha-icone { width: 26px; height: 26px; }
+.figurinha-oculta { font-weight: 700; opacity: 0.6; }
+.figurinha-nome { font-size: 10px; text-align: center; word-break: break-word; }
 
 @media (prefers-reduced-motion: reduce) {
   .era-nova-icone { animation: none; }

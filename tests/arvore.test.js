@@ -130,6 +130,52 @@ test('clicar na camada de nós, fora de um nó, também limpa o realce', () => {
   assert.equal(raiz.querySelectorAll('.arvore-no.esmaecido').length, 0);
 });
 
+test('desenha uma faixa por era', () => {
+  const raiz = raizLimpa();
+  const save = saveCom({ agua: { em: 1, via: null, fonte: 'base' } });
+  const arv = montarArvore({ raiz, store: storeFake(save), catalogo: criarCatalogo(), T });
+  arv.abrir();
+  const faixas = raiz.querySelectorAll('.arvore-faixa');
+  assert.equal(faixas.length, 6);
+  assert.equal(raiz.querySelector('.arvore-faixa[data-era="elementos"]') !== null, true);
+});
+
+function ptr(tipo, x, y, id = 1) {
+  const e = new window.Event(tipo, { bubbles: true, cancelable: true });
+  e.pointerId = id;
+  e.clientX = x;
+  e.clientY = y;
+  return e;
+}
+const espera = (ms) => new Promise((r) => setTimeout(r, ms));
+
+test('segurar um nó manda o item pro canvas; toque curto só realça', async () => {
+  const raiz = raizLimpa();
+  const save = saveCom({
+    agua: { em: 1, via: null, fonte: 'base' },
+    fogo: { em: 2, via: null, fonte: 'base' },
+  });
+  const enviados = [];
+  const arv = montarArvore({
+    raiz, store: storeFake(save), catalogo: criarCatalogo(), T,
+    aoEnviarPraCanvas: (id) => enviados.push(id),
+  });
+  arv.abrir();
+
+  const agua = no(raiz, 'agua');
+  agua.dispatchEvent(ptr('pointerdown', 10, 10));
+  await espera(500); // passa do tempo de "segurar"
+  assert.ok(agua.classList.contains('segurando'));
+  agua.dispatchEvent(ptr('pointerup', 10, 10));
+  assert.deepEqual(enviados, ['agua']);
+  assert.ok(!agua.classList.contains('destaque'), 'segurar não realça');
+
+  const fogo = no(raiz, 'fogo');
+  fogo.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+  assert.deepEqual(enviados, ['agua'], 'toque curto não manda pro canvas');
+  assert.ok(fogo.classList.contains('destaque'), 'toque curto continua realçando');
+});
+
 test('botão Fechar remove o overlay', () => {
   const raiz = raizLimpa();
   const save = saveCom({ agua: { em: 1, via: null, fonte: 'base' } });

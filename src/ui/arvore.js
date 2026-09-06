@@ -1,16 +1,20 @@
 // src/ui/arvore.js
-// Tela cheia, só-visualização: o grafo do que já foi descoberto.
-// Nós = ids em save.descobertos. Arestas = de cada pai em `via` para o filho.
-// Layout próprio por profundidade (nível = 1 + max(nível dos pais descobertos)).
+// Tela cheia: o mapa do que já foi descoberto, em faixas horizontais por era
+// (a mais simples no topo). Nós = ids em save.descobertos. Arestas = de cada
+// pai em `via` para o filho. Tocar num nó realça pais/filhos; segurar manda
+// a peça pro canvas — a árvore virou uma segunda forma de pegar itens, além
+// da gaveta.
 import { ligarPanZoom } from './panzoom.js';
+import { ERAS } from '../engine/catalogo.js';
 
-const NO_LARG = 110; // passo horizontal entre nós do mesmo nível
-const NIVEL_ALT = 130; // passo vertical entre níveis
+const NO_LARG = 110; // passo horizontal entre nós da mesma faixa
+const NIVEL_ALT = 130; // altura de cada faixa de era
 const PAD = 40; // margem do mundo
 const NO_MEIA_LARG = 34; // metade da largura nominal do nó, p/ ancorar arestas
 const NO_ALT = 60; // altura nominal do nó, p/ ancorar arestas
 const ZOOM_MIN = 0.3;
 const ZOOM_MAX = 2;
+const SEGURAR_MS = 450; // tempo de toque-e-segure pra mandar a peça pro canvas
 
 function icone(item) {
   if (item && item.svg) return `<img class="arvore-no-icone" src="${item.svg}" alt="" />`;
@@ -50,7 +54,9 @@ function calcularNiveis(descobertos) {
   return nivel;
 }
 
-export function montarArvore({ raiz, store, catalogo, T }) {
+export function montarArvore({
+  raiz, store, catalogo, T, aoEnviarPraCanvas,
+}) {
   let overlay = null;
   let selecionado = null;
   const posicoes = new Map(); // id -> { x, y } no espaço do mundo
@@ -109,6 +115,43 @@ export function montarArvore({ raiz, store, catalogo, T }) {
     legenda.textContent = combo && combo.texto ? `${nome}: ${combo.texto}` : nome;
   }
 
+  // toque curto = realça pais/filhos (como sempre); segurar = manda a peça
+  // pro canvas, como escolher um card na gaveta.
+  function ligarToqueNo(el, id) {
+    let timer = null;
+    let segurou = false;
+
+    function cancelar() {
+      clearTimeout(timer);
+      timer = null;
+      el.classList.remove('segurando');
+    }
+
+    el.addEventListener('pointerdown', (ev) => {
+      if (ev.button != null && ev.button !== 0) return;
+      segurou = false;
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        segurou = true;
+        el.classList.add('segurando');
+      }, SEGURAR_MS);
+    });
+    el.addEventListener('pointerup', (ev) => {
+      cancelar();
+      if (segurou) {
+        ev.stopPropagation();
+        aoEnviarPraCanvas?.(id);
+      }
+    });
+    el.addEventListener('pointercancel', cancelar);
+    el.addEventListener('pointerleave', cancelar);
+    el.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      if (segurou) { segurou = false; return; } // já tratado no pointerup
+      realcar(id);
+    });
+  }
+
   function aplicarVista() {
     const mundo = overlay.querySelector('.arvore-mundo');
     mundo.style.transform =
@@ -139,24 +182,45 @@ export function montarArvore({ raiz, store, catalogo, T }) {
     });
   }
 
+  function eraDoId(id) {
+    const item = catalogo.getItem(id);
+    return (item && ERAS.includes(item.era)) ? item.era : ERAS[ERAS.length - 1];
+  }
+
   function desenhar() {
     const descobertos = store.getSave().descobertos;
-    const nivel = calcularNiveis(descobertos);
+    const nivel = calcularNiveis(descobertos); // só pra metadado (dataset.nivel)
 
-    // agrupa por nível, ordena dentro do nível pela ordem de descoberta
-    const porNivel = new Map();
+    // faixa = era (a mais simples no topo); dentro da faixa, ordem de descoberta
+    const porFaixa = new Map(ERAS.map((era) => [era, []]));
     for (const id of Object.keys(descobertos)) {
-      const n = nivel.get(id);
-      if (!porNivel.has(n)) porNivel.set(n, []);
-      porNivel.get(n).push(id);
+      porFaixa.get(eraDoId(id)).push(id);
     }
     posicoes.clear();
-    for (const [n, ids] of porNivel) {
+    let maiorFaixa = 1;
+    ERAS.forEach((era, faixaIdx) => {
+      const ids = porFaixa.get(era);
       ids.sort((a, b) => descobertos[a].em - descobertos[b].em);
+      maiorFaixa = Math.max(maiorFaixa, ids.length);
       ids.forEach((id, i) => {
-        posicoes.set(id, { x: PAD + i * NO_LARG, y: PAD + n * NIVEL_ALT });
+        posicoes.set(id, { x: PAD + i * NO_LARG, y: PAD + faixaIdx * NIVEL_ALT });
       });
-    }
+    });
+
+    const faixas = overlay.querySelector('.arvore-faixas');
+    const larguraMundo = PAD * 2 + maiorFaixa * NO_LARG;
+    faixas.innerHTML = '';
+    ERAS.forEach((era, faixaIdx) => {
+      const banda = document.createElement('div');
+      banda.className = 'arvore-faixa';
+      banda.dataset.era = era;
+      banda.style.top = `${faixaIdx * NIVEL_ALT}px`;
+      banda.style.height = `${NIVEL_ALT}px`;
+      banda.style.width = `${larguraMundo}px`;
+      banda.innerHTML =
+        `<span class="arvore-faixa-rotulo">${T.erasIcone[era] || ''} ${T.eras[era] || era}</span>`;
+      faixas.appendChild(banda);
+    });
 
     const nos = overlay.querySelector('.arvore-nos');
     const svg = overlay.querySelector('.arvore-arestas');
@@ -194,10 +258,7 @@ export function montarArvore({ raiz, store, catalogo, T }) {
       el.style.left = `${pos.x}px`;
       el.style.top = `${pos.y}px`;
       el.innerHTML = `${icone(item)}<span class="arvore-no-nome">${item ? item.nome : id}</span>`;
-      el.addEventListener('click', (ev) => {
-        ev.stopPropagation();
-        realcar(id);
-      });
+      ligarToqueNo(el, id);
       nos.appendChild(el);
       elos.set(id, el);
     }
@@ -219,6 +280,7 @@ export function montarArvore({ raiz, store, catalogo, T }) {
       </div>
       <div class="arvore-palco">
         <div class="arvore-mundo">
+          <div class="arvore-faixas"></div>
           <svg class="arvore-arestas" xmlns="http://www.w3.org/2000/svg"></svg>
           <div class="arvore-nos"></div>
         </div>

@@ -1,8 +1,10 @@
-// Linha do tempo das eras: overlay só-visualização com o progresso de cada
-// uma. Lê um snapshot de save.descobertos a cada abrir().
-import { progressoPorEra } from '../engine/eras.js';
+// Álbum de figurinhas: substitui a linha do tempo. Uma seção por era, com uma
+// figurinha por item curado (a IA não conta — não é conteúdo do álbum oficial,
+// igual já não conta pra progressão da era). Descoberto mostra o ícone real;
+// não descoberto vira uma silhueta "?". Era 100% completa ganha um selo.
+import { ERAS } from '../engine/catalogo.js';
 
-export function montarLinhaDoTempo({ raiz, store, catalogo, T }) {
+export function montarAlbum({ raiz, store, catalogo, T }) {
   let overlay = null;
 
   function fechar() {
@@ -11,40 +13,63 @@ export function montarLinhaDoTempo({ raiz, store, catalogo, T }) {
     overlay = null;
   }
 
+  function itensDaEra(era) {
+    return catalogo.allItems()
+      .filter((it) => it.era === era && !it.ia)
+      .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+  }
+
+  function figurinha(item, descoberta) {
+    const icone = descoberta
+      ? (item.svg
+        ? `<img class="figurinha-icone" src="${item.svg}" alt="" />`
+        : `<span class="figurinha-icone">${item.emoji}</span>`)
+      : '<span class="figurinha-icone figurinha-oculta">?</span>';
+    const nome = descoberta ? item.nome : T.albumOculto;
+    return `<div class="figurinha ${descoberta ? 'descoberta' : 'oculta'}" data-id="${item.id}">
+      ${icone}<span class="figurinha-nome">${nome}</span>
+    </div>`;
+  }
+
   function abrir() {
     fechar();
     overlay = document.createElement('div');
-    overlay.className = 'eras-overlay';
+    overlay.className = 'album-overlay';
     overlay.setAttribute('role', 'dialog');
-    overlay.setAttribute('aria-label', T.erasTitulo);
+    overlay.setAttribute('aria-label', T.albumTitulo);
     overlay.innerHTML = `
-      <div class="eras-cabecalho">
-        <h2>${T.erasTitulo}</h2>
-        <button type="button" class="eras-fechar">${T.fechar}</button>
+      <div class="album-cabecalho">
+        <h2>${T.albumTitulo}</h2>
+        <button type="button" class="album-fechar">${T.fechar}</button>
       </div>
-      <div class="eras-lista"></div>`;
+      <div class="album-corpo"></div>`;
 
-    const lista = overlay.querySelector('.eras-lista');
-    const progresso = progressoPorEra(store.getSave().descobertos, catalogo);
-    for (const { era, descobertos, total } of progresso) {
-      const linha = document.createElement('div');
-      linha.className = 'era-linha';
-      linha.dataset.era = era;
-      if (descobertos > 0) linha.classList.add('alcancada');
-      const pct = total ? Math.round((descobertos / total) * 100) : 0;
-      linha.innerHTML = `
-        <span class="era-linha-icone">${T.erasIcone[era] || '✨'}</span>
-        <div class="era-linha-corpo">
-          <div class="era-linha-topo">
-            <span class="era-linha-nome">${T.eras[era] || era}</span>
-            <span class="era-linha-contagem">${descobertos} / ${total}</span>
-          </div>
-          <div class="era-barra"><span class="era-barra-cheia" style="width:${pct}%"></span></div>
+    const corpo = overlay.querySelector('.album-corpo');
+    const descobertos = store.getSave().descobertos;
+
+    for (const era of ERAS) {
+      const itens = itensDaEra(era);
+      const feitos = itens.filter((it) => descobertos[it.id]).length;
+      const completa = itens.length > 0 && feitos === itens.length;
+
+      const secao = document.createElement('section');
+      secao.className = 'album-era';
+      secao.dataset.era = era;
+      if (completa) secao.classList.add('completa');
+      secao.innerHTML = `
+        <div class="album-era-cabecalho">
+          <span class="album-era-icone">${T.erasIcone[era] || '✨'}</span>
+          <h3 class="album-era-nome">${T.eras[era] || era}</h3>
+          <span class="album-era-contagem">${feitos} / ${itens.length}</span>
+          ${completa ? `<span class="album-selo">${T.albumSeloCompleto}</span>` : ''}
+        </div>
+        <div class="album-grade">
+          ${itens.map((it) => figurinha(it, Boolean(descobertos[it.id]))).join('')}
         </div>`;
-      lista.appendChild(linha);
+      corpo.appendChild(secao);
     }
 
-    overlay.querySelector('.eras-fechar').addEventListener('click', fechar);
+    overlay.querySelector('.album-fechar').addEventListener('click', fechar);
     (raiz || document.body).appendChild(overlay);
   }
 
