@@ -104,6 +104,9 @@ Ainda pendente: validar toque num aparelho real; manter o Realtime Database
 
 Feito: catálogo 283/374 · modo por perfil (Pequenos/Médio/Completo) · espinha de
 eras (linha do tempo "Eras", comemoração "NOVA ERA!", fundo do canvas por era).
+Feito também: era do item da IA (herda dos pais) · barra de topo · limpar sem
+alerta, com "Desfazer".
+
 A seguir: passe sensorial (parallax/partículas/trilha por era) · árvore como mapa
 principal · álbum/figurinhas · dioramas por era · pedido do dia.
 
