@@ -87,3 +87,22 @@ test('erro de rede no Gemini vira 200 vazio', async () => {
   assert.equal(res.code, 200);
   assert.deepEqual(res.corpo, {});
 });
+
+test('com ?debug=1 o corpo traz o detalhe do erro do Gemini', async () => {
+  const orig = globalThis.fetch;
+  const origKey = process.env.GEMINI_API_KEY;
+  process.env.GEMINI_API_KEY = 'k';
+  globalThis.fetch = async () => ({ ok: false, status: 403, text: async () => 'PERMISSION_DENIED' });
+  try {
+    const res = faseRes();
+    await handler({ method: 'POST', url: '/api/combinar?debug=1', body: { a: 'Água', b: 'Fogo' } }, res);
+    assert.equal(res.code, 200);
+    assert.equal(res.corpo._erro, 'gemini-nao-ok');
+    assert.equal(res.corpo.status, 403);
+    assert.match(res.corpo.detalhe, /PERMISSION_DENIED/);
+  } finally {
+    globalThis.fetch = orig;
+    if (origKey === undefined) delete process.env.GEMINI_API_KEY;
+    else process.env.GEMINI_API_KEY = origKey;
+  }
+});

@@ -33,9 +33,13 @@ export default async function handler(req, res) {
 
   const chave = process.env.GEMINI_API_KEY;
   if (!chave) {
+    console.error('combinar: sem GEMINI_API_KEY');
     vazio(res);
     return;
   }
+
+  // ?debug=1 devolve o detalhe do erro no corpo, para diagnóstico manual.
+  const depurar = /[?&]debug=/.test(req.url || '');
 
   try {
     const r = await fetch(`${ENDPOINT}?key=${chave}`, {
@@ -61,16 +65,30 @@ export default async function handler(req, res) {
       }),
     });
     if (!r.ok) {
+      const detalhe = await r.text().catch(() => '');
+      console.error('combinar: gemini', r.status, detalhe.slice(0, 600));
+      if (depurar) { res.status(200).json({ _erro: 'gemini-nao-ok', status: r.status, detalhe: detalhe.slice(0, 800) }); return; }
       vazio(res);
       return;
     }
-    const sugestao = parseRespostaGemini(await r.json());
-    if (!sugestao || !passaNoFiltro(sugestao)) {
+    const dados = await r.json();
+    const sugestao = parseRespostaGemini(dados);
+    if (!sugestao) {
+      console.error('combinar: parse falhou', JSON.stringify(dados).slice(0, 600));
+      if (depurar) { res.status(200).json({ _erro: 'parse', dados }); return; }
+      vazio(res);
+      return;
+    }
+    if (!passaNoFiltro(sugestao)) {
+      console.error('combinar: bloqueado', JSON.stringify(sugestao));
+      if (depurar) { res.status(200).json({ _erro: 'bloqueado', sugestao }); return; }
       vazio(res);
       return;
     }
     res.status(200).json(sugestao);
-  } catch {
+  } catch (err) {
+    console.error('combinar: excecao', err && err.message);
+    if (depurar) { res.status(200).json({ _erro: 'excecao', mensagem: String(err && err.message) }); return; }
     vazio(res);
   }
 }
