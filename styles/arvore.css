@@ -72,46 +72,59 @@
 .arvore-aresta { stroke: var(--cor-peca-borda); stroke-width: 2; opacity: 0.6; }
 .arvore-nos { position: absolute; inset: 0; }
 
+/* nó virou wrapper: a .orbe-arvore carrega cor de era, seleção e estado de segurar */
 .arvore-no {
   position: absolute;
   width: 68px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  padding: 6px 4px;
-  border-radius: 10px;
-  background: var(--cor-peca);
-  border: 2px solid var(--cor-borda);
+  gap: 4px;
+  background: none;
+  border: 0;
+  padding: 0;
   color: var(--cor-texto);
   font: inherit;
   cursor: pointer;
-  transition: opacity 120ms ease, border-color 120ms ease, transform 120ms ease, box-shadow 120ms ease;
+  transition: opacity 120ms ease;
 }
-.arvore-no[data-era="elementos"] { border-color: var(--era-elementos); }
-.arvore-no[data-era="natureza"] { border-color: var(--era-natureza); }
-.arvore-no[data-era="vida"] { border-color: var(--era-vida); }
-.arvore-no[data-era="tecnologia"] { border-color: var(--era-tecnologia); }
-.arvore-no[data-era="cultura"] { border-color: var(--era-cultura); }
-.arvore-no[data-era="ficcao"] { border-color: var(--era-ficcao); }
-.arvore-no-icone { font-size: 22px; line-height: 1; }
-img.arvore-no-icone { width: 24px; height: 24px; }
+.arvore-no-icone { font-size: 20px; line-height: 1; }
+img.arvore-no-icone { width: 22px; height: 22px; }
 .arvore-no-nome { font-size: 11px; text-align: center; word-break: break-word; }
-.arvore-no[data-fonte="ia"]::after {
+
+/* discreta por padrão — prioridade visual continua nas conexões, não no nó */
+.orbe-arvore {
+  --orbe-tam: 44px;
+  box-shadow:
+    0 0 0 1.5px color-mix(in srgb, var(--cor-orbe) 50%, transparent),
+    0 0 6px 0.5px color-mix(in srgb, var(--cor-orbe) 20%, transparent),
+    inset 0 0 6px rgba(0, 0, 0, 0.35);
+  transition: box-shadow 120ms ease, transform 120ms ease;
+}
+.orbe-arvore[data-fonte="ia"]::after {
   content: "★";
   position: absolute;
-  top: 1px;
-  right: 3px;
-  font-size: 10px;
+  top: -2px;
+  right: -2px;
+  font-size: 9px;
   color: var(--era-cultura);
 }
-.arvore-no.esmaecido { opacity: 0.25; }
-.arvore-no.destaque { opacity: 1; box-shadow: 0 0 0 2px var(--cor-texto); }
-.arvore-no.segurando {
-  transform: scale(1.15);
-  box-shadow: 0 0 0 3px var(--era-cultura);
-}
 
+.arvore-no.esmaecido { opacity: 0.3; }
+/* nó selecionado: o único que ganha destaque de verdade — os demais ficam quietos */
+.arvore-no.destaque .orbe-arvore {
+  box-shadow:
+    0 0 0 2px var(--cor-texto),
+    0 0 14px 3px color-mix(in srgb, var(--cor-orbe) 55%, transparent),
+    inset 0 0 6px rgba(0, 0, 0, 0.35);
+}
+.arvore-no.segurando .orbe-arvore {
+  transform: scale(1.15);
+  box-shadow:
+    0 0 0 2px var(--era-cultura),
+    0 0 16px 4px color-mix(in srgb, var(--era-cultura) 55%, transparent),
+    inset 0 0 6px rgba(0, 0, 0, 0.35);
+}
 .arvore-legenda {
   margin: 0;
   padding: 10px 14px;
@@ -122,5 +135,5 @@ img.arvore-no-icone { width: 24px; height: 24px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .arvore-no { transition: none; }
+  .arvore-no, .orbe-arvore { transition: none; }
 }

@@ -5,17 +5,45 @@
 .drawer-chip[aria-pressed="true"] { background: var(--cor-borda); }
 .drawer-contador { padding: 0 12px 8px; font-size: 12px; opacity: 0.7; }
 .drawer-grade { flex: 1; overflow-y: auto; display: grid; grid-template-columns: repeat(2, 1fr); grid-auto-rows: min-content; align-content: start; gap: 8px; padding: 10px; }
-.drawer-card { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px; border-radius: 10px; background: #16233c; border: 2px solid var(--cor-borda); cursor: grab; position: relative; touch-action: pan-y; user-select: none; }
-.drawer-ghost { position: fixed; z-index: 100; width: 60px; pointer-events: none; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px; border-radius: 10px; background: var(--cor-peca); border: 2px solid var(--cor-peca-borda); opacity: 0.9; }
-.drawer-ghost .card-icone { font-size: 24px; }
-.drawer-ghost .card-nome { font-size: 12px; text-align: center; }
-.drawer-card .card-icone { font-size: 24px; animation: icone-bob 4s ease-in-out infinite alternate; }
-.drawer-card:nth-child(3n) .card-icone { animation-delay: -1.3s; }
-.drawer-card:nth-child(3n+1) .card-icone { animation-delay: -2.6s; }
-.drawer-card .card-nome { font-size: 12px; text-align: center; }
-.drawer-card[data-fonte="ia"]::after { content: "★"; position: absolute; top: 2px; right: 4px; font-size: 10px; color: var(--era-cultura); }
+
+/* card virou wrapper quieto: a orbe compacta é quem carrega a cor/brilho */
+.drawer-card {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 6px 4px;
+  cursor: grab;
+  position: relative;
+  touch-action: pan-y;
+  user-select: none;
+}
+.drawer-ghost { position: fixed; z-index: 100; width: 60px; pointer-events: none; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px; opacity: 0.9; }
+.drawer-ghost .card-icone { font-size: 22px; }
+.drawer-ghost .card-nome { font-size: 11px; text-align: center; }
+.card-nome { font-size: 11px; text-align: center; }
+
+/* orbe da gaveta: a mais quieta das quatro — densidade e leitura vêm antes do brilho */
+.orbe-gaveta {
+  --orbe-tam: 40px;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--cor-orbe) 45%, transparent),
+    0 0 5px 0.5px color-mix(in srgb, var(--cor-orbe) 16%, transparent),
+    inset 0 0 5px rgba(0, 0, 0, 0.3);
+}
+.orbe-gaveta .card-icone { font-size: 20px; line-height: 1; animation: icone-bob 4s ease-in-out infinite alternate; }
+.drawer-card:nth-child(3n) .orbe-gaveta .card-icone { animation-delay: -1.3s; }
+.drawer-card:nth-child(3n+1) .orbe-gaveta .card-icone { animation-delay: -2.6s; }
+
+/* estrela da IA não foi removida, só reposicionada pro contexto da orbe (o anel violeta já vem do .orbe[data-fonte="ia"] em base.css) */
+.orbe-gaveta[data-fonte="ia"]::after {
+  content: "★";
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  font-size: 9px;
+  color: var(--era-cultura);
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .drawer-card .card-icone { animation: none; }
+  .orbe-gaveta .card-icone { animation: none; }
 }
 @media (max-width: 640px) {
   #jogo { flex-direction: column; }

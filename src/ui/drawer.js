@@ -143,7 +143,9 @@ export function montarDrawer({ raiz, store, catalogo, aoEscolherItem, aoSoltarIt
       const icone = item.svg
         ? `<img class="card-icone" src="${item.svg}" alt="" />`
         : `<span class="card-icone">${item.emoji}</span>`;
-      card.innerHTML = `${icone}<span class="card-nome">${item.nome}</span>`;
+      card.innerHTML =
+        `<span class="orbe orbe-gaveta" data-era="${item.era}"${meta.fonte === 'ia' ? ' data-fonte="ia"' : ''}>${icone}</span>` +
+        `<span class="card-nome">${item.nome}</span>`;
       card.addEventListener('click', () => {
         if (card.__ignorarClique) return;
         aoEscolherItem(item.id);

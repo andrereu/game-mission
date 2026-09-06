@@ -257,7 +257,10 @@ export function montarArvore({
       el.dataset.nivel = String(nivel.get(id));
       el.style.left = `${pos.x}px`;
       el.style.top = `${pos.y}px`;
-      el.innerHTML = `${icone(item)}<span class="arvore-no-nome">${item ? item.nome : id}</span>`;
+      const fonte = meta.fonte === 'ia' ? ' data-fonte="ia"' : '';
+      el.innerHTML =
+        `<span class="orbe orbe-arvore" data-era="${item ? item.era : ''}"${fonte}>${icone(item)}</span>` +
+        `<span class="arvore-no-nome">${item ? item.nome : id}</span>`;
       ligarToqueNo(el, id);
       nos.appendChild(el);
       elos.set(id, el);

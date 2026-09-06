@@ -26,8 +26,11 @@ export function montarAlbum({ raiz, store, catalogo, T }) {
         : `<span class="figurinha-icone">${item.emoji}</span>`)
       : '<span class="figurinha-icone figurinha-oculta">?</span>';
     const nome = descoberta ? item.nome : T.albumOculto;
+    const orbe = descoberta
+      ? `<span class="orbe orbe-album" data-era="${item.era}">${icone}</span>`
+      : `<span class="orbe orbe-album orbe-oculta">${icone}</span>`;
     return `<div class="figurinha ${descoberta ? 'descoberta' : 'oculta'}" data-id="${item.id}">
-      ${icone}<span class="figurinha-nome">${nome}</span>
+      ${orbe}<span class="figurinha-nome">${nome}</span>
     </div>`;
   }
 

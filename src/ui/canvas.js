@@ -72,7 +72,10 @@ export function montarCanvas({
     const icone = item.svg
       ? `<img class="peca-icone" src="${item.svg}" alt="" />`
       : `<span class="peca-icone">${item.emoji}</span>`;
-    el.innerHTML = `${icone}<span class="peca-nome">${item.nome}</span>`;
+    const fonte = item.ia ? ' data-fonte="ia"' : '';
+    el.innerHTML =
+      `<span class="orbe orbe-canvas" data-era="${item.era}"${fonte}>${icone}</span>` +
+      `<span class="peca-nome">${item.nome}</span>`;
     ligarArrasto(el, inst.uid);
     return el;
   }

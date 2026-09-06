@@ -12,6 +12,8 @@
   --era-tecnologia: #b57cff;
   --era-cultura: #ffd25c;
   --era-ficcao: #ff5c8a;
+  --cor-orbe-ia: #c9a4ff; /* anel próprio do item inventado pela IA */
+  --cor-orbe-nucleo: #0a0f1c; /* centro escuro comum a toda orbe */
 }
 * { box-sizing: border-box; }
 html, body { height: 100%; margin: 0; }
@@ -23,3 +25,43 @@ body {
 }
 #jogo { position: relative; height: 100%; display: flex; }
 /* botões de barra e o "limpar" agora vivem em styles/barra.css */
+
+/* ---- Orbe: linguagem visual comum dos itens (substitui o card quadrado) ----
+   Base discreta e neutra; cada contexto (canvas/gaveta/árvore/álbum) ajusta
+   tamanho e intensidade do brilho por cima disso — ver respectivo styles/*.css.
+   ~30% menos intensa que o protótipo aprovado, pra não virar "árvore de Natal"
+   com muitos itens na tela ao mesmo tempo. */
+.orbe {
+  --cor-orbe: var(--cor-borda);
+  position: relative;
+  width: var(--orbe-tam, 44px);
+  height: var(--orbe-tam, 44px);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background:
+    radial-gradient(circle at 34% 30%, color-mix(in srgb, var(--cor-orbe) 28%, white 6%), transparent 55%),
+    radial-gradient(circle at 50% 62%, color-mix(in srgb, var(--cor-orbe) 20%, var(--cor-orbe-nucleo) 80%), var(--cor-orbe-nucleo) 84%);
+  box-shadow:
+    0 0 0 1.5px color-mix(in srgb, var(--cor-orbe) 55%, transparent),
+    0 0 8px 1px color-mix(in srgb, var(--cor-orbe) 24%, transparent),
+    inset 0 0 6px rgba(0, 0, 0, 0.35);
+  transition: box-shadow 150ms ease, transform 150ms ease;
+}
+.orbe[data-era="elementos"]  { --cor-orbe: var(--era-elementos); }
+.orbe[data-era="natureza"]   { --cor-orbe: var(--era-natureza); }
+.orbe[data-era="vida"]       { --cor-orbe: var(--era-vida); }
+.orbe[data-era="tecnologia"] { --cor-orbe: var(--era-tecnologia); }
+.orbe[data-era="cultura"]    { --cor-orbe: var(--era-cultura); }
+.orbe[data-era="ficcao"]     { --cor-orbe: var(--era-ficcao); }
+
+/* anel violeta discreto do item inventado pela IA — some com o anel de era */
+.orbe[data-fonte="ia"] {
+  box-shadow:
+    0 0 0 1.5px color-mix(in srgb, var(--cor-orbe) 55%, transparent),
+    0 0 0 3px color-mix(in srgb, var(--cor-orbe-ia) 65%, transparent),
+    0 0 9px 1px color-mix(in srgb, var(--cor-orbe-ia) 35%, transparent),
+    inset 0 0 6px rgba(0, 0, 0, 0.35);
+}

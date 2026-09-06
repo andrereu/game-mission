@@ -157,21 +157,32 @@ body[data-era="ficcao"]   { --ceu-1: #2e2b46; --ceu-2: #331e33; --ceu-brilho: rg
   grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
   gap: 10px;
 }
+/* figurinha virou wrapper quieto: a orbe é o "colecionável" de verdade */
 .figurinha {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 8px 4px;
-  border-radius: 10px;
-  border: 2px solid var(--cor-borda);
-  background: var(--cor-peca);
+  gap: 5px;
+  padding: 6px 4px;
 }
-.figurinha.oculta { opacity: 0.45; border-style: dashed; }
-.figurinha-icone { font-size: 24px; line-height: 1; }
-img.figurinha-icone { width: 26px; height: 26px; }
-.figurinha-oculta { font-weight: 700; opacity: 0.6; }
+.figurinha-icone { font-size: 22px; line-height: 1; }
+img.figurinha-icone { width: 24px; height: 24px; }
 .figurinha-nome { font-size: 10px; text-align: center; word-break: break-word; }
+
+.orbe-album {
+  --orbe-tam: 46px;
+  box-shadow:
+    0 0 0 1.5px color-mix(in srgb, var(--cor-orbe) 55%, transparent),
+    0 0 7px 1px color-mix(in srgb, var(--cor-orbe) 22%, transparent),
+    inset 0 0 6px rgba(0, 0, 0, 0.35);
+}
+/* item ainda não descoberto: orbe apagada, sem brilho, só o "?" */
+.orbe-album.orbe-oculta {
+  background: radial-gradient(circle at 50% 55%, #16203a, var(--cor-orbe-nucleo) 82%);
+  box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.10), inset 0 0 6px rgba(0, 0, 0, 0.45);
+}
+.orbe-album.orbe-oculta .figurinha-icone { opacity: 0.55; font-weight: 700; }
+.figurinha.oculta .figurinha-nome { opacity: 0.55; letter-spacing: 1px; }
 
 @media (prefers-reduced-motion: reduce) {
   .era-nova-icone { animation: none; }

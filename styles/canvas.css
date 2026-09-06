@@ -1,9 +1,31 @@
 .canvas { position: relative; flex: 1; overflow: hidden; background: var(--cor-canvas); touch-action: none; }
 .canvas-mundo { position: absolute; inset: 0; transform-origin: 0 0; }
-.peca { position: absolute; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 8px; border-radius: 10px; background: var(--cor-peca); border: 2px solid var(--cor-peca-borda); cursor: grab; user-select: none; }
-.peca .peca-icone { font-size: 28px; line-height: 1; animation: icone-bob 4s ease-in-out infinite alternate; }
-.peca .peca-nome { font-size: 12px; }
-.peca.arrastando { cursor: grabbing; opacity: 0.85; }
+
+/* a peça virou só um wrapper: quem carrega o visual agora é a .orbe dentro dela */
+.peca {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: grab;
+  user-select: none;
+}
+.peca .peca-nome {
+  font-size: 12px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85); /* legibilidade sobre o fundo cósmico, sem pílula atrás */
+}
+.peca.arrastando { cursor: grabbing; }
+
+/* orbe do tabuleiro: a mais viva das quatro — é a peça "pegável" */
+.orbe-canvas {
+  --orbe-tam: 52px;
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--cor-orbe) 65%, transparent),
+    0 0 14px 2px color-mix(in srgb, var(--cor-orbe) 38%, transparent),
+    inset 0 0 8px rgba(0, 0, 0, 0.35);
+}
+.orbe-canvas .peca-icone { font-size: 26px; line-height: 1; animation: icone-bob 4s ease-in-out infinite alternate; }
 
 /* varia o compasso pra não pulsarem em uníssono */
 .canvas-mundo > .peca:nth-of-type(3n) .peca-icone { animation-delay: -1.3s; }
@@ -14,15 +36,30 @@
   to   { transform: translateY(-2px); }
 }
 
+/* segurando pra arrastar: a orbe "acende" um pouco mais, sente que foi pega */
+.peca.arrastando .orbe-canvas {
+  transform: scale(1.08);
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--cor-orbe) 80%, transparent),
+    0 0 20px 4px color-mix(in srgb, var(--cor-orbe) 55%, transparent),
+    inset 0 0 8px rgba(0, 0, 0, 0.35);
+}
+
 /* aviso acessível de "nada aconteceu": lido por leitor de tela, invisível na tela */
 .canvas-aviso { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
-/* resultado de fusão: "junta e brilha" */
+/* resultado de fusão: a orbe pulsa um flash de luz quente */
 .peca.surgindo { animation: peca-surgindo 320ms ease-out; }
 @keyframes peca-surgindo {
-  0%   { transform: scale(0.4); opacity: 0; box-shadow: 0 0 0 rgba(255, 236, 160, 0); }
-  55%  { transform: scale(1.18); opacity: 1; box-shadow: 0 0 22px 6px rgba(255, 236, 160, 0.85); }
-  100% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 rgba(255, 236, 160, 0); }
+  0%   { transform: scale(0.4); opacity: 0; }
+  55%  { transform: scale(1.18); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.peca.surgindo .orbe-canvas { animation: orbe-flash-fusao 320ms ease-out; }
+@keyframes orbe-flash-fusao {
+  0%   { box-shadow: 0 0 0 2px rgba(255, 236, 160, 0), 0 0 0 0 rgba(255, 236, 160, 0), inset 0 0 8px rgba(0,0,0,0.35); }
+  55%  { box-shadow: 0 0 0 2px rgba(255, 236, 160, 0.9), 0 0 26px 8px rgba(255, 236, 160, 0.7), inset 0 0 8px rgba(0,0,0,0.35); }
+  100% { box-shadow: 0 0 0 2px color-mix(in srgb, var(--cor-orbe) 65%, transparent), 0 0 14px 2px color-mix(in srgb, var(--cor-orbe) 38%, transparent), inset 0 0 8px rgba(0,0,0,0.35); }
 }
 
 /* fusão sem resultado: quique de volta ao lugar */
@@ -47,7 +84,7 @@
 @keyframes peca-pensando-gira { to { transform: rotate(360deg); } }
 
 @media (prefers-reduced-motion: reduce) {
-  .peca.surgindo, .peca.quique { animation: none; }
+  .peca.surgindo, .peca.quique, .peca.surgindo .orbe-canvas { animation: none; }
   .peca-pensando { animation: none; }
-  .peca .peca-icone { animation: none; }
+  .orbe-canvas .peca-icone { animation: none; }
 }
