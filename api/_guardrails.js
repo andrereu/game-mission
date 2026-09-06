@@ -8,6 +8,7 @@ export const PROMPT_SISTEMA = [
   '- Conteúdo 100% adequado para crianças pequenas.',
   '- Proibido: violência, armas, morte, sangue, drogas, álcool, cigarro, sexo, nudez, palavrões, ódio, marcas comerciais e pessoas reais.',
   '- "resultadoNome": 1 a 3 palavras, em português do Brasil.',
+  '- "era": a categoria mais parecida entre exatamente estas: elementos, natureza, vida, tecnologia, cultura, ficcao.',
   '- "emoji": um único emoji Unicode que represente o item.',
   '- "texto": uma frase curta e simples, como para uma criança de 6 anos, explicando a mistura.',
   'Responda apenas o JSON, sem comentários.',
@@ -71,5 +72,6 @@ export function parseRespostaGemini(resp) {
     resultadoNome: String(obj.resultadoNome).trim(),
     emoji: obj.emoji ? String(obj.emoji) : '✨',
     texto: obj.texto ? String(obj.texto) : '',
+    ...(obj.era ? { era: String(obj.era) } : {}),
   };
 }

@@ -32,6 +32,7 @@ export function criarCatalogo() {
         era: ERAS.includes(era) ? era : 'ficcao',
         base: false,
         ref: null,
+        ia: true, // conteúdo inventado pela IA — a estrela na gaveta/árvore
       };
       itens.set(id, novo);
       return novo;

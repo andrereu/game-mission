@@ -1,7 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { criarCatalogo, ERAS } from '../src/engine/catalogo.js';
-import { progressoPorEra, erasAlcancadas, eraMaisAvancada } from '../src/engine/eras.js';
+import {
+  progressoPorEra, erasAlcancadas, eraMaisAvancada, eraHerdada,
+} from '../src/engine/eras.js';
 
 test('progressoPorEra conta descobertos e total por era, na ordem das eras', () => {
   const cat = criarCatalogo();
@@ -24,6 +26,23 @@ test('erasAlcancadas = eras com pelo menos um descoberto', () => {
   assert.ok(alc.has('vida'));
   assert.ok(!alc.has('natureza'));
   assert.ok(!alc.has('ficcao'));
+});
+
+test('eraHerdada: iguais -> essa; diferentes -> a mais avançada', () => {
+  assert.equal(eraHerdada('vida', 'vida'), 'vida');
+  assert.equal(eraHerdada('elementos', 'ficcao'), 'ficcao');
+  assert.equal(eraHerdada('cultura', 'vida'), 'cultura');
+  assert.equal(eraHerdada('bobagem', 'natureza'), 'natureza');
+  assert.equal(eraHerdada(null, null), 'ficcao');
+});
+
+test('progressoPorEra ignora itens da IA (não mexe no total nem na contagem)', () => {
+  const cat = criarCatalogo();
+  const antes = progressoPorEra({}, cat).find((p) => p.era === 'vida').total;
+  const it = cat.registrarItemIA({ nome: 'Bicho Mágico', emoji: '✨', era: 'vida' });
+  const depois = progressoPorEra({ [it.id]: { fonte: 'ia' } }, cat).find((p) => p.era === 'vida');
+  assert.equal(depois.total, antes, 'total da era não muda');
+  assert.equal(depois.descobertos, 0, 'item da IA não conta como progresso da era');
 });
 
 test('eraMaisAvancada devolve a última alcançada na ordem', () => {

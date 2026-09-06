@@ -1,3 +1,6 @@
+import { ERAS } from './catalogo.js';
+import { eraHerdada } from './eras.js';
+
 export function criarCombinador({ catalogo, aiProvider, estaOnline }) {
   return async function combinar(idA, idB) {
     const combo = catalogo.findCombo(idA, idB);
@@ -23,6 +26,9 @@ export function criarCombinador({ catalogo, aiProvider, estaOnline }) {
         const item = catalogo.registrarItemIA({
           nome: sugestao.resultadoNome,
           emoji: sugestao.emoji,
+          era: ERAS.includes(sugestao.era)
+            ? sugestao.era
+            : eraHerdada(itemA && itemA.era, itemB && itemB.era),
         });
         catalogo.registrarComboIA(idA, idB, item.id, sugestao.texto || '');
         return {

@@ -60,8 +60,12 @@ export default async function handler(req, res) {
               resultadoNome: { type: 'STRING' },
               emoji: { type: 'STRING' },
               texto: { type: 'STRING' },
+              era: {
+                type: 'STRING',
+                enum: ['elementos', 'natureza', 'vida', 'tecnologia', 'cultura', 'ficcao'],
+              },
             },
-            required: ['resultadoNome', 'emoji', 'texto'],
+            required: ['resultadoNome', 'emoji', 'texto', 'era'],
           },
         },
       }),

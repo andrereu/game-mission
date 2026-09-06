@@ -45,6 +45,33 @@ test('sem combo, online e IA sugere: cria item e combo com fonte ia', async () =
   assert.equal(r2.item.id, 'robo-musical');
 });
 
+test('IA com era válida: o item usa essa era e fica marcado como ia', async () => {
+  const cat = criarCatalogo();
+  const aiProvider = {
+    async sugerirCombo() {
+      return { resultadoNome: 'Nuvem de Açúcar', emoji: '☁️', texto: 'Ar doce.', era: 'natureza' };
+    },
+  };
+  const combinar = criarCombinador({ catalogo: cat, aiProvider, estaOnline: () => true });
+  const r = await combinar('pikachu', 'cidade'); // sem combo curado
+  assert.equal(r.fonte, 'ia');
+  assert.equal(r.item.era, 'natureza');
+  assert.equal(r.item.ia, true);
+});
+
+test('IA sem era: herda dos pais (a mais avançada)', async () => {
+  const cat = criarCatalogo();
+  const aiProvider = {
+    async sugerirCombo() {
+      return { resultadoNome: 'Coisa Estranha', emoji: '✨', texto: 'Uma coisa.' };
+    },
+  };
+  const combinar = criarCombinador({ catalogo: cat, aiProvider, estaOnline: () => true });
+  // agua=elementos, robo=tecnologia -> herda tecnologia
+  const r = await combinar('agua', 'robo');
+  assert.equal(r.item.era, 'tecnologia');
+});
+
 test('online mas IA devolve null: nada', async () => {
   const cat = criarCatalogo();
   const combinar = criarCombinador({

@@ -27,6 +27,7 @@ export function criarProviderEndpoint(url) {
           resultadoNome: String(dados.resultadoNome),
           emoji: dados.emoji ? String(dados.emoji) : '✨',
           texto: String(dados.texto || ''),
+          ...(dados.era ? { era: String(dados.era) } : {}),
         };
       } catch {
         return null;

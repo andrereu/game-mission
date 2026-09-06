@@ -7,6 +7,15 @@ test('comboKey é simétrica', () => {
   assert.equal(comboKey('agua', 'fogo'), 'agua+fogo');
 });
 
+test('registrarItemIA marca o item como ia e respeita a era passada', () => {
+  const cat = criarCatalogo();
+  const a = cat.registrarItemIA({ nome: 'Nuvem Doce', emoji: '☁️', era: 'natureza' });
+  assert.equal(a.ia, true);
+  assert.equal(a.era, 'natureza');
+  const b = cat.registrarItemIA({ nome: 'Coisa', emoji: '✨', era: 'inventada' });
+  assert.equal(b.era, 'ficcao', 'era inválida cai em ficcao');
+});
+
 test('getItem e baseItems', () => {
   const cat = criarCatalogo();
   assert.equal(cat.getItem('agua').nome, 'Água');
