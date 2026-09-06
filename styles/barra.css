@@ -39,12 +39,15 @@ body[data-era="ficcao"]     .barra { border-bottom-color: color-mix(in srgb, var
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  height: 20px;
+  height: 30px;
   width: auto;
-  opacity: 0.9;
+  opacity: 0.95;
   pointer-events: none;
+  filter: drop-shadow(0 0 6px rgba(120, 140, 255, 0.25));
 }
-@media (min-width: 720px) {
+/* só em telas realmente largas — legível de verdade, nunca disputando
+   espaço com perfil/rede/botões (a marca não precisa dominar o gameplay) */
+@media (min-width: 900px) {
   .barra-logo { display: block; }
 }
 

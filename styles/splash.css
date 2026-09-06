@@ -1,0 +1,81 @@
+/* Tela de abertura real — não confundir com a seleção de perfis (essa é o
+   "quem vai jogar", já dentro do universo). O splash aparece antes de tudo,
+   direto no HTML (sem esperar JS), e some assim que o boot termina — ver
+   src/ui/splash.js. */
+.splash {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  overflow: hidden;
+  background:
+    radial-gradient(120% 90% at 50% 30%, rgba(120, 140, 255, 0.12), transparent 60%),
+    #05070f;
+  transition: opacity 420ms ease;
+}
+.splash-decor {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  background:
+    url("../assets/decor/nebulosa.png") -8% -6% / 55% no-repeat,
+    url("../assets/decor/estrelas.png") 92% 82% / 110px no-repeat,
+    url("../assets/decor/estrelas.png") 8% 88% / 70px no-repeat;
+}
+/* brilho/orbe pulsando atrás da logo — a única animação do splash */
+.splash-brilho {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 260px;
+  height: 260px;
+  transform: translate(-50%, -60%);
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(150, 170, 255, 0.35), transparent 70%);
+  animation: splash-pulsar 2.2s ease-in-out infinite;
+}
+@keyframes splash-pulsar {
+  0%, 100% { transform: translate(-50%, -60%) scale(0.92); opacity: 0.7; }
+  50% { transform: translate(-50%, -60%) scale(1.08); opacity: 1; }
+}
+.splash-logo {
+  position: relative;
+  width: min(280px, 70vw);
+  height: auto;
+  filter: drop-shadow(0 0 30px rgba(120, 140, 255, 0.35));
+}
+.splash-mascote {
+  position: relative;
+  width: 64px;
+  height: auto;
+  opacity: 0.95;
+  animation: splash-flutuar 2.6s ease-in-out infinite;
+}
+@keyframes splash-flutuar {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+.splash-tagline {
+  position: relative;
+  margin: 0;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  color: #a9bce0;
+  text-align: center;
+}
+
+.splash.splash-saindo {
+  opacity: 0;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .splash-brilho, .splash-mascote { animation: none; }
+  .splash { transition: opacity 200ms linear; }
+}

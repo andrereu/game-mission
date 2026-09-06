@@ -15,6 +15,7 @@ definir('window', dom.window);
 definir('document', dom.window.document);
 definir('navigator', dom.window.navigator);
 definir('localStorage', dom.window.localStorage);
+definir('sessionStorage', dom.window.sessionStorage);
 definir('HTMLElement', dom.window.HTMLElement);
 definir('Event', dom.window.Event);
 definir('CustomEvent', dom.window.CustomEvent);

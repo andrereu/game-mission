@@ -6,6 +6,7 @@
     <meta name="theme-color" content="#0e1726" />
     <meta name="robots" content="noindex, nofollow" />
     <title>Misturária</title>
+    <style>body{background:#05070f;margin:0;}</style>
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon-16.png" />
@@ -21,8 +22,26 @@
     <link rel="stylesheet" href="styles/eras.css" />
     <link rel="stylesheet" href="styles/carta.css" />
     <link rel="stylesheet" href="styles/barra.css" />
+    <link rel="stylesheet" href="styles/splash.css" />
   </head>
   <body>
+    <div id="splash" class="splash">
+      <div class="splash-decor" aria-hidden="true"></div>
+      <div class="splash-brilho" aria-hidden="true"></div>
+      <img class="splash-logo" src="assets/cartas/logo-completo.png" alt="Misturária" />
+      <img class="splash-mascote" src="assets/cartas/mascote.png" alt="" aria-hidden="true" />
+      <p class="splash-tagline">Combine e crie tudo!</p>
+    </div>
+    <script>
+      // some antes mesmo do app.js (módulo, executa depois do parsing) rodar:
+      // evita o flash do splash reaparecendo num reload interno (trocar de
+      // perfil, ativar sync — ver src/app.js) dentro da mesma aba/sessão.
+      try {
+        if (sessionStorage.getItem('misturaria-splash-visto') === '1') {
+          document.getElementById('splash').style.display = 'none';
+        }
+      } catch { /* sessionStorage indisponível: mostra o splash normalmente */ }
+    </script>
     <main id="jogo">
       <div id="barra" class="barra">
         <button id="perfil" class="barra-perfil" type="button">

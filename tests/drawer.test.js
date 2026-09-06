@@ -144,6 +144,25 @@ test('mover antes de "segurar" vira scroll: não arrasta', async () => {
   assert.equal(solturas.length, 0);
 });
 
+test('botão "Ver todos" chama aoAbrirAlbum', () => {
+  const { cat, store, raiz } = ambiente();
+  let abriu = false;
+  montarDrawer({
+    raiz, store, catalogo: cat, aoEscolherItem() {}, aoAbrirAlbum: () => { abriu = true; },
+  });
+  raiz.querySelector('.drawer-ver-todos').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+  assert.ok(abriu);
+});
+
+test('a barra de progresso reflete a proporção de descobertos', () => {
+  const { cat, store, raiz } = ambiente();
+  montarDrawer({ raiz, store, catalogo: cat, aoEscolherItem() {} });
+  const barra = raiz.querySelector('.drawer-progresso-barra');
+  const total = cat.allItems().length;
+  const esperado = (3 / total) * 100;
+  assert.equal(barra.style.width, `${esperado}%`);
+});
+
 test('adicionarCard insere um novo item', () => {
   const { cat, store, raiz } = ambiente();
   const api = montarDrawer({ raiz, store, catalogo: cat, aoEscolherItem() {} });

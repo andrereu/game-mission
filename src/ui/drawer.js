@@ -5,7 +5,9 @@ import { slug } from '../engine/slug.js';
 const LIMIAR_MOV = 8; // px de movimento antes do "segurar" = virou scroll
 const SEGURAR_MS = 180; // hold pra "pegar" o card e começar a arrastar
 
-export function montarDrawer({ raiz, store, catalogo, aoEscolherItem, aoSoltarItem }) {
+export function montarDrawer({
+  raiz, store, catalogo, aoEscolherItem, aoSoltarItem, aoAbrirAlbum,
+}) {
   const soltar = aoSoltarItem || (() => {});
 
   function posicionarFantasma(el, x, y) {
@@ -69,19 +71,29 @@ export function montarDrawer({ raiz, store, catalogo, aoEscolherItem, aoSoltarIt
     card.addEventListener('pointercancel', encerrar);
   }
 
+  raiz.setAttribute('aria-label', T.inventarioTitulo);
   raiz.innerHTML = `
-    <div class="drawer-cabecalho">
-      <span class="drawer-titulo">${T.inventarioTitulo}</span>
-      <span class="drawer-contador"></span>
+    <div class="drawer-puxador" aria-hidden="true"></div>
+    <div class="drawer-controles">
+      <input class="drawer-busca" type="search" placeholder="${T.buscar}" />
+      <div class="drawer-chips-scroll"><div class="drawer-chips"></div></div>
+      <div class="drawer-progresso">
+        <div class="drawer-progresso-topo">
+          <span class="drawer-contador"></span>
+          <button type="button" class="drawer-ver-todos">${T.verTodos}</button>
+        </div>
+        <div class="drawer-progresso-trilho"><div class="drawer-progresso-barra"></div></div>
+      </div>
     </div>
-    <input class="drawer-busca" type="search" placeholder="${T.buscar}" />
-    <div class="drawer-chips-scroll"><div class="drawer-chips"></div></div>
     <div class="drawer-grade"></div>`;
 
   const elBusca = raiz.querySelector('.drawer-busca');
   const elChips = raiz.querySelector('.drawer-chips');
   const elContador = raiz.querySelector('.drawer-contador');
+  const elBarraProgresso = raiz.querySelector('.drawer-progresso-barra');
   const elGrade = raiz.querySelector('.drawer-grade');
+  const elVerTodos = raiz.querySelector('.drawer-ver-todos');
+  elVerTodos.addEventListener('click', () => aoAbrirAlbum?.());
 
   const erasAtivas = new Set();
   const chipsPorEra = new Map();
@@ -90,8 +102,8 @@ export function montarDrawer({ raiz, store, catalogo, aoEscolherItem, aoSoltarIt
   // fita com scroll horizontal (não dependem mais de caber numa linha só)
   const chipTodos = document.createElement('button');
   chipTodos.type = 'button';
-  chipTodos.className = 'drawer-chip';
-  chipTodos.textContent = T.chipTodos;
+  chipTodos.className = 'drawer-chip drawer-chip-todos';
+  chipTodos.innerHTML = `<span class="drawer-chip-icone">✨</span><span class="drawer-chip-nome">${T.chipTodos}</span>`;
   chipTodos.setAttribute('aria-pressed', 'true');
   chipTodos.addEventListener('click', () => {
     erasAtivas.clear();
@@ -109,7 +121,7 @@ export function montarDrawer({ raiz, store, catalogo, aoEscolherItem, aoSoltarIt
     const chip = document.createElement('button');
     chip.type = 'button';
     chip.className = 'drawer-chip';
-    chip.textContent = `${T.erasIcone[era] || ''} ${T.eras[era]}`;
+    chip.innerHTML = `<span class="drawer-chip-icone">${T.erasIcone[era] || ''}</span><span class="drawer-chip-nome">${T.eras[era]}</span>`;
     chip.dataset.era = era;
     chip.setAttribute('aria-pressed', 'false');
     chip.addEventListener('click', () => {
@@ -153,10 +165,10 @@ export function montarDrawer({ raiz, store, catalogo, aoEscolherItem, aoSoltarIt
       return true;
     });
 
-    elContador.textContent = T.contador(
-      Object.keys(store.getSave().descobertos).length,
-      catalogo.allItems().length,
-    );
+    const total = catalogo.allItems().length;
+    const feitos = Object.keys(store.getSave().descobertos).length;
+    elContador.textContent = T.contador(feitos, total);
+    elBarraProgresso.style.width = `${total ? Math.min(100, (feitos / total) * 100) : 0}%`;
 
     elGrade.innerHTML = '';
     for (const { item, meta } of lista) {

@@ -2,7 +2,8 @@
 
 /* Pequenos: menos interface, alvos maiores. */
 body[data-modo="pequenos"] .drawer-busca,
-body[data-modo="pequenos"] .drawer-chips,
+body[data-modo="pequenos"] .drawer-chips-scroll,
+body[data-modo="pequenos"] .drawer-ver-todos,
 body[data-modo="pequenos"] #arvore,
 body[data-modo="pequenos"] #eras {
   display: none;

@@ -1,37 +1,43 @@
-/* inventário como parte do mesmo universo do canvas: fundo com um traço de
-   nebulosa bem discreto (mesma família visual do canvas/cartas) + friso na
-   cor da era atual, igual a barra de topo já faz — não é uma tela separada. */
+/* Inventário: no mobile/tablet, um painel cósmico ("bottom sheet") que se
+   integra ao canvas — não uma gaveta administrativa por baixo. No desktop
+   continua lateral, mas com a mesma hierarquia (busca → filtros →
+   progresso → grade). Ver direção C aprovada no mockup. */
 .drawer {
-  --drawer-acento: color-mix(in srgb, var(--era-elementos) 22%, var(--cor-borda));
-  width: 280px;
+  --drawer-acento: color-mix(in srgb, var(--era-elementos) 55%, #7aa2ff);
+  width: 300px;
   flex-shrink: 0;
   background:
     radial-gradient(120% 70% at 100% 0%, color-mix(in srgb, var(--era-elementos) 7%, transparent), transparent 60%),
     var(--cor-drawer);
-  border-left: 1px solid var(--drawer-acento);
+  border-left: 1px solid color-mix(in srgb, var(--drawer-acento) 35%, var(--cor-borda));
   display: flex;
   flex-direction: column;
+  min-height: 0;
 }
-body[data-era="natureza"]   .drawer { --drawer-acento: color-mix(in srgb, var(--era-natureza) 22%, var(--cor-borda)); }
-body[data-era="vida"]       .drawer { --drawer-acento: color-mix(in srgb, var(--era-vida) 22%, var(--cor-borda)); }
-body[data-era="tecnologia"] .drawer { --drawer-acento: color-mix(in srgb, var(--era-tecnologia) 22%, var(--cor-borda)); }
-body[data-era="cultura"]    .drawer { --drawer-acento: color-mix(in srgb, var(--era-cultura) 22%, var(--cor-borda)); }
-body[data-era="ficcao"]     .drawer { --drawer-acento: color-mix(in srgb, var(--era-ficcao) 22%, var(--cor-borda)); }
+body[data-era="natureza"]   .drawer { --drawer-acento: color-mix(in srgb, var(--era-natureza) 55%, #7affc2); }
+body[data-era="vida"]       .drawer { --drawer-acento: color-mix(in srgb, var(--era-vida) 55%, #ffb37a); }
+body[data-era="tecnologia"] .drawer { --drawer-acento: color-mix(in srgb, var(--era-tecnologia) 55%, #c47aff); }
+body[data-era="cultura"]    .drawer { --drawer-acento: color-mix(in srgb, var(--era-cultura) 55%, #ffe27a); }
+body[data-era="ficcao"]     .drawer { --drawer-acento: color-mix(in srgb, var(--era-ficcao) 55%, #ff7aac); }
 
-/* "Minhas descobertas" + contagem primeiro — a gaveta abre falando de
-   progresso, não de formulário */
-.drawer-cabecalho { display: flex; align-items: baseline; justify-content: space-between; padding: 10px 12px 2px; }
-.drawer-titulo { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; opacity: 0.65; }
-.drawer-contador { font-size: 14px; font-weight: 700; opacity: 0.95; }
+.drawer-puxador { display: none; }
 
-.drawer-busca { margin: 8px 10px; padding: 8px; border-radius: 8px; border: 1px solid var(--cor-borda); background: #0e1930; color: var(--cor-texto); }
+.drawer-controles {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px 4px;
+}
 
-/* chips de era: fita com scroll horizontal real — não dependem mais de
-   caber numa linha só (6 eras já espremiam no mobile) */
+.drawer-busca { padding: 9px 12px; border-radius: 12px; border: 1px solid var(--cor-borda); background: #0e1930; color: var(--cor-texto); font-size: 13px; }
+
+/* filtros de era: seletores visuais (ícone + nome curto), não chips de
+   formulário administrativo. "Todos" sempre primeiro. */
 .drawer-chips-scroll {
   position: relative;
   overflow-x: auto;
   scrollbar-width: none;
+  margin: 0 -4px;
 }
 .drawer-chips-scroll::-webkit-scrollbar { display: none; }
 .drawer-chips-scroll::after {
@@ -42,9 +48,65 @@ body[data-era="ficcao"]     .drawer { --drawer-acento: color-mix(in srgb, var(--
   background: linear-gradient(90deg, transparent, var(--cor-drawer));
   pointer-events: none;
 }
-.drawer-chips { display: flex; flex-wrap: nowrap; gap: 6px; padding: 0 10px 10px; width: max-content; }
-.drawer-chip { flex-shrink: 0; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--cor-borda); background: transparent; color: var(--cor-texto); font-size: 12px; cursor: pointer; }
-.drawer-chip[aria-pressed="true"] { background: var(--cor-borda); }
+.drawer-chips { display: flex; flex-wrap: nowrap; gap: 6px; padding: 2px 4px 6px; width: max-content; }
+.drawer-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  min-width: 54px;
+  padding: 6px 8px 5px;
+  border-radius: 14px;
+  border: 1px solid var(--cor-borda);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--cor-texto);
+  cursor: pointer;
+  transition: border-color 120ms ease, background 120ms ease, box-shadow 120ms ease;
+}
+.drawer-chip-icone { font-size: 18px; line-height: 1; }
+.drawer-chip-nome { font-size: 9.5px; line-height: 1.1; white-space: nowrap; opacity: 0.85; }
+.drawer-chip[aria-pressed="true"] {
+  border-color: var(--drawer-acento);
+  background: color-mix(in srgb, var(--drawer-acento) 30%, transparent);
+  box-shadow: 0 0 12px 1px color-mix(in srgb, var(--drawer-acento) 55%, transparent);
+}
+.drawer-chip[aria-pressed="true"] .drawer-chip-nome { opacity: 1; }
+
+/* progresso da coleção — depois dos filtros, com acesso ao Álbum */
+.drawer-progresso { padding: 2px 2px 8px; }
+.drawer-progresso-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.drawer-contador { font-size: 13px; font-weight: 700; opacity: 0.92; }
+.drawer-ver-todos {
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  background: none;
+  border: none;
+  color: var(--drawer-acento);
+  cursor: pointer;
+  padding: 2px 2px;
+  white-space: nowrap;
+}
+.drawer-progresso-trilho {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+.drawer-progresso-barra {
+  height: 100%;
+  border-radius: 999px;
+  width: 0%;
+  background: linear-gradient(90deg, var(--era-elementos), var(--drawer-acento));
+  transition: width 350ms ease;
+}
 
 .drawer-grade {
   flex: 1;
@@ -54,7 +116,7 @@ body[data-era="ficcao"]     .drawer { --drawer-acento: color-mix(in srgb, var(--
   grid-auto-rows: min-content;
   align-content: start;
   gap: 8px;
-  padding: 10px 10px max(10px, env(safe-area-inset-bottom));
+  padding: 6px 12px max(10px, env(safe-area-inset-bottom));
 }
 
 /* card virou wrapper quieto: a orbe compacta é quem carrega a cor/brilho */
@@ -96,8 +158,41 @@ body[data-era="ficcao"]     .drawer { --drawer-acento: color-mix(in srgb, var(--
 @media (prefers-reduced-motion: reduce) {
   .orbe-gaveta .card-icone { animation: none; }
 }
-@media (max-width: 640px) {
+
+/* ---------- mobile / tablet: painel cósmico inferior (direção C) ---------- */
+@media (max-width: 1024px) {
   #jogo { flex-direction: column; }
-  .drawer { width: auto; height: 44%; border-left: 0; border-top: 2px solid var(--drawer-acento); }
+  .drawer {
+    width: auto;
+    height: 48%;
+    max-height: 62vh;
+    border-left: 0;
+    border-radius: 24px 24px 0 0;
+    background:
+      radial-gradient(130% 55% at 50% -6%, color-mix(in srgb, var(--drawer-acento) 20%, transparent), transparent 65%),
+      url("../assets/decor/estrelas.png") 97% 1% / 40px no-repeat,
+      linear-gradient(180deg, #0d1428 0%, #080b1a 60%, #060812 100%);
+    box-shadow:
+      0 0 0 1.5px color-mix(in srgb, var(--drawer-acento) 55%, transparent),
+      0 -6px 10px -4px color-mix(in srgb, var(--drawer-acento) 30%, transparent),
+      0 -18px 44px -20px rgba(0, 0, 0, 0.7);
+  }
+  .drawer-puxador {
+    display: block;
+    width: 42px;
+    height: 5px;
+    margin: 9px auto 2px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--drawer-acento) 75%, white 15%);
+    opacity: 0.85;
+    flex-shrink: 0;
+  }
+  .drawer-grade { grid-template-columns: repeat(4, 1fr); gap: 8px 6px; }
+  .orbe-gaveta { --orbe-tam: 56px; }
+  .orbe-gaveta .card-icone { font-size: 26px; }
+}
+
+@media (max-width: 340px) {
+  /* telas realmente estreitas: 4 colunas apertaria demais o toque */
   .drawer-grade { grid-template-columns: repeat(3, 1fr); }
 }

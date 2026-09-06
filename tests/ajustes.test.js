@@ -38,6 +38,28 @@ test('ligar a IA chama set com o valor booleano', () => {
   assert.deepEqual(set, [['iaLigada', true]]);
 });
 
+test('cada linha mostra ícone, título e descrição (não é mais um checkbox nu)', () => {
+  const { api, raiz } = ambiente({ som: true, iaLigada: false });
+  api.abrir();
+  const linhas = raiz.querySelectorAll('.ajuste-linha');
+  assert.equal(linhas.length, 2);
+  for (const l of linhas) {
+    assert.ok(l.querySelector('.ajuste-icone').textContent.length > 0);
+    assert.ok(l.querySelector('.ajuste-titulo').textContent.length > 0);
+    assert.ok(l.querySelector('.ajuste-desc').textContent.length > 0);
+    assert.ok(l.querySelector('input[type="checkbox"]'), 'o input real continua lá, só a aparência muda');
+  }
+});
+
+test('a descrição da IA reflete o funcionamento real (consultada quando não existe combo)', () => {
+  const { api, raiz } = ambiente({ som: false, iaLigada: false });
+  api.abrir();
+  const desc = raiz.querySelector('input[data-chave="iaLigada"]')
+    .closest('.ajuste-linha').querySelector('.ajuste-desc').textContent;
+  assert.match(desc, /não existe/i);
+  assert.doesNotMatch(desc, /dica/i);
+});
+
 test('fechar tira o overlay', () => {
   const { api, raiz } = ambiente({ som: false, iaLigada: false });
   api.abrir();

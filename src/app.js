@@ -27,6 +27,9 @@ import {
   sincronizar, empurrar,
 } from './engine/sync.js';
 import { T } from './data/textos.js';
+import { prepararSplash, esconderSplash } from './ui/splash.js';
+
+prepararSplash();
 
 async function iniciar() {
   const catalogo = criarCatalogo();
@@ -64,6 +67,7 @@ async function iniciar() {
     // Primeira vez (ou todos apagados): não inicia o jogo até escolher.
     // aoEscolher recarrega a página, então o boot recomeça já com um ativo.
     seletor.abrir(perfis);
+    esconderSplash();
     return;
   }
 
@@ -117,7 +121,7 @@ async function iniciar() {
   // cada descoberta (nunca coordenada fixa) via getBoundingClientRect
   // dentro de animarVooParaDestino.
   function destinoRecompensa() {
-    if (modoPequenos) return elDrawer.querySelector('.drawer-cabecalho');
+    if (modoPequenos) return elDrawer.querySelector('.drawer-progresso-topo');
     return elEras;
   }
 
@@ -174,6 +178,7 @@ async function iniciar() {
       if (!dentro) return; // soltou fora do tabuleiro: ignora
       canvas.soltarItem(id, clientX - r.left, clientY - r.top);
     },
+    aoAbrirAlbum: () => album.abrir(),
   });
 
   // limpar sem alerta bloqueante: some tudo e oferece "Desfazer" por alguns segundos
@@ -258,9 +263,11 @@ async function iniciar() {
   });
 
   montarStatusRede({ el: document.getElementById('rede'), T });
+  esconderSplash();
 }
 
 iniciar().catch((err) => {
+  esconderSplash();
   console.error(err);
 });
 
