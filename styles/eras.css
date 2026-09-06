@@ -1,10 +1,41 @@
-/* Fundo do canvas conforme a era mais avançada alcançada. Tons sutis e
-   escuros pra não atrapalhar a leitura das peças. */
-body[data-era="natureza"] .canvas { background: linear-gradient(160deg, #263a4f, #24422f); }
-body[data-era="vida"] .canvas { background: linear-gradient(160deg, #33323f, #3b2c28); }
-body[data-era="tecnologia"] .canvas { background: linear-gradient(160deg, #2b3150, #342c4a); }
-body[data-era="cultura"] .canvas { background: linear-gradient(160deg, #35374d, #3a3524); }
-body[data-era="ficcao"] .canvas { background: linear-gradient(160deg, #34324e, #3a2438); }
+/* Fundo do canvas: um gradiente escuro por era + uma camada de "céu"
+   (nébula + estrelas) que flutua devagar. Tudo atrás das peças. */
+:root {
+  --ceu-1: #1d2a4a;
+  --ceu-2: #14203c;
+  --ceu-brilho: rgba(120, 170, 255, 0.14);
+}
+body[data-era="natureza"] { --ceu-1: #1c3346; --ceu-2: #16321f; --ceu-brilho: rgba(90, 210, 130, 0.14); }
+body[data-era="vida"]     { --ceu-1: #322a30; --ceu-2: #34231e; --ceu-brilho: rgba(255, 150, 110, 0.14); }
+body[data-era="tecnologia"] { --ceu-1: #232a4a; --ceu-2: #2b2440; --ceu-brilho: rgba(170, 130, 255, 0.14); }
+body[data-era="cultura"]  { --ceu-1: #2f2f44; --ceu-2: #35301d; --ceu-brilho: rgba(255, 210, 120, 0.14); }
+body[data-era="ficcao"]   { --ceu-1: #2e2b46; --ceu-2: #331e33; --ceu-brilho: rgba(255, 120, 180, 0.15); }
+
+.canvas { background: linear-gradient(165deg, var(--ceu-1), var(--ceu-2)); }
+.canvas-mundo { z-index: 1; }
+.canvas::before {
+  content: "";
+  position: absolute;
+  inset: -8%;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(58% 46% at 28% 18%, var(--ceu-brilho), transparent 70%),
+    radial-gradient(46% 40% at 82% 88%, var(--ceu-brilho), transparent 70%),
+    radial-gradient(1.6px 1.6px at 20px 28px, rgba(255,255,255,0.5), transparent),
+    radial-gradient(1.4px 1.4px at 96px 66px, rgba(255,255,255,0.38), transparent),
+    radial-gradient(1.2px 1.2px at 150px 130px, rgba(255,255,255,0.32), transparent),
+    radial-gradient(1.5px 1.5px at 60px 170px, rgba(255,255,255,0.28), transparent);
+  background-size: 100% 100%, 100% 100%, 200px 200px, 200px 200px, 200px 200px, 200px 200px;
+  animation: ceu-drift 42s ease-in-out infinite alternate;
+}
+@keyframes ceu-drift {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to   { transform: translate3d(2.5%, -2%, 0) scale(1.06); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .canvas::before { animation: none; }
+}
 
 /* ---- comemoração "nova era" ---- */
 .era-nova-overlay {

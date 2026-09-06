@@ -1,9 +1,18 @@
 .canvas { position: relative; flex: 1; overflow: hidden; background: var(--cor-canvas); touch-action: none; }
 .canvas-mundo { position: absolute; inset: 0; transform-origin: 0 0; }
 .peca { position: absolute; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 8px; border-radius: 10px; background: var(--cor-peca); border: 2px solid var(--cor-peca-borda); cursor: grab; user-select: none; }
-.peca .peca-icone { font-size: 28px; line-height: 1; }
+.peca .peca-icone { font-size: 28px; line-height: 1; animation: icone-bob 4s ease-in-out infinite alternate; }
 .peca .peca-nome { font-size: 12px; }
 .peca.arrastando { cursor: grabbing; opacity: 0.85; }
+
+/* varia o compasso pra não pulsarem em uníssono */
+.canvas-mundo > .peca:nth-of-type(3n) .peca-icone { animation-delay: -1.3s; }
+.canvas-mundo > .peca:nth-of-type(3n+1) .peca-icone { animation-delay: -2.6s; }
+
+@keyframes icone-bob {
+  from { transform: translateY(0); }
+  to   { transform: translateY(-2px); }
+}
 
 /* aviso acessível de "nada aconteceu": lido por leitor de tela, invisível na tela */
 .canvas-aviso { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
@@ -40,4 +49,5 @@
 @media (prefers-reduced-motion: reduce) {
   .peca.surgindo, .peca.quique { animation: none; }
   .peca-pensando { animation: none; }
+  .peca .peca-icone { animation: none; }
 }

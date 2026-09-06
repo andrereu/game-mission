@@ -24,3 +24,13 @@ body[data-modo="pequenos"] .drawer-card .card-nome { font-size: 14px; }
 
 /* quique mais suave (menos "erro" na cara) */
 body[data-modo="pequenos"] .peca.quique { animation-duration: 200ms; }
+
+/* bob um tiquinho mais brincalhão pros pequenos */
+body[data-modo="pequenos"] .peca .peca-icone,
+body[data-modo="pequenos"] .drawer-card .card-icone {
+  animation-name: icone-bob-grande;
+}
+@keyframes icone-bob-grande {
+  from { transform: translateY(1px) scale(1); }
+  to   { transform: translateY(-4px) scale(1.04); }
+}
