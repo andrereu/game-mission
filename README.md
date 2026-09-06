@@ -102,6 +102,13 @@ Ainda pendente: validar toque num aparelho real; manter o Realtime Database
 precisar). Roadmap com sabor Cell to Singularity em `docs/superpowers/` /
 memória — próximo é a espinha de progressão de eras.
 
+### Roadmap (sabor Cell to Singularity)
+
+Feito: catálogo 283/374 · modo por perfil (Pequenos/Médio/Completo) · espinha de
+eras (linha do tempo "Eras", comemoração "NOVA ERA!", fundo do canvas por era).
+A seguir: passe sensorial (parallax/partículas/trilha por era) · árvore como mapa
+principal · álbum/figurinhas · dioramas por era · pedido do dia.
+
 ### Feito na fase 2
 
 - **Árvore de descobertas** (`src/ui/arvore.js`) — grafo em tela cheia do que já
