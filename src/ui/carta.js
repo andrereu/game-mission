@@ -111,6 +111,29 @@ export function criarElementoCarta(dados, { T, comRodape = true }) {
   return carta;
 }
 
+// Figurinha compacta do miolo do Álbum: mesma identidade visual da carta
+// (fundo/moldura/brilho da raridade, orbe do item, nome, era) sem os blocos
+// de texto nem os controles da carta completa — tocar nela abre a carta de
+// verdade (ver montarCartaOverlay), nunca amplia a própria miniatura.
+export function criarFigurinhaCompacta(dados, { T }) {
+  const {
+    item, meta, raridade, alemDoMapa,
+  } = dados;
+  const eraOrbe = item.ia ? 'ia' : item.era;
+  const el = document.createElement('button');
+  el.type = 'button';
+  el.className = `figurinha-mini raridade-${raridade}`;
+  el.style.setProperty('--cor-raro', RARO_COR[raridade]);
+  el.dataset.id = item.id;
+  el.setAttribute('aria-label', item.nome);
+  el.innerHTML = `
+    <span class="figurinha-mini-selo">${RARO_LABEL[raridade]}</span>
+    <span class="orbe orbe-figurinha-mini" data-era="${eraOrbe}"${meta.fonte === 'ia' ? ' data-fonte="ia"' : ''}${alemDoMapa ? ` data-alem="mapa" title="${T.alemDoMapaTitulo}"` : ''}>${iconeHTML(item)}</span>
+    <span class="figurinha-mini-nome">${item.nome}</span>
+  `;
+  return el;
+}
+
 export function montarCartaOverlay({ raiz, store, catalogo, T }) {
   let overlay = null;
 

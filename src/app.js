@@ -13,7 +13,7 @@ import { montarArvore } from './ui/arvore.js';
 import { montarAjustes } from './ui/ajustes.js';
 import { montarStatusRede } from './ui/rede.js';
 import { mostrarDesfazer } from './ui/desfazer.js';
-import { montarAlbum } from './ui/eras.js';
+import { montarAlbum } from './ui/album.js';
 import { mostrarEraNova } from './ui/era-nova.js';
 import { mostrarAtualizacaoDisponivel } from './ui/atualizacao.js';
 import { erasAlcancadas, eraMaisAvancada, progressoPorEra } from './engine/eras.js';

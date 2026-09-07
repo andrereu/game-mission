@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { criarCatalogo } from '../src/engine/catalogo.js';
 import { criarStore } from '../src/engine/state.js';
-import { montarAlbum } from '../src/ui/eras.js';
+import { montarAlbum } from '../src/ui/album.js';
 import { montarCartaOverlay } from '../src/ui/carta.js';
 import { T } from '../src/data/textos.js';
 
@@ -121,9 +121,9 @@ test('clicar numa figurinha descoberta do álbum abre a carta correspondente', (
   });
   const album = montarAlbum({ raiz, store, catalogo: cat, T });
   album.abrir();
+  raiz.querySelector('.album-capa-botao').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
 
-  const figAgua = [...raiz.querySelectorAll('.figurinha.descoberta')]
-    .find((f) => f.dataset.id === 'agua');
+  const figAgua = raiz.querySelector('.figurinha-mini[data-id="agua"]');
   assert.ok(figAgua);
   figAgua.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
 

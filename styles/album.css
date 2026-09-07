@@ -1,0 +1,368 @@
+/* Álbum de figurinhas — usa os PNGs canônicos de assets/album/ (capa, fundo
+   cósmico, base do miolo e overlays temáticos por era). Nunca recriar essas
+   artes em SVG/CSS: aqui só compomos camadas (base → figurinhas → overlay) e
+   cuidamos de responsividade, paginação e acabamento dos controles. */
+.album-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  background: var(--cor-fundo);
+  overflow: hidden;
+}
+
+/* ---- capa: tela de entrada ---- */
+.album-capa-fundo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.album-capa-fechar {
+  position: absolute;
+  top: max(12px, env(safe-area-inset-top));
+  right: max(12px, env(safe-area-inset-right));
+  z-index: 2;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(10, 14, 26, 0.55);
+  color: #fff;
+  cursor: pointer;
+}
+.album-capa-botao {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+.album-capa-imagem {
+  max-width: min(78vw, 420px);
+  max-height: 68dvh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 18px 40px rgba(0, 0, 0, 0.55));
+  transition: transform 200ms ease;
+}
+.album-capa-botao:hover .album-capa-imagem,
+.album-capa-botao:focus-visible .album-capa-imagem {
+  transform: scale(1.03);
+}
+.album-capa-botao:focus-visible { outline: none; }
+.album-capa-botao:focus-visible .album-capa-imagem {
+  filter: drop-shadow(0 18px 40px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 0 3px #fff);
+}
+.album-capa-dica {
+  padding: 6px 16px;
+  border-radius: 999px;
+  background: rgba(10, 14, 26, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  animation: album-capa-pulsar 2.4s ease-in-out infinite;
+}
+@keyframes album-capa-pulsar {
+  0%, 100% { opacity: 0.75; transform: translateY(0); }
+  50% { opacity: 1; transform: translateY(-2px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .album-capa-dica { animation: none; }
+  .album-capa-botao:hover .album-capa-imagem { transform: none; }
+}
+
+/* ---- cabeçalho: mesma linguagem lúdica do resto do jogo ---- */
+.album-cabecalho {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--cor-borda);
+  background: linear-gradient(
+    100deg,
+    color-mix(in srgb, var(--era-elementos) 26%, transparent),
+    color-mix(in srgb, var(--era-natureza) 22%, transparent) 22%,
+    color-mix(in srgb, var(--era-vida) 20%, transparent) 42%,
+    color-mix(in srgb, var(--era-tecnologia) 20%, transparent) 62%,
+    color-mix(in srgb, var(--era-cultura) 22%, transparent) 82%,
+    color-mix(in srgb, var(--era-ficcao) 26%, transparent)
+  ), var(--cor-drawer);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.album-cabecalho-estrelas {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(1.4px 1.4px at 8% 30%, rgba(255,255,255,0.55), transparent),
+    radial-gradient(1.2px 1.2px at 22% 70%, rgba(255,255,255,0.4), transparent),
+    radial-gradient(1.6px 1.6px at 46% 20%, rgba(255,255,255,0.5), transparent),
+    radial-gradient(1.2px 1.2px at 64% 65%, rgba(255,255,255,0.35), transparent),
+    radial-gradient(1.4px 1.4px at 82% 25%, rgba(255,255,255,0.45), transparent),
+    radial-gradient(1.2px 1.2px at 94% 60%, rgba(255,255,255,0.35), transparent);
+}
+.album-cabecalho-logo { position: relative; height: 26px; width: auto; flex-shrink: 0; filter: drop-shadow(0 0 6px rgba(0, 0, 0, 0.35)); }
+.album-cabecalho-titulo { position: relative; flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.album-cabecalho h2 { margin: 0; font-size: 15px; font-weight: 800; }
+.album-cabecalho-contagem { font-size: 11.5px; opacity: 0.9; }
+.album-fechar {
+  position: relative;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(10, 14, 26, 0.45);
+  color: var(--cor-texto);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* ---- atalhos de coleção (6 eras + IA) ---- */
+.album-atalhos {
+  display: flex;
+  gap: 7px;
+  padding: 8px 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  flex-shrink: 0;
+}
+.album-atalhos::-webkit-scrollbar { display: none; }
+.album-atalho {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1.5px solid color-mix(in srgb, var(--cor-atalho, var(--cor-borda)) 55%, transparent);
+  background: color-mix(in srgb, var(--cor-atalho, transparent) 14%, rgba(255, 255, 255, 0.03));
+  color: var(--cor-texto);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: box-shadow 120ms ease, transform 120ms ease;
+}
+.album-atalho[aria-current="true"] {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--cor-atalho, var(--cor-borda)) 70%, transparent), 0 0 10px 1px color-mix(in srgb, var(--cor-atalho, var(--cor-borda)) 55%, transparent);
+  transform: scale(1.08);
+}
+.album-atalho[data-era="elementos"] { --cor-atalho: var(--era-elementos); }
+.album-atalho[data-era="natureza"] { --cor-atalho: var(--era-natureza); }
+.album-atalho[data-era="vida"] { --cor-atalho: var(--era-vida); }
+.album-atalho[data-era="tecnologia"] { --cor-atalho: var(--era-tecnologia); }
+.album-atalho[data-era="cultura"] { --cor-atalho: var(--era-cultura); }
+.album-atalho[data-era="ficcao"] { --cor-atalho: var(--era-ficcao); }
+.album-atalho[data-era="ia"] { --cor-atalho: var(--cor-orbe-ia); color: var(--cor-orbe-ia); }
+
+.album-colecao-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px 6px;
+  flex-shrink: 0;
+}
+.album-colecao-contagem { font-size: 12.5px; font-weight: 700; opacity: 0.85; }
+.album-selo {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--era-cultura);
+  color: #1a1408;
+}
+
+/* ---- miolo: base + overlay + slots, com setas de navegação flutuando por
+   cima da arte (não dividindo a largura com ela) — no mobile isso devolve
+   uma faixa e tanto de largura útil pra página, que já é bem vertical ---- */
+.album-miolo {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  padding: 4px 4px max(4px, env(safe-area-inset-bottom));
+}
+.album-pagina-area {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.album-nav {
+  position: absolute;
+  top: 50%;
+  z-index: 3;
+  transform: translateY(-50%);
+  background: rgba(10, 14, 26, 0.55);
+}
+.album-nav-anterior { left: 2px; }
+.album-nav-proxima { right: 2px; }
+/* dimensionada em JS (ver ajustarMoldura em src/ui/album.js) com a proporção
+   exata da arte — 3344×1882 no desktop, 2048×3072 no mobile — pra base,
+   overlay e slots (todos em % dessa caixa) ficarem sempre alinhados com o
+   que é realmente desenhado, sem a barra de "object-fit: contain" desalinhar
+   os slots da arte visível. */
+.album-pagina-moldura {
+  position: relative;
+}
+.album-pagina-base, .album-pagina-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  user-select: none;
+}
+/* overlay temático sempre por cima das figurinhas — preserva folhagem,
+   moldura e acabamento das páginas por sobre os slots */
+.album-pagina-overlay { z-index: 2; }
+.album-pagina-slots {
+  position: absolute;
+  z-index: 1;
+}
+.album-slots {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  gap: 2%;
+  align-content: start;
+  justify-items: stretch;
+  align-items: stretch;
+}
+/* mesma proporção 3344x1882 (desktop) / 2048x3072 (mobile) do container das
+   imagens — os slots ficam ancorados na área livre de decoração de cada
+   metade/página (ver AREA_SEGURA em src/ui/album.js) */
+.album-miolo[data-modo="desktop"] .album-pagina-slots {
+  top: 29%; bottom: 18%;
+}
+.album-miolo[data-modo="desktop"] .album-pagina-slots-esquerda { left: 12%; right: 55%; }
+.album-miolo[data-modo="desktop"] .album-pagina-slots-direita { left: 55%; right: 11%; }
+.album-miolo[data-modo="mobile"] .album-pagina-slots-esquerda {
+  top: 24%; bottom: 42%; left: 14%; right: 13%;
+}
+.album-fim-colecao {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  opacity: 0.7;
+  text-align: center;
+}
+
+.album-nav {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #fff;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+.album-nav:disabled { opacity: 0.35; cursor: default; }
+
+.album-rodape {
+  flex-shrink: 0;
+  padding: 4px 14px max(6px, env(safe-area-inset-bottom));
+  text-align: center;
+  font-size: 11.5px;
+  opacity: 0.7;
+}
+
+/* ---- figurinha: versão compacta da carta (mesma identidade, sem os
+   blocos de texto/controles da carta completa) ---- */
+.figurinha-mini {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 100%;
+  height: 100%;
+  padding: 3px;
+  border: 0;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--cor-raro) 12%, rgba(8, 13, 28, 0.35));
+  box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--cor-raro) 55%, transparent);
+  color: var(--cor-texto);
+  font: inherit;
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+.figurinha-mini:hover, .figurinha-mini:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 0 0 2px var(--cor-raro), 0 6px 14px -6px color-mix(in srgb, var(--cor-raro) 60%, transparent);
+  outline: none;
+}
+.figurinha-mini-selo {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  font-size: 7px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  padding: 1px 4px;
+  border-radius: 999px;
+  background: var(--cor-raro);
+  color: #10131c;
+  line-height: 1.4;
+}
+.orbe-figurinha-mini { --orbe-tam: min(40px, 65%); }
+.figurinha-mini-nome {
+  font-size: 9px;
+  line-height: 1.15;
+  text-align: center;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.figurinha-vazia {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: rgba(10, 14, 26, 0.22);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+.figurinha-vazia-marca { font-size: 14px; font-weight: 700; opacity: 0.35; }
+
+@media (prefers-reduced-motion: reduce) {
+  .figurinha-mini { transition: none; }
+}
+
+/* ---- mobile: mais compacto ---- */
+@media (max-width: 640px) {
+  .album-cabecalho-logo { display: none; }
+  .album-atalho { width: 28px; height: 28px; font-size: 13px; }
+  .album-nav { width: 32px; height: 32px; font-size: 16px; }
+}
+
+@media (max-height: 480px) and (orientation: landscape) {
+  .album-cabecalho { padding: 6px 10px; }
+  .album-atalhos { padding: 4px 10px; }
+  .album-colecao-info { padding: 0 10px 4px; }
+}
