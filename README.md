@@ -1,166 +1,197 @@
 # Misturária
 
-Jogo de descobertas estilo Infinite Craft, pt-BR, para jogar online e offline.
-Arraste dois itens no canvas para descobrir um terceiro. Cada descoberta nova ganha um
-destaque em tela cheia antes de virar um card na gaveta.
+Misturária é um jogo infantil de descobertas em português do Brasil. A criança combina dois elementos no canvas, descobre novos itens, acompanha sua evolução pelas eras e coleciona cartas no Álbum.
 
-Jogo jogável offline — canvas, gaveta com busca e filtro, destaque de descoberta,
-árvore de descobertas, PWA instalável, 283 itens e 374 combinações em pt_BR
-(com Pikachu e Homem-Aranha e SVGs próprios), IA desligada.
+O projeto nasceu como uma experiência familiar inspirada na liberdade de combinação de Infinite Craft e na sensação de evolução de Cell to Singularity, mas possui catálogo, progressão, identidade visual e regras próprias.
 
-## Como jogar (Windows)
+**Jogar:** https://dist-vert-theta.vercel.app
 
-Você precisa do **Node.js** instalado (https://nodejs.org — versão 20.6 ou mais nova).
+> Projeto pessoal, sem anúncios, com funcionamento online e offline. O repositório é público para documentação e acompanhamento da evolução do jogo.
 
-**Opção fácil:** dê dois cliques em **`Jogar Misturaria.bat`**. Ele abre o navegador e liga o jogo.
+## Estado atual
 
-**Pelo terminal:**
+- 283 itens oficiais
+- 394 combinações curadas
+- 6 eras: Elementos, Natureza, Vida, Tecnologia, Cultura e Ficção
+- 256 testes automatizados passando
+- PWA instalável em celular e desktop
+- Interface responsiva para mobile, tablet e desktop
+- Sincronização opcional entre aparelhos
+- IA opcional e desligada por padrão
 
-```
-npm start
-```
+Versão de referência: commit b3037dd.
 
-Depois abra **http://localhost:4173** no navegador. Para parar o servidor: `Ctrl+C`.
+## Como jogar
 
-> Não dá para abrir o `index.html` direto (dois cliques no arquivo) — o navegador bloqueia
-> os módulos. Tem que passar pelo `npm start` / pelo `.bat`.
+Arraste ou toque em dois itens para colocá-los no canvas. Quando eles formam uma combinação conhecida, um novo elemento é criado e registrado no perfil da criança.
 
-### Offline
+Uma descoberta inédita:
 
-Depois de abrir uma vez, o jogo funciona sem internet — é só rodar `npm start` de novo.
-O progresso (itens descobertos e o que está no canvas) fica salvo no próprio navegador,
-por navegador/computador.
+1. permanece como peça no canvas;
+2. abre sua carta colecionável;
+3. voa visualmente até o Álbum;
+4. passa a aparecer no inventário, na Árvore e no Álbum oficial.
 
-**Instalar como app:** com o jogo aberto no Chrome ou Edge, use o ícone de instalar na
-barra de endereço (ou menu → "Instalar Misturária"). Vira um app com janela e ícone
-próprios e funciona offline pelo cache. Nos aparelhos dos filhos, o caminho é publicar
-(abaixo) e usar "Adicionar à tela inicial".
+O catálogo possui rotas alternativas para combinações intuitivas. As receitas oficiais funcionam sem internet e não dependem da IA.
 
-### Um perfil por filho
+## Principais recursos
 
-No primeiro acesso o jogo pergunta "Quem vai jogar?" e você cria um perfil por criança
-(nome + cor + **modo**). Cada perfil tem o save próprio (descobertas, canvas, ajustes).
-O jogo abre direto no último perfil usado; o botão no canto superior-esquerdo troca de
-perfil ou cria outro.
+### Canvas e inventário
 
-**Modo** (você define, troca pelo lápis no card do perfil, não é dificuldade de jogo):
-- **Pequenos** — sem busca, sem filtros de era, sem Árvore; peças e cards maiores; área
-  de encaixe folgada pra fundir. Pra quem ainda não lê.
-- **Médio** — o padrão.
-- **Completo** — tudo à mostra.
+- Peças em formato de orbe, com identidade cósmica.
+- Drawer inferior no mobile/tablet e painel lateral no desktop.
+- Busca, filtros por era e progresso da coleção.
+- Arrastar do inventário ou tocar para adicionar ao canvas.
+- Limpar canvas com possibilidade de desfazer.
 
-## Publicar e atualizar (GitHub → Vercel)
+### Perfis infantis
 
-O repositório está conectado à Vercel: **todo `git push` na `main` builda e
-publica sozinho**. A Vercel roda `scripts/build.mjs` (`vercel.json`:
-`buildCommand` + `outputDirectory`), serve o `dist/` gerado **e** publica
-`api/combinar.js` como função. `vercel.json` marca a página como `noindex` e
-manda o `/sw.js` não ser cacheado; `.vercelignore` tira `tests/`, `docs/` e o
-`scratchpad` do upload.
+Cada criança possui um perfil separado, com avatar, descobertas, canvas e preferências próprias.
 
-Atalho para publicar o que estiver pendente:
+Os três modos alteram apenas a quantidade de interface exibida:
 
-```
-npm run deploy
-```
+- **Pequenos:** elementos maiores e menos controles.
+- **Médio:** experiência padrão.
+- **Completo:** todas as ferramentas disponíveis.
 
-`scripts/deploy.mjs` sobe a versão do cache no `sw.js` (`mistura-v1` → `v2` → ...),
-comita tudo e dá `git push`. A troca da versão é o que faz os aparelhos já
-instalados baixarem os arquivos novos. (Se preferir commitar à mão, lembre de
-bumpar o `sw.js` no mesmo commit quando mudar conteúdo.)
+Perfis antigos são migrados sem perder progresso.
 
-Configuração feita uma vez: no painel da Vercel → projeto → Settings →
-Environment Variables → `GEMINI_API_KEY` (chave do Google AI Studio) e, opcional,
-`GEMINI_MODELO`. E Settings → Git → repositório conectado, branch de produção `main`.
+### Eras, Árvore e Álbum
 
-> `netlify.toml` ficou no repositório como alternativa: a Netlify passou a exigir
-> créditos pra deploy de produção no time grátis.
+- A progressão oficial é dividida em seis eras.
+- A Árvore mostra as relações entre descobertas sem revelar itens ainda desconhecidos.
+- O foco de um nó mostra somente seus pais e filhos diretos.
+- O Álbum organiza as figurinhas por era.
+- Cada carta possui raridade, origem, usos e exportação como imagem.
+- Eras completas recebem uma celebração e selo próprio.
 
-## Rodar os testes
+### Itens “Além do mapa”
 
-```
-npm install
-npm test
-```
+Itens sem continuação no catálogo oficial recebem uma borda platina e o símbolo ∞. Isso indica que o caminho canônico daquele item terminou, mas ele ainda pode participar de uma mistura inventada com IA.
 
-## Estrutura
+A classificação é calculada automaticamente a partir das combinações oficiais.
 
-```
-index.html          página e pontos de montagem
-servidor.mjs        servidor estático local (sem dependências)
-src/engine/         slug, catalogo, storage, state, combinar
-src/ui/             canvas, drawer, descoberta (overlay)
-src/ai/             interface de IA (stub desligado nesta fase)
-src/data/           itens, combos e textos (pt_BR)
-docs/superpowers/   spec de design e plano de implementação
-```
+### Misturas inventadas com IA
 
-## Fase 2 (depois dos testes com as crianças)
+A IA é opcional, fica desligada por padrão e nunca substitui uma receita oficial.
 
-Ainda pendente: validar toque num aparelho real; manter o Realtime Database
-"acordado" (o free pausa sozinho? um ping via GitHub Actions resolve se precisar).
+Quando uma dupla não possui combinação curada, o jogo pode oferecer:
 
-### Roadmap (sabor Cell to Singularity)
+**✨ Inventar com IA**
 
-Feito: catálogo 283/374 · modo por perfil (Pequenos/Médio/Completo) · espinha de
-eras (linha do tempo "Eras", comemoração "NOVA ERA!", fundo do canvas por era).
-Feito também: era do item da IA (herda dos pais) · barra de topo · limpar sem
-alerta, com "Desfazer".
+O resultado:
 
-Feito também: passe sensorial visual (fundo vivo por era + bob nos ícones).
+- passa pelos guardrails infantis do servidor;
+- fica identificado como criação da IA;
+- permanece fora do cânone;
+- não altera a contagem ou conclusão das eras oficiais.
 
-A seguir: áudio por era · árvore como mapa
-principal · álbum/figurinhas · dioramas por era · pedido do dia.
+A IA exige internet e a variável GEMINI_API_KEY configurada na Vercel.
 
-### Feito na fase 2
+### PWA e funcionamento offline
 
-- **Árvore de descobertas** (`src/ui/arvore.js`) — grafo em tela cheia do que já
-  foi descoberto, layout próprio por profundidade, pan/zoom, clique num nó realça
-  pais e filhos e mostra o texto do combo. Botão "Árvore" no canto inferior-esquerdo.
-- **PWA instalável e offline** — `manifest.webmanifest` + `sw.js` (cache
-  `mistura-v1`, pré-cache do app-shell inteiro no `install`, cache-first no
-  `fetch`, limpeza de caches antigos no `activate`). Registro em `app.js` atrás
-  de `'serviceWorker' in navigator`. Ícones gerados por `scripts/gerar-icones.mjs`
-  (sem dependência). Falta validar o registro em Chrome real / celular — o
-  navegador de preview embutido bloqueia service worker.
-- **Catálogo maior** — 283 itens / 374 combos curados (era 35 / 40), só emoji,
-  todas as seis eras. Integridade garantida por `tests/dados.test.js`.
-- **SVGs de Pokémon e Homem-Aranha** — `assets/svg/` com pikachu, raichu,
-  pokebola, homem-aranha, venom e duende-verde. Ícones flat legíveis de 24px a
-  96px; a UI troca emoji por `<img>` quando o item tem `svg`.
-- **Perfis por criança** (`src/engine/perfis.js`, `src/ui/perfis.js`) — save
-  separado por perfil na chave `save:<id>`; índice em `perfis`. Migra o save
-  antigo `principal` sem perder progresso. Seletor "Quem vai jogar?" no primeiro
-  acesso e no botão do canto.
-- **Toque no celular** — pinça-zoom (`src/ui/panzoom.js`, compartilhado pelo
-  canvas e pela árvore) e arrastar o card da gaveta pro canvas por ponteiro
-  (segura ~180 ms, um "fantasma" segue o dedo, solta no tabuleiro). Tocar no card
-  segue criando a peça no centro. Falta validar num aparelho real.
-- **IA opcional** (`api/combinar.js`, `api/_guardrails.js`, `src/ui/ajustes.js`) —
-  quando o par não está no catálogo e o perfil ligou a IA no ⚙️, o cliente chama
-  `/api/combinar`; a função serverless pergunta ao Gemini (`gemini-flash-lite-latest`,
-  trocável por `GEMINI_MODELO`) e devolve a sugestão só se ela passar nos
-  guard-rails (prompt fixo pt_BR family-friendly, lista de bloqueio, nome curto).
-  Falha/bloqueio/sem chave = "nada aconteceu". Desligada por padrão. Precisa de
-  `GEMINI_API_KEY` na Vercel. `?debug=1` na URL devolve o erro no corpo.
-- **Sincronizar entre aparelhos** (`src/engine/sync.js`, `src/data/config.js`) —
-  no ⚙️ → "Ativar" gera um **código de família** (`ABCD-2345`); digite o mesmo
-  código no ⚙️ dos outros aparelhos. Ao abrir o jogo (online), puxa e mescla do
-  Firebase Realtime Database: lista de perfis (união por id) e `descobertos`
-  (união, mantém a descoberta mais antiga). Canvas e ajustes ficam por aparelho.
-  Empurra as descobertas ~2 s depois de cada uma nova. Sem credencial no cliente
-  — as rules do RTDB (`firebase-rules.json`) exigem o código com 8+ caracteres.
-  URL do banco em `src/data/config.js`.
+Depois do primeiro carregamento, o app-shell, catálogo, combinações e assets essenciais ficam disponíveis offline.
 
-### Ajustes vindos dos testes no notebook (2026-09-05)
+No desktop:
 
-- **Canvas com fundo mais claro.** _Feito (2026-09-05, commit `9857e44`)._
-  `--cor-canvas` foi de `#121d31` para `#2c3c59`. A peça ganhou variáveis próprias
-  acima desse tom (`--cor-peca: #405682`, `--cor-peca-borda: #5b74a8`) para não
-  ficar mais escura que o fundo; o botão "Limpar canvas" usa as mesmas. Texto
-  segue `#eaf0ff`. Drawer e corpo continuam escuros, emoldurando o canvas.
-- **Arrastar e soltar no mobile não foi testado.** Só notebook até agora. O canvas usa
-  Pointer Events (funciona em toque), mas falta: validar o drag de card da gaveta para o
-  canvas no celular, o toque-longo (500 ms) para apagar sem conflitar com scroll, e a
-  ausência de pinça-zoom (`touch-action: none` + `user-scalable=no`). Testar em um
-  aparelho real no início da fase 2, antes da pinça-zoom.
+- Chrome e Edge podem instalar o jogo como aplicativo;
+- window-controls-overlay integra o header à barra da janela quando suportado;
+- a opção **Tela cheia** nos Ajustes usa a Fullscreen API e precisa ser ativada pelo usuário.
+
+No mobile, use **Adicionar à tela inicial** ou a opção equivalente do navegador.
+
+Ícones instalados podem permanecer em cache pelo sistema operacional. Se uma instalação antiga não atualizar o ícone, remova e instale novamente.
+
+### Sincronização entre aparelhos
+
+Nos Ajustes, um aparelho pode gerar um código de família. O mesmo código em outro aparelho sincroniza perfis e descobertas pelo Firebase Realtime Database.
+
+O canvas e preferências locais permanecem específicos de cada aparelho.
+
+## Splash e identidade visual
+
+A abertura usa logo e mascote definitivos, atmosfera cósmica, frases alternadas e duração mínima curta enquanto o estado essencial do jogo é preparado.
+
+Os arquivos mestres de alta resolução ficam em design-assets/, fora do bundle. Apenas derivados otimizados ficam em assets/.
+
+## Executar localmente
+
+Requisitos:
+
+- Node.js 20.6 ou mais recente
+
+Instale e rode:
+
+    npm install
+    npm start
+
+Abra http://localhost:4173.
+
+No Windows, também é possível usar o arquivo **Jogar Misturaria.bat**.
+
+O index.html não deve ser aberto diretamente porque o navegador bloqueia os módulos nessa condição.
+
+## Testes
+
+    npm test
+
+A suíte cobre dados, combinações, persistência, perfis, IA, sincronização, Árvore, Álbum, cartas, PWA, acessibilidade e comportamentos responsivos relevantes.
+
+## Build e deploy
+
+    npm run build
+    npm run deploy
+
+A branch de produção é main. Cada push dispara o build e o deploy automático na Vercel.
+
+O script de deploy atualiza a versão do cache do service worker, realiza commit e envia para o GitHub. O bump do service worker é necessário quando arquivos usados pelo app mudam, mas não para alterações exclusivas de documentação.
+
+Variáveis usadas em produção:
+
+- GEMINI_API_KEY
+- GEMINI_MODELO, opcional
+
+A configuração do Firebase fica em src/data/config.js. Nenhum segredo deve ser colocado no cliente ou neste README.
+
+## Estrutura principal
+
+    index.html                 pontos de montagem e splash
+    src/app.js                 orquestração do jogo
+    src/data/                  itens, combinações, textos, modos e avatares
+    src/engine/                catálogo, estado, storage, eras, sync e regras
+    src/ui/                    canvas, drawer, Árvore, Álbum, cartas e Ajustes
+    src/ai/                    cliente do provider de IA
+    api/                       função serverless e guardrails
+    assets/                    arquivos otimizados usados em produção
+    design-assets/             masters e materiais de design fora do build
+    tests/                     suíte automatizada
+
+## Pendência conhecida
+
+Uma descoberta criada pela IA já é persistida e aparece na Árvore, porém ainda não aparece no Álbum de figurinhas.
+
+A correção deverá permitir que essas descobertas sejam vistas em uma seção própria do Álbum — por exemplo, **Descobertas inventadas** — sem incluí-las na contagem, progresso ou conclusão das seis eras oficiais.
+
+## Próximas etapas
+
+1. Diagnosticar e corrigir a presença das descobertas da IA no Álbum, mantendo-as fora do progresso canônico.
+2. Validar em instalações reais os novos ícones e o window-controls-overlay.
+3. Especificar o diorama: função no loop, progressão visual, layout responsivo, mapa de desbloqueios e inventário exato de assets.
+4. Criar os assets individuais aprovados para o diorama.
+5. Implementar o diorama como representação viva da evolução do universo.
+6. Fazer uma varredura geral de UX, mecânica, performance, acessibilidade e acabamento antes de congelar a V1.
+
+Pendências de menor prioridade:
+
+- revisar o arrastar do drawer no tablet físico;
+- avaliar áudio sintetizado por era;
+- avaliar futuramente um “pedido do dia”.
+
+## Princípios do projeto
+
+- Feito primeiro para as crianças da família.
+- Sem anúncios e sem mecânicas predatórias.
+- Jogável sem internet nas combinações oficiais.
+- IA opcional, transparente e protegida.
+- Linguagem infantil sem tratar a criança como bebê.
+- Interfaces simples por fora, com consistência e segurança por baixo.
