@@ -66,6 +66,9 @@ body {
 .orbe[data-era="tecnologia"] { --cor-orbe: var(--era-tecnologia); }
 .orbe[data-era="cultura"]    { --cor-orbe: var(--era-cultura); }
 .orbe[data-era="ficcao"]     { --cor-orbe: var(--era-ficcao); }
+/* faixa/coleção paralela "Inventadas com IA": identidade violeta/galáxia
+   própria, nunca a cor da era herdada internamente pra raridade */
+.orbe[data-era="ia"]         { --cor-orbe: var(--cor-orbe-ia); }
 
 /* anel violeta discreto do item inventado pela IA — some com o anel de era */
 .orbe[data-fonte="ia"] {

@@ -163,6 +163,72 @@ test('a barra de progresso reflete a proporção de descobertos', () => {
   assert.equal(barra.style.width, `${esperado}%`);
 });
 
+test('contagem canônica aparece separada da quantidade de itens inventados', () => {
+  const { cat, store, raiz } = ambiente();
+  const item = cat.registrarItemIA({ nome: 'Coisa da IA', emoji: '✨', era: 'elementos' });
+  store.getSave().descobertos[item.id] = { em: 4, via: null, fonte: 'ia' };
+  montarDrawer({ raiz, store, catalogo: cat, aoEscolherItem() {} });
+  const totalCanonico = cat.allItems().filter((it) => !it.ia).length;
+  assert.equal(raiz.querySelector('.drawer-contador').textContent, `3 / ${totalCanonico} descobertos`);
+  assert.equal(raiz.querySelector('.drawer-contador-ia').textContent, '✨ 1 inventada');
+});
+
+test('filtro "IA" mostra somente itens da IA', () => {
+  const { cat, store, raiz } = ambiente();
+  const item = cat.registrarItemIA({ nome: 'Coisa da IA', emoji: '✨', era: 'elementos' });
+  store.getSave().descobertos[item.id] = { em: 4, via: null, fonte: 'ia' };
+  montarDrawer({ raiz, store, catalogo: cat, aoEscolherItem() {} });
+  const chipIA = raiz.querySelector('.drawer-chip-ia');
+  chipIA.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+  const nomes = [...raiz.querySelectorAll('.drawer-card .card-nome')].map((n) => n.textContent);
+  assert.deepEqual(nomes, ['Coisa da IA']);
+  assert.equal(chipIA.getAttribute('aria-pressed'), 'true');
+});
+
+test('filtros de era excluem itens da IA mesmo quando a era herdada bate', () => {
+  const { cat, store, raiz } = ambiente();
+  const item = cat.registrarItemIA({ nome: 'Coisa da IA', emoji: '✨', era: 'elementos' });
+  store.getSave().descobertos[item.id] = { em: 4, via: null, fonte: 'ia' };
+  montarDrawer({ raiz, store, catalogo: cat, aoEscolherItem() {} });
+  const chipElementos = raiz.querySelector('.drawer-chip[data-era="elementos"]');
+  chipElementos.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+  const nomes = [...raiz.querySelectorAll('.drawer-card .card-nome')].map((n) => n.textContent);
+  assert.deepEqual(nomes, ['Água', 'Fogo', 'Vapor']);
+});
+
+test('"Todos" reúne itens canônicos e criações da IA', () => {
+  const { cat, store, raiz } = ambiente();
+  const item = cat.registrarItemIA({ nome: 'Coisa da IA', emoji: '✨', era: 'elementos' });
+  store.getSave().descobertos[item.id] = { em: 4, via: null, fonte: 'ia' };
+  montarDrawer({ raiz, store, catalogo: cat, aoEscolherItem() {} });
+  const nomes = [...raiz.querySelectorAll('.drawer-card .card-nome')].map((n) => n.textContent);
+  assert.deepEqual(nomes, ['Água', 'Fogo', 'Vapor', 'Coisa da IA']);
+});
+
+test('busca funciona junto com o filtro "IA"', () => {
+  const { cat, store, raiz } = ambiente();
+  const item = cat.registrarItemIA({ nome: 'Gelo Mágico', emoji: '✨', era: 'elementos' });
+  store.getSave().descobertos[item.id] = { em: 4, via: null, fonte: 'ia' };
+  montarDrawer({ raiz, store, catalogo: cat, aoEscolherItem() {} });
+  raiz.querySelector('.drawer-chip-ia').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+  const busca = raiz.querySelector('.drawer-busca');
+  busca.value = 'gelo';
+  busca.dispatchEvent(new window.Event('input', { bubbles: true }));
+  const nomes = [...raiz.querySelectorAll('.drawer-card .card-nome')].map((n) => n.textContent);
+  assert.deepEqual(nomes, ['Gelo Mágico']);
+});
+
+test('clicar num chip de era desativa o filtro "IA" ativo', () => {
+  const { cat, store, raiz } = ambiente();
+  const item = cat.registrarItemIA({ nome: 'Coisa da IA', emoji: '✨', era: 'elementos' });
+  store.getSave().descobertos[item.id] = { em: 4, via: null, fonte: 'ia' };
+  montarDrawer({ raiz, store, catalogo: cat, aoEscolherItem() {} });
+  const chipIA = raiz.querySelector('.drawer-chip-ia');
+  chipIA.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+  raiz.querySelector('.drawer-chip[data-era="vida"]').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+  assert.equal(chipIA.getAttribute('aria-pressed'), 'false');
+});
+
 test('adicionarCard insere um novo item', () => {
   const { cat, store, raiz } = ambiente();
   const api = montarDrawer({ raiz, store, catalogo: cat, aoEscolherItem() {} });

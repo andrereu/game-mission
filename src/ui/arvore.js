@@ -248,8 +248,12 @@ export function montarArvore({
     });
   }
 
-  function eraDoId(id) {
+  // faixa = era canônica, exceto pra criações da IA: elas nunca ficam
+  // encaixadas na era herdada — vão pra uma faixa própria "✨ IA", separada
+  // das 6 faixas de "ERAS" e só desenhada quando existe pelo menos uma.
+  function faixaDoId(id) {
     const item = catalogo.getItem(id);
+    if (item && item.ia) return 'ia';
     return (item && ERAS.includes(item.era)) ? item.era : ERAS[ERAS.length - 1];
   }
 
@@ -257,15 +261,19 @@ export function montarArvore({
     const descobertos = store.getSave().descobertos;
     const nivel = calcularNiveis(descobertos); // só pra metadado (dataset.nivel)
 
-    // faixa = era (a mais simples no topo); dentro da faixa, ordem de descoberta
-    const porFaixa = new Map(ERAS.map((era) => [era, []]));
+    const temIA = Object.keys(descobertos).some((id) => faixaDoId(id) === 'ia');
+    const faixasOrdem = temIA ? [...ERAS, 'ia'] : ERAS;
+
+    // faixa = era (a mais simples no topo, IA sempre por último); dentro da
+    // faixa, ordem de descoberta
+    const porFaixa = new Map(faixasOrdem.map((faixa) => [faixa, []]));
     for (const id of Object.keys(descobertos)) {
-      porFaixa.get(eraDoId(id)).push(id);
+      porFaixa.get(faixaDoId(id)).push(id);
     }
     posicoes.clear();
     let maiorFaixa = 1;
-    ERAS.forEach((era, faixaIdx) => {
-      const ids = porFaixa.get(era);
+    faixasOrdem.forEach((faixa, faixaIdx) => {
+      const ids = porFaixa.get(faixa);
       ids.sort((a, b) => descobertos[a].em - descobertos[b].em);
       maiorFaixa = Math.max(maiorFaixa, ids.length);
       ids.forEach((id, i) => {
@@ -276,15 +284,16 @@ export function montarArvore({
     const faixas = overlay.querySelector('.arvore-faixas');
     const larguraMundo = PAD * 2 + maiorFaixa * NO_LARG;
     faixas.innerHTML = '';
-    ERAS.forEach((era, faixaIdx) => {
+    faixasOrdem.forEach((faixa, faixaIdx) => {
       const banda = document.createElement('div');
       banda.className = 'arvore-faixa';
-      banda.dataset.era = era;
+      banda.dataset.era = faixa;
       banda.style.top = `${faixaIdx * NIVEL_ALT}px`;
       banda.style.height = `${NIVEL_ALT}px`;
       banda.style.width = `${larguraMundo}px`;
-      banda.innerHTML =
-        `<span class="arvore-faixa-rotulo">${T.erasIcone[era] || ''} ${T.eras[era] || era}</span>`;
+      banda.innerHTML = faixa === 'ia'
+        ? `<span class="arvore-faixa-rotulo">${T.arvoreIAFaixa}</span>`
+        : `<span class="arvore-faixa-rotulo">${T.erasIcone[faixa] || ''} ${T.eras[faixa] || faixa}</span>`;
       faixas.appendChild(banda);
     });
 
@@ -323,14 +332,14 @@ export function montarArvore({
       el.type = 'button';
       el.className = 'arvore-no';
       el.dataset.id = id;
-      el.dataset.era = item ? item.era : '';
+      el.dataset.era = faixaDoId(id);
       el.dataset.fonte = meta.fonte;
       el.dataset.nivel = String(nivel.get(id));
       el.style.left = `${pos.x}px`;
       el.style.top = `${pos.y}px`;
       const fonte = meta.fonte === 'ia' ? ' data-fonte="ia"' : '';
       el.innerHTML =
-        `<span class="orbe orbe-arvore" data-era="${item ? item.era : ''}"${fonte}>${icone(item)}</span>` +
+        `<span class="orbe orbe-arvore" data-era="${faixaDoId(id)}"${fonte}>${icone(item)}</span>` +
         `<span class="arvore-no-nome">${item ? item.nome : id}</span>`;
       ligarToqueNo(el, id);
       nos.appendChild(el);

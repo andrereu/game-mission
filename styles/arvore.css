@@ -70,6 +70,16 @@
 .arvore-faixa[data-era="tecnologia"] { --cor-faixa: var(--era-tecnologia); }
 .arvore-faixa[data-era="cultura"] { --cor-faixa: var(--era-cultura); }
 .arvore-faixa[data-era="ficcao"] { --cor-faixa: var(--era-ficcao); }
+/* faixa paralela da IA: sempre depois das 6 faixas de era, nunca faz parte
+   de "ERAS" — identidade violeta/galáxia própria */
+.arvore-faixa[data-era="ia"] {
+  --cor-faixa: var(--cor-orbe-ia);
+  border-top-style: solid;
+}
+.arvore-faixa[data-era="ia"] .arvore-faixa-rotulo {
+  color: var(--cor-orbe-ia);
+  border: 1px solid color-mix(in srgb, var(--cor-orbe-ia) 45%, transparent);
+}
 
 .arvore-arestas {
   position: absolute;

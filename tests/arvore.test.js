@@ -209,6 +209,60 @@ test('segurar um nó manda o item pro canvas; toque curto só realça', async ()
   assert.ok(fogo.classList.contains('destaque'), 'toque curto continua realçando');
 });
 
+test('faixa "IA" não aparece quando não há criações da IA descobertas', () => {
+  const raiz = raizLimpa();
+  const save = saveCom({ agua: { em: 1, via: null, fonte: 'base' } });
+  const arv = montarArvore({ raiz, store: storeFake(save), catalogo: criarCatalogo(), T });
+  arv.abrir();
+  assert.equal(raiz.querySelector('.arvore-faixa[data-era="ia"]'), null);
+  assert.equal(raiz.querySelectorAll('.arvore-faixa').length, 6);
+});
+
+test('criação da IA descoberta ganha faixa própria, depois das 6 faixas de era', () => {
+  const raiz = raizLimpa();
+  const cat = criarCatalogo();
+  cat.registrarItemIA({ nome: 'Gelo Estelar', emoji: '🧊', era: 'elementos' });
+  const save = saveCom({
+    agua: { em: 1, via: null, fonte: 'base' },
+    ar: { em: 1, via: null, fonte: 'base' },
+    'gelo-estelar': { em: 2, via: ['agua', 'ar'], fonte: 'ia' },
+  });
+  const arv = montarArvore({ raiz, store: storeFake(save), catalogo: cat, T });
+  arv.abrir();
+
+  const faixas = raiz.querySelectorAll('.arvore-faixa');
+  assert.equal(faixas.length, 7, '6 faixas de era + 1 faixa da IA');
+  const faixaIA = raiz.querySelector('.arvore-faixa[data-era="ia"]');
+  assert.ok(faixaIA);
+  assert.match(faixaIA.textContent, /IA/);
+
+  // faixa da IA fica depois das 6 faixas canônicas (maior "top")
+  const tops = [...faixas].map((f) => parseFloat(f.style.top));
+  assert.equal(Math.max(...tops), parseFloat(faixaIA.style.top));
+
+  const noGelo = no(raiz, 'gelo-estelar');
+  assert.equal(noGelo.dataset.era, 'ia', 'nó da IA fica marcado com a faixa própria, não a era herdada');
+  assert.ok(parseFloat(noGelo.style.top) > parseFloat(no(raiz, 'agua').style.top));
+});
+
+test('relações entre itens canônicos e criações da IA continuam corretas na faixa separada', () => {
+  const raiz = raizLimpa();
+  const cat = criarCatalogo();
+  cat.registrarItemIA({ nome: 'Gelo Estelar', emoji: '🧊', era: 'elementos' });
+  const save = saveCom({
+    agua: { em: 1, via: null, fonte: 'base' },
+    ar: { em: 1, via: null, fonte: 'base' },
+    'gelo-estelar': { em: 2, via: ['agua', 'ar'], fonte: 'ia' },
+  });
+  const arv = montarArvore({ raiz, store: storeFake(save), catalogo: cat, T });
+  arv.abrir();
+
+  no(raiz, 'gelo-estelar').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+  assert.ok(no(raiz, 'agua').classList.contains('pai'));
+  assert.ok(no(raiz, 'ar').classList.contains('pai'));
+  assert.match(raiz.querySelector('.arvore-legenda').textContent, /água \+ ar/i);
+});
+
 test('botão Fechar remove o overlay', () => {
   const raiz = raizLimpa();
   const save = saveCom({ agua: { em: 1, via: null, fonte: 'base' } });

@@ -75,14 +75,20 @@ export function montarDrawer({
   raiz.setAttribute('aria-label', T.inventarioTitulo);
   raiz.innerHTML = `
     <div class="drawer-puxador" aria-hidden="true"></div>
+    <div class="drawer-cabecalho">
+      <div class="drawer-cabecalho-texto">
+        <h2 class="drawer-titulo">${T.inventarioTitulo}</h2>
+        <div class="drawer-cabecalho-contagem">
+          <span class="drawer-contador"></span>
+          <span class="drawer-contador-ia"></span>
+        </div>
+      </div>
+      <button type="button" class="drawer-ver-todos">${T.verTodos}</button>
+    </div>
     <div class="drawer-controles">
       <input class="drawer-busca" type="search" placeholder="${T.buscar}" />
       <div class="drawer-chips-scroll"><div class="drawer-chips"></div></div>
       <div class="drawer-progresso">
-        <div class="drawer-progresso-topo">
-          <span class="drawer-contador"></span>
-          <button type="button" class="drawer-ver-todos">${T.verTodos}</button>
-        </div>
         <div class="drawer-progresso-trilho"><div class="drawer-progresso-barra"></div></div>
       </div>
     </div>
@@ -91,6 +97,7 @@ export function montarDrawer({
   const elBusca = raiz.querySelector('.drawer-busca');
   const elChips = raiz.querySelector('.drawer-chips');
   const elContador = raiz.querySelector('.drawer-contador');
+  const elContadorIA = raiz.querySelector('.drawer-contador-ia');
   const elBarraProgresso = raiz.querySelector('.drawer-progresso-barra');
   const elGrade = raiz.querySelector('.drawer-grade');
   const elVerTodos = raiz.querySelector('.drawer-ver-todos');
@@ -98,9 +105,11 @@ export function montarDrawer({
 
   const erasAtivas = new Set();
   const chipsPorEra = new Map();
+  let iaAtivo = false;
 
-  // "Todos" limpa os filtros de era — junto com os chips de era, agora numa
-  // fita com scroll horizontal (não dependem mais de caber numa linha só)
+  // "Todos" limpa os filtros de era e o filtro de IA — junto com os chips de
+  // era, agora numa fita com scroll horizontal (não dependem mais de caber
+  // numa linha só)
   const chipTodos = document.createElement('button');
   chipTodos.type = 'button';
   chipTodos.className = 'drawer-chip drawer-chip-todos';
@@ -109,13 +118,15 @@ export function montarDrawer({
   chipTodos.addEventListener('click', () => {
     erasAtivas.clear();
     for (const chip of chipsPorEra.values()) chip.setAttribute('aria-pressed', 'false');
+    iaAtivo = false;
+    chipIA.setAttribute('aria-pressed', 'false');
     atualizarChipTodos();
     render();
   });
   elChips.appendChild(chipTodos);
 
   function atualizarChipTodos() {
-    chipTodos.setAttribute('aria-pressed', String(erasAtivas.size === 0));
+    chipTodos.setAttribute('aria-pressed', String(erasAtivas.size === 0 && !iaAtivo));
   }
 
   for (const era of ERAS) {
@@ -126,6 +137,8 @@ export function montarDrawer({
     chip.dataset.era = era;
     chip.setAttribute('aria-pressed', 'false');
     chip.addEventListener('click', () => {
+      iaAtivo = false;
+      chipIA.setAttribute('aria-pressed', 'false');
       if (erasAtivas.has(era)) {
         erasAtivas.delete(era);
         chip.setAttribute('aria-pressed', 'false');
@@ -139,6 +152,26 @@ export function montarDrawer({
     elChips.appendChild(chip);
     chipsPorEra.set(era, chip);
   }
+
+  // filtro próprio da coleção "Inventadas com IA": mutuamente exclusivo com
+  // os filtros de era (item.ia nunca conta pra nenhuma era canônica)
+  const chipIA = document.createElement('button');
+  chipIA.type = 'button';
+  chipIA.className = 'drawer-chip drawer-chip-ia';
+  chipIA.innerHTML = `<span class="drawer-chip-icone">✨</span><span class="drawer-chip-nome">${T.chipIA}</span>`;
+  chipIA.dataset.ia = 'true';
+  chipIA.setAttribute('aria-pressed', 'false');
+  chipIA.addEventListener('click', () => {
+    iaAtivo = !iaAtivo;
+    chipIA.setAttribute('aria-pressed', String(iaAtivo));
+    if (iaAtivo) {
+      erasAtivas.clear();
+      for (const chip of chipsPorEra.values()) chip.setAttribute('aria-pressed', 'false');
+    }
+    atualizarChipTodos();
+    render();
+  });
+  elChips.appendChild(chipIA);
 
   elBusca.addEventListener('input', render);
 
@@ -161,15 +194,26 @@ export function montarDrawer({
   function render() {
     const termo = slug(elBusca.value || '');
     const lista = itensDescobertos().filter(({ item }) => {
-      if (erasAtivas.size && !erasAtivas.has(item.era)) return false;
+      // "IA" mostra só criações da IA; os filtros de era nunca incluem
+      // item.ia (não conta pra nenhuma era canônica); "Todos" reúne os dois.
+      if (iaAtivo) {
+        if (!item.ia) return false;
+      } else if (erasAtivas.size && (item.ia || !erasAtivas.has(item.era))) {
+        return false;
+      }
       if (termo && !slug(item.nome).includes(termo)) return false;
       return true;
     });
 
-    const total = catalogo.allItems().length;
-    const feitos = Object.keys(store.getSave().descobertos).length;
-    elContador.textContent = T.contador(feitos, total);
-    elBarraProgresso.style.width = `${total ? Math.min(100, (feitos / total) * 100) : 0}%`;
+    // contagem canônica separada da contagem de criações da IA — criar com
+    // IA nunca aumenta o denominador canônico (283 itens do mapa)
+    const totalCanonico = catalogo.allItems().filter((it) => !it.ia).length;
+    const todosDescobertos = itensDescobertos();
+    const feitosCanonico = todosDescobertos.filter(({ item }) => !item.ia).length;
+    const feitosIA = todosDescobertos.filter(({ item }) => item.ia).length;
+    elContador.textContent = T.contador(feitosCanonico, totalCanonico);
+    elContadorIA.textContent = feitosIA > 0 ? T.drawerInventadas(feitosIA) : '';
+    elBarraProgresso.style.width = `${totalCanonico ? Math.min(100, (feitosCanonico / totalCanonico) * 100) : 0}%`;
 
     elGrade.innerHTML = '';
     for (const { item, meta } of lista) {
