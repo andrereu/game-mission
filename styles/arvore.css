@@ -1,6 +1,6 @@
-/* mesma família visual do resto do jogo: campo de estrelas bem discreto por
-   trás das faixas de era (que continuam intactas — isto é só acabamento,
-   não mexe na estrutura/comportamento da árvore) */
+/* Universo das Descobertas — mesma família visual do resto do jogo (canvas,
+   Drawer, Álbum): fundo profundo com campo de estrelas discreto, atmosferas
+   de cor por região em vez de faixas técnicas/tracejadas. */
 .arvore-overlay {
   position: fixed;
   inset: 0;
@@ -18,15 +18,23 @@
   background-attachment: fixed;
 }
 
+/* ---- cabeçalho: título + subtítulo + fechar, depois busca/ver tudo/atalhos ---- */
 .arvore-cabecalho {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  flex-direction: column;
+  gap: 8px;
   padding: 10px 14px;
   border-bottom: 1px solid var(--cor-borda);
 }
+.arvore-cabecalho-topo {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.arvore-cabecalho-titulo { min-width: 0; }
 .arvore-titulo { margin: 0; font-size: 16px; }
+.arvore-subtitulo { margin: 2px 0 0; font-size: 12px; opacity: 0.75; line-height: 1.3; }
 .arvore-fechar {
   padding: 8px 14px;
   border-radius: 8px;
@@ -34,8 +42,67 @@
   background: var(--cor-peca);
   color: var(--cor-texto);
   cursor: pointer;
+  flex-shrink: 0;
 }
 
+.arvore-ferramentas {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.arvore-busca {
+  flex: 1 1 140px;
+  min-width: 100px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--cor-borda);
+  background: #0e1930;
+  color: var(--cor-texto);
+  font-size: 13px;
+}
+.arvore-ver-tudo {
+  flex-shrink: 0;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--cor-peca-borda);
+  background: var(--cor-peca);
+  color: var(--cor-texto);
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.arvore-atalhos-scroll {
+  flex: 1 1 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.arvore-atalhos-scroll::-webkit-scrollbar { display: none; }
+.arvore-atalhos { display: flex; gap: 6px; width: max-content; padding: 1px; }
+.arvore-atalho {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid var(--cor-borda);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--cor-texto);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+.arvore-atalho:hover, .arvore-atalho:focus-visible { border-color: var(--cor-borda-forte, var(--cor-borda)); outline: none; }
+.arvore-atalho[data-era="elementos"] { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--era-elementos) 45%, transparent); }
+.arvore-atalho[data-era="natureza"] { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--era-natureza) 45%, transparent); }
+.arvore-atalho[data-era="vida"] { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--era-vida) 45%, transparent); }
+.arvore-atalho[data-era="tecnologia"] { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--era-tecnologia) 45%, transparent); }
+.arvore-atalho[data-era="cultura"] { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--era-cultura) 45%, transparent); }
+.arvore-atalho[data-era="ficcao"] { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--era-ficcao) 45%, transparent); }
+.arvore-atalho[data-era="ia"] { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--cor-orbe-ia) 55%, transparent); color: var(--cor-orbe-ia); }
+
+/* ---- palco: câmera (pan/zoom via transform em .arvore-mundo) ---- */
 .arvore-palco {
   position: relative;
   flex: 1;
@@ -45,48 +112,44 @@
   cursor: grab;
 }
 .arvore-mundo { position: absolute; inset: 0; transform-origin: 0 0; }
-.arvore-faixas { position: absolute; top: 0; left: 0; pointer-events: none; }
-.arvore-faixa {
+
+/* regiões concêntricas: atmosfera por gradiente, nunca um círculo com
+   contorno rígido — a mais externa é pintada primeiro (embaixo), a mais
+   interna por último (em cima), criando os "cinturões" por sobreposição */
+.arvore-regioes { position: absolute; top: 0; left: 0; pointer-events: none; }
+.arvore-regiao {
   position: absolute;
-  left: 0;
-  border-top: 1px dashed var(--cor-borda);
-  background: color-mix(in srgb, var(--cor-faixa, transparent) 6%, transparent);
+  border-radius: 50%;
+  opacity: 0.5;
 }
-.arvore-faixa-rotulo {
-  position: sticky;
-  left: 8px;
-  top: 4px;
-  display: inline-block;
-  margin: 6px;
-  padding: 2px 8px;
-  border-radius: 999px;
-  font-size: 12px;
-  opacity: 0.7;
-  background: var(--cor-fundo);
+.arvore-regiao[data-era="elementos"] {
+  background: radial-gradient(circle, color-mix(in srgb, var(--era-elementos) 30%, transparent) 0%, color-mix(in srgb, var(--era-elementos) 14%, transparent) 55%, transparent 100%);
 }
-.arvore-faixa[data-era="elementos"] { --cor-faixa: var(--era-elementos); }
-.arvore-faixa[data-era="natureza"] { --cor-faixa: var(--era-natureza); }
-.arvore-faixa[data-era="vida"] { --cor-faixa: var(--era-vida); }
-.arvore-faixa[data-era="tecnologia"] { --cor-faixa: var(--era-tecnologia); }
-.arvore-faixa[data-era="cultura"] { --cor-faixa: var(--era-cultura); }
-.arvore-faixa[data-era="ficcao"] { --cor-faixa: var(--era-ficcao); }
-/* faixa paralela da IA: sempre depois das 6 faixas de era, nunca faz parte
-   de "ERAS" — identidade violeta/galáxia própria */
-.arvore-faixa[data-era="ia"] {
-  --cor-faixa: var(--cor-orbe-ia);
-  border-top-style: solid;
+.arvore-regiao[data-era="natureza"] {
+  background: radial-gradient(circle, color-mix(in srgb, var(--era-natureza) 26%, transparent) 0%, color-mix(in srgb, var(--era-natureza) 10%, transparent) 60%, transparent 100%);
 }
-.arvore-faixa[data-era="ia"] .arvore-faixa-rotulo {
-  color: var(--cor-orbe-ia);
-  border: 1px solid color-mix(in srgb, var(--cor-orbe-ia) 45%, transparent);
+.arvore-regiao[data-era="vida"] {
+  background: radial-gradient(circle, color-mix(in srgb, var(--era-vida) 24%, transparent) 0%, color-mix(in srgb, var(--era-vida) 9%, transparent) 60%, transparent 100%);
+}
+.arvore-regiao[data-era="tecnologia"] {
+  background: radial-gradient(circle, color-mix(in srgb, var(--era-tecnologia) 24%, transparent) 0%, color-mix(in srgb, var(--era-tecnologia) 9%, transparent) 60%, transparent 100%);
+}
+.arvore-regiao[data-era="cultura"] {
+  background: radial-gradient(circle, color-mix(in srgb, var(--era-cultura) 22%, transparent) 0%, color-mix(in srgb, var(--era-cultura) 8%, transparent) 60%, transparent 100%);
+}
+.arvore-regiao[data-era="ficcao"] {
+  background: radial-gradient(circle, color-mix(in srgb, var(--era-ficcao) 24%, transparent) 0%, color-mix(in srgb, var(--era-ficcao) 9%, transparent) 60%, transparent 100%);
+}
+.arvore-regiao[data-era="ia"] {
+  background: radial-gradient(circle, color-mix(in srgb, var(--cor-orbe-ia) 26%, transparent) 0%, color-mix(in srgb, var(--cor-orbe-ia) 10%, transparent) 60%, transparent 100%);
 }
 
 .arvore-arestas {
   position: absolute;
   top: 0;
   left: 0;
-  width: 4000px;
-  height: 4000px;
+  width: 6500px;
+  height: 6500px;
   overflow: visible;
   pointer-events: none;
 }
@@ -97,17 +160,17 @@
 .arvore-aresta { stroke-width: 2; opacity: 0; display: none; }
 .arvore-aresta.ativa { display: inline; opacity: 0.95; }
 .arvore-aresta.aresta-pai {
-  stroke: var(--era-cultura);
+  stroke: var(--arvore-cor-pai, #ffd25c);
   stroke-dasharray: 5 4;
   marker-end: url(#arvore-seta-pai);
 }
 .arvore-aresta.aresta-filho {
-  stroke: var(--era-elementos);
+  stroke: var(--arvore-cor-filho, #4ad0e6);
   stroke-dasharray: none;
   marker-end: url(#arvore-seta-filho);
 }
-.arvore-seta-pai-forma { fill: var(--era-cultura); }
-.arvore-seta-filho-forma { fill: var(--era-elementos); }
+.arvore-seta-pai-forma { fill: var(--arvore-cor-pai, #ffd25c); }
+.arvore-seta-filho-forma { fill: var(--arvore-cor-filho, #4ad0e6); }
 .arvore-nos { position: absolute; inset: 0; }
 
 /* nó virou wrapper: a .orbe-arvore carrega cor de era, seleção e estado de segurar */
@@ -126,19 +189,30 @@
   cursor: pointer;
   transition: opacity 120ms ease;
 }
-.arvore-no-icone { font-size: 20px; line-height: 1; }
-img.arvore-no-icone { width: 22px; height: 22px; }
-.arvore-no-nome { font-size: 11px; text-align: center; word-break: break-word; }
+.arvore-no-icone { font-size: 18px; line-height: 1; }
+img.arvore-no-icone { width: 20px; height: 20px; }
+.arvore-no-nome {
+  font-size: 10.5px;
+  text-align: center;
+  word-break: break-word;
+  transition: opacity 150ms ease;
+}
+/* zoom bem distante: nomes escondem visualmente (o rótulo acessível do
+   botão continua disponível pra leitor de tela, independente do zoom) */
+.arvore-overlay.arvore-zoom-longe .arvore-no-nome { opacity: 0; }
 
-/* discreta por padrão — prioridade visual continua nas conexões, não no nó */
+/* discreta por padrão no panorama — prioridade visual fica nas conexões e
+   no item selecionado, não em todos os nós ao mesmo tempo */
 .orbe-arvore {
-  --orbe-tam: 44px;
+  --orbe-tam: 40px;
   box-shadow:
-    0 0 0 1.5px color-mix(in srgb, var(--cor-orbe) 50%, transparent),
-    0 0 6px 0.5px color-mix(in srgb, var(--cor-orbe) 20%, transparent),
+    0 0 0 1.5px color-mix(in srgb, var(--cor-orbe) 45%, transparent),
+    0 0 5px 0.5px color-mix(in srgb, var(--cor-orbe) 16%, transparent),
     inset 0 0 6px rgba(0, 0, 0, 0.35);
   transition: box-shadow 120ms ease, transform 120ms ease;
 }
+/* lendários e "além do mapa" ganham um pouco mais de presença no panorama */
+.arvore-no-grande .orbe-arvore { --orbe-tam: 50px; }
 .orbe-arvore[data-fonte="ia"]::after {
   content: "★";
   position: absolute;
@@ -150,28 +224,31 @@ img.arvore-no-icone { width: 22px; height: 22px; }
 
 /* sem foco: item não-relacionado fica secundário, mas continua parte do
    universo visível — nunca "morto" (opacidade moderada, sem dessaturar) */
-.arvore-no.esmaecido { opacity: 0.55; }
-/* nó selecionado: o único com destaque forte — os demais ficam quietos */
+.arvore-no.esmaecido { opacity: 0.5; }
+/* nó selecionado: o único grande protagonista */
 .arvore-no.destaque .orbe-arvore {
+  --orbe-tam: 58px;
   box-shadow:
     0 0 0 2px var(--cor-texto),
-    0 0 14px 3px color-mix(in srgb, var(--cor-orbe) 55%, transparent),
+    0 0 16px 4px color-mix(in srgb, var(--cor-orbe) 60%, transparent),
     inset 0 0 6px rgba(0, 0, 0, 0.35);
 }
-/* origem (pai) e derivação (filho) do foco — mesmas cores das setas/traços
-   das arestas, pra reforçar a relação também no nó */
+.arvore-no.destaque .arvore-no-nome { opacity: 1; font-weight: 700; }
+/* origem (pai) e derivação (filho) do foco — mesmas cores das arestas, pra
+   reforçar a relação também no nó */
 .arvore-no.pai .orbe-arvore {
   box-shadow:
-    0 0 0 2px var(--era-cultura),
-    0 0 8px 2px color-mix(in srgb, var(--era-cultura) 45%, transparent),
+    0 0 0 2px var(--arvore-cor-pai, #ffd25c),
+    0 0 10px 2px color-mix(in srgb, var(--arvore-cor-pai, #ffd25c) 45%, transparent),
     inset 0 0 6px rgba(0, 0, 0, 0.35);
 }
 .arvore-no.filho .orbe-arvore {
   box-shadow:
-    0 0 0 2px var(--era-elementos),
-    0 0 8px 2px color-mix(in srgb, var(--era-elementos) 45%, transparent),
+    0 0 0 2px var(--arvore-cor-filho, #4ad0e6),
+    0 0 10px 2px color-mix(in srgb, var(--arvore-cor-filho, #4ad0e6) 45%, transparent),
     inset 0 0 6px rgba(0, 0, 0, 0.35);
 }
+.arvore-no.pai .arvore-no-nome, .arvore-no.filho .arvore-no-nome { opacity: 1; }
 .arvore-no.segurando .orbe-arvore {
   transform: scale(1.15);
   box-shadow:
@@ -179,20 +256,98 @@ img.arvore-no-icone { width: 22px; height: 22px; }
     0 0 16px 4px color-mix(in srgb, var(--era-cultura) 55%, transparent),
     inset 0 0 6px rgba(0, 0, 0, 0.35);
 }
-.arvore-legenda {
-  margin: 0;
-  padding: 10px 14px;
+
+/* ---- bandeja da descoberta: substitui a legenda de texto corrido ---- */
+.arvore-bandeja {
   border-top: 1px solid var(--cor-borda);
-  font-size: 13px;
-  min-height: 1.4em;
-  opacity: 0.9;
+  background:
+    radial-gradient(120% 100% at 50% 0%, color-mix(in srgb, var(--cor-orbe-ia) 6%, transparent), transparent 60%),
+    var(--cor-drawer);
+  padding: 10px 14px max(10px, env(safe-area-inset-bottom));
+  max-height: 34vh;
+  overflow-y: auto;
+}
+.arvore-bandeja-dica { margin: 0; font-size: 13px; opacity: 0.85; min-height: 1.4em; }
+.arvore-bandeja-item { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.orbe-arvore-mini { --orbe-tam: 44px; flex-shrink: 0; }
+.arvore-bandeja-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.arvore-bandeja-nome { font-size: 14.5px; }
+.arvore-bandeja-raridade {
+  align-self: flex-start;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+}
+.arvore-bandeja-raridade[data-raridade="raro"] { color: #4ad0e6; }
+.arvore-bandeja-raridade[data-raridade="epico"] { color: #b06bff; }
+.arvore-bandeja-raridade[data-raridade="lendario"] { color: #ffc94a; }
+.arvore-bandeja-secao { margin-top: 8px; }
+.arvore-bandeja-secao h4 { margin: 0 0 6px; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.7; }
+.arvore-bandeja-vazio { margin: 0; font-size: 12.5px; opacity: 0.75; font-style: italic; }
+.arvore-bandeja-mini-orbes {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: thin;
+}
+.arvore-mini-orbe {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+  width: 60px;
+  background: none;
+  border: 0;
+  padding: 2px;
+  color: var(--cor-texto);
+  font: inherit;
+  cursor: pointer;
 }
-.arvore-legenda-nome { font-weight: 700; }
-.arvore-legenda-linha { font-size: 12px; opacity: 0.85; }
+.arvore-mini-orbe .orbe-arvore-mini { --orbe-tam: 38px; }
+.arvore-mini-orbe-nome { font-size: 10px; text-align: center; word-break: break-word; }
+.arvore-mini-orbe:hover .orbe-arvore-mini, .arvore-mini-orbe:focus-visible .orbe-arvore-mini {
+  box-shadow:
+    0 0 0 2px var(--cor-texto),
+    0 0 8px 2px color-mix(in srgb, var(--cor-orbe) 50%, transparent),
+    inset 0 0 6px rgba(0, 0, 0, 0.35);
+  outline: none;
+}
 
 @media (prefers-reduced-motion: reduce) {
-  .arvore-no, .orbe-arvore { transition: none; }
+  .arvore-no, .orbe-arvore, .arvore-no-nome, .arvore-mundo { transition: none !important; }
+}
+
+/* ---- desktop: bandeja vira painel flutuante compacto, universo continua visível ---- */
+@media (min-width: 900px) {
+  .arvore-bandeja {
+    position: absolute;
+    left: 16px;
+    bottom: 16px;
+    width: min(360px, calc(100% - 32px));
+    max-height: 40vh;
+    border-radius: 16px;
+    border: 1px solid var(--cor-borda);
+    box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.6);
+  }
+  .arvore-palco { position: relative; }
+}
+
+@media (max-width: 640px) {
+  .arvore-subtitulo { display: none; }
+  .arvore-ver-tudo span { display: none; }
+}
+
+/* celular em paisagem: viewport baixa, cabeçalho não pode dominar a tela */
+@media (max-height: 420px) {
+  .arvore-cabecalho { padding: 6px 10px; gap: 5px; }
+  .arvore-subtitulo { display: none; }
+  .arvore-busca { padding: 6px 10px; font-size: 12px; }
+  .arvore-ver-tudo { padding: 6px 10px; font-size: 11.5px; }
+  .arvore-atalho { width: 28px; height: 28px; font-size: 13px; }
+  .arvore-bandeja { max-height: 30vh; padding: 6px 10px; }
 }
