@@ -45,8 +45,9 @@ export function calcularDadosCarta(id, { store, catalogo }) {
   const pais = Array.isArray(meta.via) ? nomesDe(meta.via, catalogo) : null;
   const filhosIds = filhosDe(id, descobertos);
   const filhos = filhosIds.length ? nomesDe(filhosIds, catalogo) : null;
+  const alemDoMapa = catalogo.ehAlemDoMapa(id); // já implica descoberto (meta existe)
   return {
-    item, meta, raridade, descricao, pais, filhos,
+    item, meta, raridade, descricao, pais, filhos, alemDoMapa,
   };
 }
 
@@ -62,13 +63,18 @@ function blocoCriei({ filhos }, T) {
   return `<div class="carta-bloco"><b>${T.cartaCrieiIsso}</b>${filhos.join(', ')}</div>`;
 }
 
+function blocoAlemDoMapa({ alemDoMapa }, T) {
+  if (!alemDoMapa) return '';
+  return `<div class="carta-bloco carta-bloco-alem-mapa"><b>✦ ${T.alemDoMapaTitulo}</b>${T.alemDoMapaTexto}</div>`;
+}
+
 // Constrói o elemento `.carta` — o MESMO componente/markup em qualquer
 // contexto (Álbum ou animação de recompensa). `comRodape:false` omite os
 // botões (usado no flash de 1ª descoberta, que é efêmero e voa antes que dê
 // tempo de exportar imagem).
 export function criarElementoCarta(dados, { T, comRodape = true }) {
   const {
-    item, meta, raridade, descricao,
+    item, meta, raridade, descricao, alemDoMapa,
   } = dados;
 
   const carta = document.createElement('div');
@@ -79,13 +85,14 @@ export function criarElementoCarta(dados, { T, comRodape = true }) {
     <div class="carta-topo"><img class="carta-logo" src="${LOGO_SRC}" alt="Misturária" /></div>
     <div class="carta-orbe-area">
       <div class="anel-orbita"></div>
-      <span class="orbe orbe-carta" data-era="${item.era}"${meta.fonte === 'ia' ? ' data-fonte="ia"' : ''}>${iconeHTML(item)}</span>
+      <span class="orbe orbe-carta" data-era="${item.era}"${meta.fonte === 'ia' ? ' data-fonte="ia"' : ''}${alemDoMapa ? ` data-alem="mapa" title="${T.alemDoMapaTitulo}: ${T.alemDoMapaTexto}"` : ''}>${iconeHTML(item)}</span>
     </div>
-    <div class="carta-nome">${item.nome}</div>
+    <div class="carta-nome">${item.nome}${alemDoMapa ? `<span class="sr-only"> — ${T.alemDoMapaTitulo}</span>` : ''}</div>
     <div class="carta-era">${(T.eras[item.era] || item.era)}${meta.fonte === 'ia' ? ` · ${T.cartaCriadoPelaIA}` : ''}</div>
     <div class="carta-bloco"><b>${T.cartaSobre}</b>${descricao}</div>
     ${blocoVia(dados, T)}
     ${blocoCriei(dados, T)}
+    ${blocoAlemDoMapa(dados, T)}
     ${comRodape ? `
     <div class="carta-rodape">
       <img class="carta-mascote" src="${MASCOTE_SRC}" alt="" />

@@ -248,3 +248,109 @@ test('destruirTudo limpa o canvas mas não as descobertas', async () => {
   assert.equal(raiz.querySelectorAll('.peca').length, 0);
   assert.ok(store.isDiscovered('vapor'));
 });
+
+test('sem combo curado e IA elegível: mostra o convite antes de chamar a IA', async () => {
+  document.body.innerHTML = '<section id="canvas" class="canvas"></section>';
+  const cat = criarCatalogo();
+  const store = criarStore({
+    versao: 1, descobertos: { robo: {}, musica: {} }, canvas: [], ajustes: { som: false },
+  });
+  let chamouCombinar = false;
+  const api = montarCanvas({
+    raiz: document.getElementById('canvas'),
+    store,
+    catalogo: cat,
+    combinar: async () => { chamouCombinar = true; return { tipo: 'nada' }; },
+    aoResultado: () => {},
+    iaElegivel: () => true,
+  });
+  const a = api.soltarItem('robo', 10, 10);
+  const b = api.soltarItem('musica', 12, 12);
+  const p = api._fundirParaTeste(a.uid, b.uid, { x: 10, y: 10 });
+  await esperar(20);
+  const overlay = document.querySelector('.convite-ia-overlay');
+  assert.ok(overlay, 'convite apareceu');
+  assert.equal(chamouCombinar, false, 'a IA não é chamada antes do convite ser respondido');
+  overlay.querySelector('.convite-ia-recusar').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+  await p;
+  assert.equal(chamouCombinar, false, 'recusar o convite nunca chama a IA');
+});
+
+test('aceitar o convite chama a combinação (que pode envolver a IA)', async () => {
+  document.body.innerHTML = '<section id="canvas" class="canvas"></section>';
+  const cat = criarCatalogo();
+  const store = criarStore({
+    versao: 1, descobertos: { robo: {}, musica: {} }, canvas: [], ajustes: { som: false },
+  });
+  let chamouCombinar = false;
+  const api = montarCanvas({
+    raiz: document.getElementById('canvas'),
+    store,
+    catalogo: cat,
+    combinar: async () => { chamouCombinar = true; return { tipo: 'nada' }; },
+    aoResultado: () => {},
+    iaElegivel: () => true,
+  });
+  const a = api.soltarItem('robo', 10, 10);
+  const b = api.soltarItem('musica', 12, 12);
+  const p = api._fundirParaTeste(a.uid, b.uid, { x: 10, y: 10 });
+  await esperar(20);
+  document.querySelector('.convite-ia-aceitar').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+  await p;
+  assert.equal(chamouCombinar, true, 'aceitar o convite chama a combinação normalmente');
+});
+
+test('sem combo curado e IA NÃO elegível (desligada/offline): nenhum convite aparece, comportamento de sempre', async () => {
+  document.body.innerHTML = '<section id="canvas" class="canvas"></section>';
+  const cat = criarCatalogo();
+  const store = criarStore({
+    versao: 1, descobertos: { robo: {}, musica: {} }, canvas: [], ajustes: { som: false },
+  });
+  let chamouCombinar = false;
+  const api = montarCanvas({
+    raiz: document.getElementById('canvas'),
+    store,
+    catalogo: cat,
+    combinar: async () => { chamouCombinar = true; return { tipo: 'nada' }; },
+    aoResultado: () => {},
+    iaElegivel: () => false,
+  });
+  const a = api.soltarItem('robo', 10, 10);
+  const b = api.soltarItem('musica', 12, 12);
+  await api._fundirParaTeste(a.uid, b.uid, { x: 10, y: 10 });
+  assert.equal(document.querySelector('.convite-ia-overlay'), null);
+  assert.equal(chamouCombinar, true, 'sem convite disponível, cai direto na combinação de sempre');
+});
+
+test('combo curado nunca mostra convite, mesmo com IA elegível', async () => {
+  const { cat, store, combinar, raiz } = ambiente();
+  const api = montarCanvas({
+    raiz, store, catalogo: cat, combinar, aoResultado() {}, iaElegivel: () => true,
+  });
+  const a = api.soltarItem('agua', 10, 10);
+  const b = api.soltarItem('fogo', 10, 10);
+  await api._fundirParaTeste(a.uid, b.uid);
+  assert.equal(document.querySelector('.convite-ia-overlay'), null);
+  assert.ok(store.isDiscovered('vapor'));
+});
+
+test('IA ligada mas offline: aviso específico em vez do genérico "nada aconteceu"', async () => {
+  document.body.innerHTML = '<section id="canvas" class="canvas"></section>';
+  const cat = criarCatalogo();
+  const store = criarStore({
+    versao: 1, descobertos: { robo: {}, musica: {} }, canvas: [], ajustes: { som: false },
+  });
+  const api = montarCanvas({
+    raiz: document.getElementById('canvas'),
+    store,
+    catalogo: cat,
+    combinar: async () => ({ tipo: 'nada' }),
+    aoResultado: () => {},
+    iaElegivel: () => false,
+    iaLigadaMasOffline: () => true,
+  });
+  const a = api.soltarItem('robo', 10, 10);
+  const b = api.soltarItem('musica', 12, 12);
+  await api._fundirParaTeste(a.uid, b.uid, { x: 10, y: 10 });
+  assert.equal(document.querySelector('.canvas-aviso').textContent, T.iaOffline);
+});

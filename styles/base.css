@@ -14,6 +14,16 @@
   --era-ficcao: #ff5c8a;
   --cor-orbe-ia: #c9a4ff; /* anel próprio do item inventado pela IA */
   --cor-orbe-nucleo: #0a0f1c; /* centro escuro comum a toda orbe */
+  --cor-alem-mapa: #d9e6f5; /* platina/perolada fria — nunca o dourado de raridade/era/conclusão */
+}
+/* utilitário: some visualmente, continua acessível a leitor de tela (mesmo
+   padrão já usado em .barra-botao span, agora reutilizável) */
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 * { box-sizing: border-box; }
 html, body { height: 100%; margin: 0; }
@@ -64,4 +74,35 @@ body {
     0 0 0 3px color-mix(in srgb, var(--cor-orbe-ia) 65%, transparent),
     0 0 9px 1px color-mix(in srgb, var(--cor-orbe-ia) 35%, transparent),
     inset 0 0 6px rgba(0, 0, 0, 0.35);
+}
+
+/* "Além do mapa": item curado que chegou ao fim da árvore (calculado em
+   src/engine/alemDoMapa.js). Borda platina/perolada fria — nunca o dourado
+   usado em descoberta/raridade lendária/era completa, pra não confundir os
+   dois significados. Reflexo é ocasional (ciclo longo), não uma pulsação
+   contínua; o símbolo (∞) nunca é a única pista — o texto acessível vem à
+   parte (ver .sr-only ao lado de cada uso). */
+.orbe[data-alem="mapa"] {
+  box-shadow:
+    0 0 0 1.5px color-mix(in srgb, var(--cor-alem-mapa) 75%, transparent),
+    0 0 10px 1px color-mix(in srgb, var(--cor-alem-mapa) 30%, transparent),
+    inset 0 0 6px rgba(0, 0, 0, 0.35);
+  animation: alem-mapa-reflexo 7s ease-in-out infinite;
+}
+.orbe[data-alem="mapa"]::after {
+  content: "∞";
+  position: absolute;
+  bottom: -3px;
+  right: -3px;
+  font-size: 9px;
+  line-height: 1;
+  color: var(--cor-alem-mapa);
+  text-shadow: 0 0 4px color-mix(in srgb, var(--cor-alem-mapa) 70%, transparent);
+}
+@keyframes alem-mapa-reflexo {
+  0%, 88%, 100% { filter: brightness(1); }
+  93% { filter: brightness(1.4); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .orbe[data-alem="mapa"] { animation: none; }
 }

@@ -20,3 +20,57 @@ img.descoberta-icone { width: 120px; height: 120px; }
 .descoberta-texto { opacity: 0.9; }
 .descoberta-fechar { margin-top: 16px; padding: 8px 16px; border-radius: 8px; border: 1px solid var(--cor-borda); background: #1b2942; color: var(--cor-texto); cursor: pointer; }
 .icone-mini { width: 18px; height: 18px; vertical-align: middle; }
+
+/* Convite lúdico da IA: só aparece quando não há combinação oficial pra
+   dupla e a IA está disponível — nunca chama a IA sem esse toque explícito. */
+.convite-ia-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(4, 8, 16, 0.82);
+  padding: 20px;
+  animation: aparecer 0.2s ease;
+}
+.convite-ia-cartao {
+  max-width: 340px;
+  padding: 22px 22px 20px;
+  border-radius: 20px;
+  text-align: center;
+  background:
+    radial-gradient(120% 60% at 50% -10%, rgba(120, 140, 255, 0.16), transparent 60%),
+    linear-gradient(180deg, #0d1428 0%, #080b1a 55%, #060812 100%);
+  box-shadow:
+    0 0 0 1.5px color-mix(in srgb, var(--cor-orbe-ia) 55%, transparent),
+    0 0 30px 4px color-mix(in srgb, var(--cor-orbe-ia) 22%, transparent),
+    0 20px 50px -16px rgba(0, 0, 0, 0.7);
+}
+.convite-ia-dupla { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 0 0 12px; font-size: 13px; opacity: 0.85; }
+.convite-ia-icone { width: 18px; height: 18px; vertical-align: middle; }
+.convite-ia-titulo { margin: 0 0 6px; font-size: 18px; font-weight: 800; }
+.convite-ia-texto { margin: 0 0 10px; font-size: 14px; }
+.convite-ia-explicacao { margin: 0 0 16px; font-size: 12px; color: #9fb0d9; line-height: 1.4; }
+.convite-ia-botoes { display: flex; flex-direction: column; gap: 8px; }
+.convite-ia-aceitar {
+  font: inherit;
+  font-weight: 700;
+  font-size: 14px;
+  padding: 11px 16px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--cor-orbe-ia) 65%, #7aa2ff);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--cor-orbe-ia) 90%, white 10%), var(--cor-orbe-ia));
+  color: #14102a;
+  cursor: pointer;
+}
+.convite-ia-recusar {
+  font: inherit;
+  font-size: 13px;
+  padding: 9px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--cor-texto);
+  cursor: pointer;
+}

@@ -1,7 +1,9 @@
 /* Tela de abertura real — não confundir com a seleção de perfis (essa é o
    "quem vai jogar", já dentro do universo). O splash aparece antes de tudo,
    direto no HTML (sem esperar JS), e some assim que o boot termina — ver
-   src/ui/splash.js. */
+   src/ui/splash.js. Composição revista: nebulosa como atmosfera de fundo
+   (não um recorte solto num canto), logo e mascote como protagonistas reais,
+   com profundidade controlada (estrelas + órbita sutil), sem poluir. */
 .splash {
   position: fixed;
   inset: 0;
@@ -10,72 +12,158 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 18px;
+  gap: 14px;
   overflow: hidden;
-  background:
-    radial-gradient(120% 90% at 50% 30%, rgba(120, 140, 255, 0.12), transparent 60%),
-    #05070f;
+  background: radial-gradient(60% 55% at 50% 40%, #131c36, #05070f 72%);
   transition: opacity 420ms ease;
 }
-.splash-decor {
+
+/* nebulosa "sangrando" pelas bordas: a borda quadrada do PNG se dissolve num
+   degradê radial, então ela lê como atmosfera do universo, não como um
+   recorte de imagem colado no canto. */
+.splash-nebulosa {
+  position: absolute;
+  inset: -12%;
+  pointer-events: none;
+  background: url("../assets/decor/nebulosa.png") center / cover no-repeat;
+  opacity: 0.6;
+  -webkit-mask-image: radial-gradient(62% 58% at 50% 42%, #000 45%, transparent 88%);
+  mask-image: radial-gradient(62% 58% at 50% 42%, #000 45%, transparent 88%);
+}
+
+/* campo de estrelas (mesma técnica de carta.css): profundidade sem precisar
+   de mais um arquivo de imagem, controlada e discreta. */
+.splash-estrelas {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  opacity: 0.5;
-  background:
-    url("../assets/decor/nebulosa.png") -8% -6% / 55% no-repeat,
-    url("../assets/decor/estrelas.png") 92% 82% / 110px no-repeat,
-    url("../assets/decor/estrelas.png") 8% 88% / 70px no-repeat;
+  opacity: 0.75;
+  background-image:
+    radial-gradient(1.6px 1.6px at 12% 18%, #fff, transparent),
+    radial-gradient(1.2px 1.2px at 82% 14%, #fff, transparent),
+    radial-gradient(1.4px 1.4px at 38% 8%, #cfe0ff, transparent),
+    radial-gradient(1px 1px at 66% 24%, #fff, transparent),
+    radial-gradient(1.6px 1.6px at 92% 40%, #fff, transparent),
+    radial-gradient(1px 1px at 6% 46%, #cfe0ff, transparent),
+    radial-gradient(1.3px 1.3px at 24% 62%, #fff, transparent),
+    radial-gradient(1px 1px at 78% 68%, #fff, transparent),
+    radial-gradient(1.5px 1.5px at 94% 82%, #cfe0ff, transparent),
+    radial-gradient(1px 1px at 16% 88%, #fff, transparent),
+    radial-gradient(1.3px 1.3px at 54% 92%, #fff, transparent),
+    radial-gradient(1px 1px at 46% 6%, #fff, transparent);
 }
-/* brilho/orbe pulsando atrás da logo — a única animação do splash */
+
+.splash-nucleo {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+/* órbita sutil ao redor do conjunto logo+mascote — profundidade controlada,
+   nunca frenética. Some com prefers-reduced-motion. */
+.splash-orbita {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(320px, 78vw);
+  height: min(320px, 78vw);
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 1px dashed rgba(150, 170, 255, 0.28);
+  pointer-events: none;
+  animation: splash-girar 22s linear infinite;
+}
+.splash-orbita::after {
+  content: "";
+  position: absolute;
+  top: -3px;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  margin-left: -3px;
+  border-radius: 50%;
+  background: #cfe0ff;
+  box-shadow: 0 0 10px 3px rgba(190, 205, 255, 0.7);
+}
+@keyframes splash-girar { to { transform: translate(-50%, -50%) rotate(360deg); } }
+
+/* brilho pulsando por trás do conjunto — a única "respiração" contínua */
 .splash-brilho {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 260px;
-  height: 260px;
-  transform: translate(-50%, -60%);
+  width: min(360px, 86vw);
+  height: min(360px, 86vw);
+  transform: translate(-50%, -50%);
   border-radius: 50%;
   pointer-events: none;
-  background: radial-gradient(circle, rgba(150, 170, 255, 0.35), transparent 70%);
-  animation: splash-pulsar 2.2s ease-in-out infinite;
+  background: radial-gradient(circle, rgba(150, 170, 255, 0.32), transparent 70%);
+  animation: splash-pulsar 2.6s ease-in-out infinite;
 }
 @keyframes splash-pulsar {
-  0%, 100% { transform: translate(-50%, -60%) scale(0.92); opacity: 0.7; }
-  50% { transform: translate(-50%, -60%) scale(1.08); opacity: 1; }
+  0%, 100% { transform: translate(-50%, -50%) scale(0.94); opacity: 0.75; }
+  50% { transform: translate(-50%, -50%) scale(1.06); opacity: 1; }
 }
-.splash-logo {
-  position: relative;
-  width: min(280px, 70vw);
-  height: auto;
-  filter: drop-shadow(0 0 30px rgba(120, 140, 255, 0.35));
-}
+
+/* mascote e logo são os protagonistas — presença real, não um detalhe */
 .splash-mascote {
   position: relative;
-  width: 64px;
+  width: min(150px, 38vw);
   height: auto;
-  opacity: 0.95;
-  animation: splash-flutuar 2.6s ease-in-out infinite;
+  filter: drop-shadow(0 0 24px rgba(120, 140, 255, 0.4));
+  animation: splash-flutuar 2.8s ease-in-out infinite;
 }
 @keyframes splash-flutuar {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
+  50% { transform: translateY(-8px); }
+}
+.splash-logo {
+  position: relative;
+  width: min(340px, 80vw);
+  height: auto;
+  filter: drop-shadow(0 0 34px rgba(120, 140, 255, 0.45));
 }
 .splash-tagline {
   position: relative;
-  margin: 0;
-  font-size: 14px;
-  letter-spacing: 0.04em;
-  color: #a9bce0;
+  margin: 2px 0 0;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: #cdd8f5;
   text-align: center;
 }
+
+/* frase de status alternando — cadência legível, controlada via JS
+   (ver src/ui/splash.js), nunca percentual falso. */
+.splash-status {
+  position: relative;
+  min-height: 18px;
+  margin: 2px 0 0;
+  font-size: 12.5px;
+  color: #8fa3d6;
+  text-align: center;
+  transition: opacity 260ms ease;
+}
+.splash-status.splash-status-trocando { opacity: 0; }
 
 .splash.splash-saindo {
   opacity: 0;
   pointer-events: none;
 }
 
+/* landscape / telas largas: composição em linha (mascote ao lado do
+   logo+texto) em vez de uma coluna alta e estreita esticada. */
+@media (min-width: 700px) and (orientation: landscape) {
+  .splash-nucleo { flex-direction: row; gap: 26px; }
+  .splash-mascote { width: min(130px, 16vw); }
+  .splash-logo { width: min(300px, 34vw); }
+  .splash-orbita, .splash-brilho { width: min(460px, 50vw); height: min(300px, 40vh); }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .splash-brilho, .splash-mascote { animation: none; }
+  .splash-brilho, .splash-mascote, .splash-orbita { animation: none; }
   .splash { transition: opacity 200ms linear; }
+  .splash-status { transition: none; }
 }

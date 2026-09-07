@@ -3,7 +3,7 @@
 // fetch: cache-first para estático mesmo-origem; rede direta para /api/.
 // activate: apaga versões antigas do cache.
 
-const VERSAO = 'mistura-v26';
+const VERSAO = 'mistura-v27';
 
 const PRECACHE = [
   './',
@@ -25,11 +25,13 @@ const PRECACHE = [
 
   'src/app.js',
   'src/ai/provider.js',
+  'src/data/avatares.js',
   'src/data/combos.js',
   'src/data/config.js',
   'src/data/itens.js',
   'src/data/modos.js',
   'src/data/textos.js',
+  'src/engine/alemDoMapa.js',
   'src/engine/catalogo.js',
   'src/engine/combinar.js',
   'src/engine/eras.js',
@@ -39,9 +41,11 @@ const PRECACHE = [
   'src/engine/state.js',
   'src/engine/storage.js',
   'src/engine/sync.js',
+  'src/ui/alemDoMapaUI.js',
   'src/ui/arvore.js',
   'src/ui/canvas.js',
   'src/ui/carta.js',
+  'src/ui/convite-ia.js',
   'src/ui/descoberta.js',
   'src/ui/descoberta-carta.js',
   'src/ui/voo-carta.js',
@@ -55,13 +59,14 @@ const PRECACHE = [
   'src/ui/perfis.js',
   'src/ui/rede.js',
   'src/ui/atualizacao.js',
+  'src/ui/avatarSvg.js',
 
-  'assets/icons/icon-192.png',
-  'assets/icons/icon-512.png',
-  'assets/icons/icon-maskable-512.png',
-  'assets/icons/apple-touch-icon.png',
-  'assets/icons/favicon-32.png',
-  'assets/icons/favicon-16.png',
+  'assets/icons/icon-192-v2.png',
+  'assets/icons/icon-512-v2.png',
+  'assets/icons/icon-maskable-512-v2.png',
+  'assets/icons/apple-touch-icon-v2.png',
+  'assets/icons/favicon-32-v2.png',
+  'assets/icons/favicon-16-v2.png',
 
   'assets/svg/pikachu.svg',
   'assets/svg/raichu.svg',

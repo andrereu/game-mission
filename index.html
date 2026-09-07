@@ -8,9 +8,9 @@
     <title>Misturária</title>
     <style>body{background:#05070f;margin:0;}</style>
     <link rel="manifest" href="manifest.webmanifest" />
-    <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32.png" />
-    <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon-16.png" />
-    <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32-v2.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon-16-v2.png" />
+    <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon-v2.png" />
     <link rel="stylesheet" href="styles/base.css" />
     <link rel="stylesheet" href="styles/canvas.css" />
     <link rel="stylesheet" href="styles/drawer.css" />
@@ -25,12 +25,17 @@
     <link rel="stylesheet" href="styles/splash.css" />
   </head>
   <body>
-    <div id="splash" class="splash">
-      <div class="splash-decor" aria-hidden="true"></div>
-      <div class="splash-brilho" aria-hidden="true"></div>
-      <img class="splash-logo" src="assets/cartas/logo-completo.png" alt="Misturária" />
-      <img class="splash-mascote" src="assets/cartas/mascote.png" alt="" aria-hidden="true" />
+    <div id="splash" class="splash" role="status" aria-live="polite">
+      <div class="splash-nebulosa" aria-hidden="true"></div>
+      <div class="splash-estrelas" aria-hidden="true"></div>
+      <div class="splash-nucleo">
+        <div class="splash-orbita" aria-hidden="true"></div>
+        <div class="splash-brilho" aria-hidden="true"></div>
+        <img class="splash-mascote" src="assets/cartas/mascote.png" alt="" aria-hidden="true" />
+        <img class="splash-logo" src="assets/cartas/logo-header.png" alt="Misturária" />
+      </div>
       <p class="splash-tagline">Combine e crie tudo!</p>
+      <p class="splash-status" id="splash-status"></p>
     </div>
     <script>
       // some antes mesmo do app.js (módulo, executa depois do parsing) rodar:

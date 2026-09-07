@@ -2,16 +2,41 @@
 // formulário pra criar um novo. Só desenha e dispara os callbacks; quem
 // persiste e recarrega o jogo é o app.js.
 import { MODOS, MODO_PADRAO } from '../data/modos.js';
-
-const CORES = ['#4aa3ff', '#45c26b', '#ff8a5c', '#b57cff', '#ffd25c', '#ff5c8a'];
+import { AVATARES, avatarPadrao } from '../data/avatares.js';
+import { avatarSvgMarkup } from './avatarSvg.js';
 
 export function montarSeletorPerfis({
   raiz, T, aoEscolher, aoCriar, aoApagar, aoEditar,
 }) {
   const editar = aoEditar || (async () => {});
   let overlay = null;
-  let corEscolhida = CORES[0];
+  let avatarEscolhido = AVATARES[0].id;
   let modoEscolhido = MODO_PADRAO;
+
+  // fileira de carinhas selecionáveis — reaproveitada na criação e na edição.
+  // `aoTrocar(avatarId)` é chamado no clique; marca a opção ativa visualmente.
+  function fileiraAvatares(atual, aoTrocar) {
+    const box = document.createElement('div');
+    box.className = 'perfil-avatares';
+    box.setAttribute('role', 'group');
+    box.setAttribute('aria-label', T.perfilEscolherCarinha);
+    AVATARES.forEach((av, i) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'perfil-avatar-opcao';
+      b.dataset.avatar = av.id;
+      b.setAttribute('aria-label', T.perfilCarinha(i + 1));
+      b.innerHTML = avatarSvgMarkup(av.id);
+      if (av.id === atual) b.classList.add('escolhida');
+      b.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        for (const outro of box.children) outro.classList.toggle('escolhida', outro === b);
+        aoTrocar(av.id);
+      });
+      box.appendChild(b);
+    });
+    return box;
+  }
 
   function fechar() {
     if (!overlay) return;
@@ -54,7 +79,7 @@ export function montarSeletorPerfis({
       card.dataset.id = p.id;
       if (estado.ativo === p.id) card.classList.add('ativo');
       card.innerHTML = `
-        <span class="perfil-cor" style="background:${p.cor}"></span>
+        <span class="perfil-avatar">${avatarSvgMarkup(p.avatarId || avatarPadrao(p.id))}</span>
         <span class="perfil-nome"></span>
         <span class="perfil-modo-tag"></span>
         <button type="button" class="perfil-editar" aria-label="${T.perfilEditar}">✎</button>
@@ -79,6 +104,11 @@ export function montarSeletorPerfis({
         if (card.querySelector('.perfil-modos')) return; // já aberto
         card.appendChild(fileiraModos(p.modo || MODO_PADRAO, async (m) => {
           const novo = await editar(p.id, { modo: m });
+          if (novo) render(novo);
+        }));
+        card.appendChild(fileiraAvatares(p.avatarId || avatarPadrao(p.id), async (avatarId) => {
+          const av = AVATARES.find((a) => a.id === avatarId);
+          const novo = await editar(p.id, { avatarId, cor: av?.cor });
           if (novo) render(novo);
         }));
       });
@@ -106,28 +136,14 @@ export function montarSeletorPerfis({
         <div class="perfil-novo">
           <form>
             <input type="text" maxlength="16" placeholder="${T.perfilNome}" aria-label="${T.perfilNome}" />
-            <div class="perfil-cores"></div>
           </form>
         </div>
       </div>`;
 
     const form = overlay.querySelector('.perfil-novo form');
 
-    const cores = overlay.querySelector('.perfil-cores');
-    corEscolhida = CORES[0];
-    for (const c of CORES) {
-      const b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'perfil-swatch';
-      b.style.background = c;
-      b.dataset.cor = c;
-      if (c === corEscolhida) b.classList.add('escolhida');
-      b.addEventListener('click', () => {
-        corEscolhida = c;
-        for (const outro of cores.children) outro.classList.toggle('escolhida', outro === b);
-      });
-      cores.appendChild(b);
-    }
+    avatarEscolhido = AVATARES[0].id;
+    form.appendChild(fileiraAvatares(avatarEscolhido, (avatarId) => { avatarEscolhido = avatarId; }));
 
     modoEscolhido = MODO_PADRAO;
     form.appendChild(fileiraModos(modoEscolhido, (m) => { modoEscolhido = m; }));
@@ -144,7 +160,8 @@ export function montarSeletorPerfis({
       const nome = campo.value.trim();
       if (!nome) return;
       campo.value = '';
-      const novo = await aoCriar(nome, corEscolhida, modoEscolhido);
+      const avatar = AVATARES.find((a) => a.id === avatarEscolhido) || AVATARES[0];
+      const novo = await aoCriar(nome, avatar.cor, modoEscolhido, avatar.id);
       if (novo) render(novo);
     });
 

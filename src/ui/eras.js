@@ -4,6 +4,7 @@
 // não descoberto vira uma silhueta "?". Era 100% completa ganha um selo.
 import { ERAS } from '../engine/catalogo.js';
 import { montarCartaOverlay } from './carta.js';
+import { ehAlemDoMapaVisivel, atributosOrbeAlemDoMapa, srOnlyAlemDoMapa } from './alemDoMapaUI.js';
 
 export function montarAlbum({ raiz, store, catalogo, T }) {
   let overlay = null;
@@ -31,12 +32,13 @@ export function montarAlbum({ raiz, store, catalogo, T }) {
         : `<span class="figurinha-icone">${item.emoji}</span>`)
       : '<span class="figurinha-icone figurinha-oculta">?</span>';
     const nome = descoberta ? item.nome : T.albumOculto;
+    const alem = descoberta && ehAlemDoMapaVisivel(catalogo, store, item.id);
     const orbe = descoberta
-      ? `<span class="orbe orbe-album" data-era="${item.era}">${icone}</span>`
+      ? `<span class="orbe orbe-album" data-era="${item.era}"${atributosOrbeAlemDoMapa(alem, T)}>${icone}</span>`
       : `<span class="orbe orbe-album orbe-oculta">${icone}</span>`;
     const atributosClicaveis = descoberta ? ' role="button" tabindex="0"' : '';
     return `<div class="figurinha ${descoberta ? 'descoberta' : 'oculta'}" data-id="${item.id}"${atributosClicaveis}>
-      ${orbe}<span class="figurinha-nome">${nome}</span>
+      ${orbe}<span class="figurinha-nome">${nome}${srOnlyAlemDoMapa(alem, T)}</span>
     </div>`;
   }
 

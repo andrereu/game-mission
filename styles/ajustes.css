@@ -212,3 +212,37 @@
   .ajustes-cartao { max-width: 100%; border-radius: 18px; }
   .ajustes-mascote { width: 68px; }
 }
+
+/* Desktop: o mobile aprovado fica intacto (regras acima) — aqui só se
+   reorganiza o espaçamento vertical pra caber sem rolagem em 1440×900,
+   1366×768 e 1280×720 (as alturas usuais de notebook/desktop). Card mais
+   largo reflui o texto em menos linhas; não é só "encolher tudo por escala"
+   — cada bloco perde ar sobrando, não legibilidade nem alvo de clique. */
+@media (min-width: 900px) {
+  .ajustes-cartao {
+    max-width: 460px;
+    max-height: min(94dvh, 620px);
+    padding: 14px 22px calc(12px + env(safe-area-inset-bottom));
+  }
+  .ajustes-cabecalho { padding: 2px 32px 8px; gap: 2px; }
+  .ajustes-mascote { width: 56px; margin-bottom: 2px; }
+  .ajustes-cabecalho h2 { font-size: 19px; }
+  .ajustes-subtitulo { font-size: 12px; }
+  .ajustes-balao { margin-top: 6px; padding: 5px 12px; font-size: 11px; }
+  .ajustes-corpo { gap: 10px; }
+  .ajustes-lista { gap: 6px; }
+  .ajuste-linha { padding: 7px 10px; gap: 10px; }
+  .ajuste-icone { width: 28px; height: 28px; font-size: 13px; }
+  .ajuste-titulo { font-size: 13px; }
+  .ajuste-desc { font-size: 11px; }
+  .ajustes-secao { padding: 10px; }
+  .ajustes-secao-cabecalho { margin-bottom: 5px; }
+  .ajustes-secao-texto { margin-bottom: 6px; }
+  .ajustes-rodape { margin-top: 2px; padding-top: 8px; font-size: 10px; }
+}
+
+/* alturas realmente pequenas ou zoom alto: nunca corta conteúdo — volta a
+   rolar dentro do cartão em vez de forçar tudo num espaço menor que isso. */
+@media (min-width: 900px) and (max-height: 560px) {
+  .ajustes-cartao { max-height: 92dvh; overflow-y: auto; }
+}

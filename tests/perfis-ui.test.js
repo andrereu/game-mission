@@ -123,3 +123,62 @@ test('só dá pra fechar quando já existe um perfil ativo', () => {
   raiz.querySelector('.perfil-fechar').dispatchEvent(clique());
   assert.equal(raiz.querySelector('.perfis-overlay'), null);
 });
+
+test('o formulário de novo perfil mostra 8 carinhas e passa a escolhida pro aoCriar', async () => {
+  const raiz = raizLimpa();
+  const chamadas = [];
+  const sel = montarSeletorPerfis({
+    raiz, T, aoEscolher() {}, async aoEditar() {},
+    async aoCriar(nome, cor, modo, avatarId) { chamadas.push({ nome, cor, modo, avatarId }); return { lista: [], ativo: null }; },
+    async aoApagar() {},
+  });
+  sel.abrir({ lista: [], ativo: null });
+  const opcoes = raiz.querySelectorAll('.perfil-novo .perfil-avatar-opcao');
+  assert.equal(opcoes.length, 8);
+  opcoes[3].dispatchEvent(clique());
+  raiz.querySelector('.perfil-novo input').value = 'Duda';
+  raiz.querySelector('.perfil-novo form').dispatchEvent(new window.Event('submit', { bubbles: true, cancelable: true }));
+  await new Promise((r) => setTimeout(r, 0));
+  assert.equal(chamadas.length, 1);
+  assert.equal(chamadas[0].nome, 'Duda');
+  assert.equal(chamadas[0].avatarId, opcoes[3].dataset.avatar);
+  assert.ok(chamadas[0].cor, 'a cor é derivada automaticamente da carinha escolhida');
+});
+
+test('cada card de perfil mostra uma carinha (não mais um círculo de cor abstrato)', () => {
+  const raiz = raizLimpa();
+  const sel = montarSeletorPerfis({ raiz, T, aoEscolher() {}, async aoCriar() {}, async aoApagar() {} });
+  sel.abrir({ lista: [{ id: 'a', nome: 'Ana', cor: '#4aa3ff', avatarId: 'lumen' }], ativo: null });
+  const avatar = raiz.querySelector('.perfil-card .perfil-avatar');
+  assert.ok(avatar, 'tem um contêiner de carinha');
+  assert.ok(avatar.querySelector('svg'), 'a carinha é um SVG, não emoji nem cor sólida');
+  assert.equal(raiz.querySelector('.perfil-cor'), null, 'o círculo de cor abstrato não existe mais');
+});
+
+test('perfil sem avatarId (perfil antigo) ainda mostra uma carinha determinística, sem quebrar', () => {
+  const raiz = raizLimpa();
+  const sel = montarSeletorPerfis({ raiz, T, aoEscolher() {}, async aoCriar() {}, async aoApagar() {} });
+  sel.abrir({ lista: [{ id: 'legado', nome: 'Legado', cor: '#4aa3ff' }], ativo: null });
+  assert.ok(raiz.querySelector('.perfil-card .perfil-avatar svg'));
+});
+
+test('editar um card também permite trocar a carinha via aoEditar', async () => {
+  const raiz = raizLimpa();
+  let editado = null;
+  const sel = montarSeletorPerfis({
+    raiz, T, aoEscolher() {}, async aoCriar() {}, async aoApagar() {},
+    async aoEditar(id, campos) {
+      editado = { id, campos };
+      return { lista: [{ id, nome: 'Ana', cor: campos.cor || '#4aa3ff', modo: 'medio', avatarId: campos.avatarId }], ativo: null };
+    },
+  });
+  sel.abrir({ lista: [{ id: 'a', nome: 'Ana', cor: '#4aa3ff', modo: 'medio', avatarId: 'nova' }], ativo: null });
+  raiz.querySelector('.perfil-card .perfil-editar').dispatchEvent(clique());
+  const opcoes = raiz.querySelectorAll('.perfil-card .perfil-avatar-opcao');
+  assert.equal(opcoes.length, 8);
+  const outra = [...opcoes].find((b) => b.dataset.avatar !== 'nova');
+  outra.dispatchEvent(clique());
+  await new Promise((r) => setTimeout(r, 0));
+  assert.equal(editado.id, 'a');
+  assert.equal(editado.campos.avatarId, outra.dataset.avatar);
+});

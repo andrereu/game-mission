@@ -51,12 +51,12 @@ test('cada linha mostra ícone, título e descrição (não é mais um checkbox 
   }
 });
 
-test('a descrição da IA reflete o funcionamento real (consultada quando não existe combo)', () => {
+test('a descrição da IA reflete o funcionamento real (consultada quando não houver combinação oficial)', () => {
   const { api, raiz } = ambiente({ som: false, iaLigada: false });
   api.abrir();
   const desc = raiz.querySelector('input[data-chave="iaLigada"]')
     .closest('.ajuste-linha').querySelector('.ajuste-desc').textContent;
-  assert.match(desc, /não existe/i);
+  assert.match(desc, /não houver.*combinação oficial/i);
   assert.doesNotMatch(desc, /dica/i);
 });
 

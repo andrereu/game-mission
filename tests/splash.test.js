@@ -23,7 +23,7 @@ test('esconderSplash some do DOM depois da duração mínima', async () => {
   prepararSplash();
   esconderSplash();
   assert.ok(document.getElementById('splash'), 'ainda não sumiu imediatamente');
-  await new Promise((r) => setTimeout(r, 1500));
+  await new Promise((r) => setTimeout(r, 2800));
   assert.equal(document.getElementById('splash'), null, 'sumiu depois da duração mínima');
 });
 
@@ -32,7 +32,7 @@ test('marca a sessão como vista (sessionStorage) ao esconder', async () => {
   const { prepararSplash, esconderSplash } = await importarSplashLimpo();
   prepararSplash();
   esconderSplash();
-  await new Promise((r) => setTimeout(r, 1500));
+  await new Promise((r) => setTimeout(r, 2800));
   assert.equal(sessionStorage.getItem('misturaria-splash-visto'), '1');
 });
 
@@ -64,6 +64,32 @@ test('chamar esconderSplash duas vezes não duplica nem quebra', async () => {
   prepararSplash();
   esconderSplash();
   esconderSplash();
-  await new Promise((r) => setTimeout(r, 1500));
+  await new Promise((r) => setTimeout(r, 2800));
   assert.equal(document.getElementById('splash'), null);
+});
+
+test('frases alternam enquanto o splash está visível, numa cadência legível', async () => {
+  document.body.innerHTML = '<div id="splash" class="splash"><p class="splash-status" id="splash-status"></p></div>';
+  try { sessionStorage.clear(); } catch { /* ok */ }
+  const { prepararSplash, esconderSplash } = await importarSplashLimpo();
+  prepararSplash();
+  const el = document.getElementById('splash-status');
+  const primeira = el.textContent;
+  assert.ok(primeira.length > 0, 'já mostra uma frase de cara');
+  await new Promise((r) => setTimeout(r, 900));
+  assert.notEqual(el.textContent, primeira, 'trocou de frase depois de um tempo');
+  esconderSplash();
+  await new Promise((r) => setTimeout(r, 2800));
+});
+
+test('esconder o splash cedo (interação) para de trocar frase depois de removido', async () => {
+  document.body.innerHTML = '<div id="splash" class="splash"><p class="splash-status" id="splash-status"></p></div>';
+  try { sessionStorage.clear(); } catch { /* ok */ }
+  const { prepararSplash, esconderSplash } = await importarSplashLimpo();
+  prepararSplash();
+  esconderSplash();
+  await new Promise((r) => setTimeout(r, 2800));
+  assert.equal(document.getElementById('splash'), null);
+  // não deve sobrar nenhum timer tentando escrever num elemento que já sumiu
+  await new Promise((r) => setTimeout(r, 800));
 });

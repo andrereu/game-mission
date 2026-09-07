@@ -2,6 +2,12 @@
 // O índice fica na chave `perfis` -> { versao, lista: [{id,nome,cor}], ativo }.
 import { lerChave, escreverChave, apagarChave } from './storage.js';
 import { normalizarModo, MODO_PADRAO } from '../data/modos.js';
+import { AVATARES, avatarPadrao } from '../data/avatares.js';
+
+function normalizarAvatarId(avatarId, perfilId) {
+  if (AVATARES.some((a) => a.id === avatarId)) return avatarId;
+  return avatarPadrao(perfilId);
+}
 
 const CHAVE_INDICE = 'perfis';
 const CHAVE_LEGADA = 'principal';
@@ -22,7 +28,13 @@ function novoId() {
 
 function normalizar(cru) {
   if (cru && Array.isArray(cru.lista)) {
-    return { versao: VERSAO, lista: cru.lista, ativo: cru.ativo ?? null };
+    // perfis gravados antes desta rodada não têm avatarId: cada um recebe um
+    // padrão determinístico (sempre o mesmo pro mesmo id), nunca aleatório a
+    // cada abertura — sem precisar reescrever o índice só por isso.
+    const lista = cru.lista.map((p) => (
+      p.avatarId ? p : { ...p, avatarId: avatarPadrao(p.id) }
+    ));
+    return { versao: VERSAO, lista, ativo: cru.ativo ?? null };
   }
   return null;
 }
@@ -40,7 +52,10 @@ export async function carregarPerfis() {
 
   const legado = await lerChave(CHAVE_LEGADA);
   if (legado && typeof legado === 'object') {
-    const perfil = { id: novoId(), nome: 'Jogo 1', cor: '#4aa3ff', modo: MODO_PADRAO };
+    const id = novoId();
+    const perfil = {
+      id, nome: 'Jogo 1', cor: '#4aa3ff', modo: MODO_PADRAO, avatarId: avatarPadrao(id),
+    };
     await escreverChave(chaveSave(perfil.id), legado);
     return gravarIndice({ versao: VERSAO, lista: [perfil], ativo: perfil.id });
   }
@@ -52,13 +67,15 @@ export async function salvarPerfis({ lista = [], ativo = null } = {}) {
   await gravarIndice({ versao: VERSAO, lista, ativo });
 }
 
-export async function criarPerfil(nome, cor, modo) {
+export async function criarPerfil(nome, cor, modo, avatarId) {
   const estado = await carregarPerfis();
+  const id = novoId();
   const perfil = {
-    id: novoId(),
+    id,
     nome: String(nome || 'Sem nome').trim() || 'Sem nome',
     cor: cor || '#4aa3ff',
     modo: normalizarModo(modo),
+    avatarId: normalizarAvatarId(avatarId, id),
   };
   estado.lista.push(perfil);
   await gravarIndice(estado);
@@ -72,6 +89,7 @@ export async function editarPerfil(id, campos = {}) {
   if (campos.nome != null) perfil.nome = String(campos.nome).trim() || perfil.nome;
   if (campos.cor != null) perfil.cor = campos.cor;
   if (campos.modo != null) perfil.modo = normalizarModo(campos.modo);
+  if (campos.avatarId != null) perfil.avatarId = normalizarAvatarId(campos.avatarId, id);
   await gravarIndice(estado);
   return perfil;
 }

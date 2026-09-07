@@ -123,3 +123,59 @@ test('não migra de novo se já existe um perfil', async () => {
   assert.equal(p.lista.length, 1);
   assert.equal(p.lista[0].nome, 'Ana');
 });
+
+test('criarPerfil sem avatarId recebe um padrão determinístico (não muda entre chamadas)', async () => {
+  reset();
+  const a = await criarPerfil('Ana', '#4aa3ff');
+  const { AVATARES } = await import('../src/data/avatares.js');
+  assert.ok(AVATARES.some((av) => av.id === a.avatarId), 'avatarId é um avatar válido');
+  const { lista } = await carregarPerfis();
+  assert.equal(lista[0].avatarId, a.avatarId, 'estável ao recarregar');
+});
+
+test('criarPerfil com avatarId inválido cai no padrão determinístico', async () => {
+  reset();
+  const a = await criarPerfil('Ana', '#4aa3ff', 'medio', 'nao-existe');
+  const { avatarPadrao } = await import('../src/data/avatares.js');
+  assert.equal(a.avatarId, avatarPadrao(a.id));
+});
+
+test('criarPerfil com avatarId válido é respeitado', async () => {
+  reset();
+  const a = await criarPerfil('Ana', '#4aa3ff', 'medio', 'lumen');
+  assert.equal(a.avatarId, 'lumen');
+});
+
+test('editarPerfil troca o avatarId e persiste', async () => {
+  reset();
+  const a = await criarPerfil('Ana', '#4aa3ff', 'medio', 'nova');
+  const atualizado = await editarPerfil(a.id, { avatarId: 'cosmo' });
+  assert.equal(atualizado.avatarId, 'cosmo');
+  const { lista } = await carregarPerfis();
+  assert.equal(lista[0].avatarId, 'cosmo');
+});
+
+test('perfil antigo (gravado sem avatarId) recebe um padrão determinístico ao carregar, sem sumir nem trocar sozinho entre leituras', async () => {
+  reset();
+  await escreverChave('perfis', {
+    versao: 1,
+    lista: [{ id: 'legado1', nome: 'Legado', cor: '#4aa3ff', modo: 'medio' }],
+    ativo: 'legado1',
+  });
+  const { avatarPadrao } = await import('../src/data/avatares.js');
+  const p1 = await carregarPerfis();
+  const p2 = await carregarPerfis();
+  assert.equal(p1.lista[0].avatarId, avatarPadrao('legado1'));
+  assert.equal(p1.lista[0].avatarId, p2.lista[0].avatarId, 'nunca muda sozinho entre leituras');
+  assert.equal(p1.lista[0].nome, 'Legado', 'nome preservado');
+});
+
+test('migração do save "principal" já grava um perfil com avatarId', async () => {
+  reset();
+  await escreverChave('principal', {
+    versao: 1, descobertos: { agua: { em: 1, via: null, fonte: 'base' } }, canvas: [], ajustes: {},
+  });
+  const p = await carregarPerfis();
+  const { AVATARES } = await import('../src/data/avatares.js');
+  assert.ok(AVATARES.some((av) => av.id === p.lista[0].avatarId));
+});

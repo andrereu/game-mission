@@ -1,6 +1,7 @@
 import { T } from '../data/textos.js';
 import { ERAS } from '../engine/catalogo.js';
 import { slug } from '../engine/slug.js';
+import { ehAlemDoMapaVisivel, atributosOrbeAlemDoMapa, srOnlyAlemDoMapa } from './alemDoMapaUI.js';
 
 const LIMIAR_MOV = 8; // px de movimento antes do "segurar" = virou scroll
 const SEGURAR_MS = 180; // hold pra "pegar" o card e começar a arrastar
@@ -180,9 +181,10 @@ export function montarDrawer({
       const icone = item.svg
         ? `<img class="card-icone" src="${item.svg}" alt="" />`
         : `<span class="card-icone">${item.emoji}</span>`;
+      const alem = ehAlemDoMapaVisivel(catalogo, store, item.id);
       card.innerHTML =
-        `<span class="orbe orbe-gaveta" data-era="${item.era}"${meta.fonte === 'ia' ? ' data-fonte="ia"' : ''}>${icone}</span>` +
-        `<span class="card-nome">${item.nome}</span>`;
+        `<span class="orbe orbe-gaveta" data-era="${item.era}"${meta.fonte === 'ia' ? ' data-fonte="ia"' : ''}${atributosOrbeAlemDoMapa(alem, T)}>${icone}</span>` +
+        `<span class="card-nome">${item.nome}${srOnlyAlemDoMapa(alem, T)}</span>`;
       card.addEventListener('click', () => {
         if (card.__ignorarClique) return;
         aoEscolherItem(item.id);

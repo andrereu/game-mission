@@ -28,6 +28,8 @@ import {
 } from './engine/sync.js';
 import { T } from './data/textos.js';
 import { prepararSplash, esconderSplash } from './ui/splash.js';
+import { avatarSvgMarkup } from './ui/avatarSvg.js';
+import { avatarPadrao } from './data/avatares.js';
 
 prepararSplash();
 
@@ -38,7 +40,10 @@ async function iniciar() {
     raiz: document.getElementById('perfis-raiz'),
     T,
     aoEscolher: async (id) => { await definirAtivo(id); location.reload(); },
-    aoCriar: async (nome, cor, modo) => { await criarPerfil(nome, cor, modo); return carregarPerfis(); },
+    aoCriar: async (nome, cor, modo, avatarId) => {
+      await criarPerfil(nome, cor, modo, avatarId);
+      return carregarPerfis();
+    },
     aoEditar: async (id, campos) => { await editarPerfil(id, campos); return carregarPerfis(); },
     aoApagar: async (id) => { await apagarPerfil(id); return carregarPerfis(); },
   });
@@ -95,11 +100,15 @@ async function iniciar() {
   document.body.dataset.era = eraMaisAvancada(erasVistas);
 
   // A IA só é tentada quando o perfil ligou `iaLigada` E há rede (spec §5.2/§9).
-  // Nasce desligada; o painel de ajustes liga.
+  // Nasce desligada; o painel de ajustes liga. Mesma checagem usada pro
+  // convite lúdico da IA no canvas (só oferece o convite quando dá pra
+  // atender, ver montarCanvas abaixo).
+  const iaElegivel = () => store.getSave().ajustes.iaLigada === true && navigator.onLine;
+  const iaLigadaMasOffline = () => store.getSave().ajustes.iaLigada === true && !navigator.onLine;
   const combinar = criarCombinador({
     catalogo,
     aiProvider: criarProviderEndpoint('/api/combinar'),
-    estaOnline: () => store.getSave().ajustes.iaLigada === true && navigator.onLine,
+    estaOnline: iaElegivel,
     aoRegistrarIA: (item, combo) => {
       store.registrarItemIA(item, comboKey(combo.a, combo.b), combo);
     },
@@ -130,6 +139,8 @@ async function iniciar() {
     store,
     catalogo,
     combinar,
+    iaElegivel,
+    iaLigadaMasOffline,
     margemFusao: configDoModo(modo).margemFusao,
     aoResultado: async (resultado, ctx) => {
       if (resultado.tipo !== 'ok' || !ctx.novo) return;
@@ -257,7 +268,11 @@ async function iniciar() {
   // botão de trocar de perfil: a mini-orbe do avatar usa a cor do perfil
   const elPerfil = document.getElementById('perfil');
   elPerfil.querySelector('.barra-perfil-nome').textContent = perfilAtivo ? perfilAtivo.nome : T.trocarPerfil;
-  if (perfilAtivo) elPerfil.querySelector('.barra-avatar').style.setProperty('--cor-orbe', perfilAtivo.cor);
+  if (perfilAtivo) {
+    const elAvatar = elPerfil.querySelector('.barra-avatar');
+    elAvatar.style.setProperty('--cor-orbe', perfilAtivo.cor);
+    elAvatar.innerHTML = avatarSvgMarkup(perfilAtivo.avatarId || avatarPadrao(perfilAtivo.id));
+  }
   elPerfil.addEventListener('click', async () => {
     seletor.abrir(await carregarPerfis());
   });

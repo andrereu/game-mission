@@ -398,4 +398,29 @@ export const combos = [
   { a: 'unicornio', b: 'ceu', resultado: 'estrela', texto: 'O unicórnio galopa pelo céu deixando estrelas.' },
   { a: 'gigante', b: 'cidade', resultado: 'monstro', texto: 'Um gigante pisando na cidade parece um monstro.' },
   { a: 'eevee', b: 'raio-eletrico', resultado: 'pikachu', texto: 'Eevee cheio de eletricidade lembra o Pikachu.' },
+
+  // ---- rotas lógicas alternativas (mesmos resultados já existentes,
+  // caminhos novos até eles — inspirado no princípio do Infinite Craft de
+  // permitir mais de um jeito óbvio de chegar num item, sem copiar receitas
+  // nem mudar as que já existem) --------------------------------------
+  { a: 'terra', b: 'terra', resultado: 'montanha', texto: 'Terra empilhada sobre terra também forma uma montanha.' },
+  { a: 'agua', b: 'poeira', resultado: 'lama', texto: 'Água na poeira também vira lama.' },
+  { a: 'lava', b: 'agua', resultado: 'pedra', texto: 'A água esfria a lava na hora: vira pedra.' },
+  { a: 'nuvem', b: 'nuvem', resultado: 'tempestade', texto: 'Muita nuvem carregada junta: tempestade.' },
+  { a: 'nuvem', b: 'frio', resultado: 'neve', texto: 'Nuvem com frio também cai como neve.' },
+  { a: 'gelo', b: 'gelo', resultado: 'geleira', texto: 'Gelo sobre gelo, ano após ano: geleira.' },
+  { a: 'chuva', b: 'chuva', resultado: 'lago', texto: 'Muita chuva junta enche um lago.' },
+  { a: 'rio', b: 'rio', resultado: 'lago', texto: 'Dois rios se encontram e formam um lago.' },
+  { a: 'lago', b: 'lago', resultado: 'oceano', texto: 'Lagos e mais lagos até virar um oceano.' },
+  { a: 'agua', b: 'areia', resultado: 'praia', texto: 'Água encontrando areia também é praia.' },
+  { a: 'oceano', b: 'terra', resultado: 'ilha', texto: 'Um pedaço de terra cercado de oceano: ilha.' },
+  { a: 'semente', b: 'agua', resultado: 'planta', texto: 'Semente regada com água também vira planta.' },
+  { a: 'vida', b: 'agua', resultado: 'peixe', texto: 'Vida que nasce na água também vira peixe.' },
+  { a: 'vida', b: 'ar', resultado: 'passaro', texto: 'Vida que ganha o ar também vira pássaro.' },
+  { a: 'fogo', b: 'vapor', resultado: 'motor', texto: 'Fogo esquentando vapor também move um motor.' },
+  { a: 'papel', b: 'papel', resultado: 'livro', texto: 'Muitas folhas de papel juntas também formam um livro.' },
+  { a: 'madeira', b: 'metal', resultado: 'ferramenta', texto: 'Madeira com metal também vira ferramenta.' },
+  { a: 'vidro', b: 'madeira', resultado: 'janela', texto: 'Vidro emoldurado em madeira também é janela.' },
+  { a: 'casa', b: 'casa', resultado: 'cidade', texto: 'Casa e mais casa juntas também formam uma cidade.' },
+  { a: 'fruta', b: 'gelo', resultado: 'sorvete', texto: 'Fruta bem gelada também vira sorvete.' },
 ];

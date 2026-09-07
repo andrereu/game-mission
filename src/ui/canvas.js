@@ -1,6 +1,8 @@
 // src/ui/canvas.js
 import { T } from '../data/textos.js';
 import { ligarPanZoom } from './panzoom.js';
+import { ehAlemDoMapaVisivel, atributosOrbeAlemDoMapa, srOnlyAlemDoMapa } from './alemDoMapaUI.js';
+import { mostrarConviteIA } from './convite-ia.js';
 
 const ZOOM_MIN = 0.4;
 const ZOOM_MAX = 2.5;
@@ -28,6 +30,7 @@ function tocarNada() {
 
 export function montarCanvas({
   raiz, store, catalogo, combinar, aoResultado, margemFusao = 0,
+  iaElegivel = () => false, iaLigadaMasOffline = () => false,
 }) {
   raiz.innerHTML = '';
   const mundo = document.createElement('div');
@@ -73,9 +76,10 @@ export function montarCanvas({
       ? `<img class="peca-icone" src="${item.svg}" alt="" />`
       : `<span class="peca-icone">${item.emoji}</span>`;
     const fonte = item.ia ? ' data-fonte="ia"' : '';
+    const alem = ehAlemDoMapaVisivel(catalogo, store, item.id);
     el.innerHTML =
-      `<span class="orbe orbe-canvas" data-era="${item.era}"${fonte}>${icone}</span>` +
-      `<span class="peca-nome">${item.nome}</span>`;
+      `<span class="orbe orbe-canvas" data-era="${item.era}"${fonte}${atributosOrbeAlemDoMapa(alem, T)}>${icone}</span>` +
+      `<span class="peca-nome">${item.nome}${srOnlyAlemDoMapa(alem, T)}</span>`;
     ligarArrasto(el, inst.uid);
     return el;
   }
@@ -126,6 +130,29 @@ export function montarCanvas({
     if (el) animarUmaVez(el, 'quique');
   }
 
+  // isola o "ponto de pensando" (a combinação real pode envolver a IA e
+  // demorar) da decisão de sequer tentar a IA — usado tanto direto (combo já
+  // é curado, ou IA indisponível) quanto depois de a criança aceitar o
+  // convite abaixo.
+  async function combinarComPensando(idA, idB, px, py) {
+    const pensando = document.createElement('div');
+    pensando.className = 'peca-pensando';
+    pensando.style.left = `${px}px`;
+    pensando.style.top = `${py}px`;
+    pensando.innerHTML = `<img src="assets/cartas/mascote-pensando.png" alt="" /><span class="peca-pensando-texto">${T.iaInventando}</span>`;
+    let mostrouPensando = false;
+    const timerPensando = setTimeout(() => {
+      mundo.appendChild(pensando);
+      mostrouPensando = true;
+    }, 250);
+    try {
+      return await combinar(idA, idB);
+    } finally {
+      clearTimeout(timerPensando);
+      if (mostrouPensando) pensando.remove();
+    }
+  }
+
   async function fundir(uidArrastada, uidAlvo, inicio = null) {
     const a = store.getInstance(uidArrastada);
     const b = store.getInstance(uidAlvo);
@@ -133,25 +160,19 @@ export function montarCanvas({
     const px = (a.x + b.x) / 2;
     const py = (a.y + b.y) / 2;
 
-    // se a combinação demorar (geralmente = foi consultar a IA), mostra um
-    // ponto de "pensando" no lugar da fusão
-    const pensando = document.createElement('div');
-    pensando.className = 'peca-pensando';
-    pensando.style.left = `${px}px`;
-    pensando.style.top = `${py}px`;
-    pensando.innerHTML = '<img src="assets/cartas/mascote-pensando.png" alt="" />';
-    let mostrouPensando = false;
-    const timerPensando = setTimeout(() => {
-      mundo.appendChild(pensando);
-      mostrouPensando = true;
-    }, 250);
-
     let resultado;
-    try {
-      resultado = await combinar(a.id, b.id);
-    } finally {
-      clearTimeout(timerPensando);
-      if (mostrouPensando) pensando.remove();
+    const semComboOficial = !catalogo.findCombo(a.id, b.id);
+    // sem combinação oficial, mas dava pra tentar IA: pergunta antes de
+    // gastar rede ou inventar qualquer coisa — nunca automático.
+    if (semComboOficial && iaElegivel()) {
+      const quer = await mostrarConviteIA({
+        itemA: catalogo.getItem(a.id), itemB: catalogo.getItem(b.id), T,
+      });
+      resultado = quer
+        ? await combinarComPensando(a.id, b.id, px, py)
+        : { tipo: 'nada' };
+    } else {
+      resultado = await combinarComPensando(a.id, b.id, px, py);
     }
 
     if (resultado.tipo === 'ok') {
@@ -177,7 +198,9 @@ export function montarCanvas({
       voltarPara(uidArrastada, origem);
       const elAlvo = pecas.get(uidAlvo);
       if (elAlvo) animarUmaVez(elAlvo, 'quique');
-      aviso.textContent = T.nadaAconteceu;
+      // avisa especificamente quando o motivo é "sem internet" (IA ligada mas
+      // offline) em vez do genérico "nada aconteceu" — não parece quebrado.
+      aviso.textContent = semComboOficial && iaLigadaMasOffline() ? T.iaOffline : T.nadaAconteceu;
       if (store.getSave().ajustes?.som) tocarNada();
       aoResultado(resultado, { x: origem.x, y: origem.y, novo: false });
     }

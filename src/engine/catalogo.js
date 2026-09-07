@@ -6,6 +6,7 @@ import {
   calcularProfundidadesCatalogo,
   calcularRaridadeIA,
 } from './raridade.js';
+import { calcularAlemDoMapa } from './alemDoMapa.js';
 
 export const ERAS = ['elementos', 'natureza', 'vida', 'tecnologia', 'cultura', 'ficcao'];
 
@@ -29,6 +30,7 @@ export function criarCatalogo() {
   // (nunca recalculada), ver registrarItemIA/hidratarIA.
   const raridadesCuradas = calcularRaridadesCatalogo(itensBase, combosBase);
   const profundidade = calcularProfundidadesCatalogo(itensBase, combosBase);
+  const alemDoMapa = calcularAlemDoMapa(itensBase, combosBase);
 
   function comboDoResultado(id) {
     for (const c of combos.values()) if (c.resultado === id) return c;
@@ -49,6 +51,11 @@ export function criarCatalogo() {
       if (item.ia) return item.raridade || 'comum';
       return raridadesCuradas.get(id) || 'comum';
     },
+
+    // "Além do mapa": só itens do catálogo curado (nunca criações da IA, que
+    // não entram no cálculo). Chamar sempre + checar se o jogador já
+    // descobriu o item é responsabilidade de quem exibe (não tem spoiler aqui).
+    ehAlemDoMapa: (id) => alemDoMapa.has(id),
 
     getDescricao(id) {
       const item = itens.get(id);

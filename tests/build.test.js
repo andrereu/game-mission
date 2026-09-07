@@ -16,7 +16,7 @@ test('build monta dist/ com o runtime e sem lixo', () => {
     'dist/vercel.json',
     'dist/src/app.js',
     'dist/styles/base.css',
-    'dist/assets/icons/icon-192.png',
+    'dist/assets/icons/icon-192-v2.png',
     'dist/assets/svg/pikachu.svg',
   ]) {
     assert.ok(existsSync(raiz + rel), `dist deve ter ${rel}`);
