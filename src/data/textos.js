@@ -14,7 +14,7 @@ export const T = {
   abrirArvore: 'Árvore',
   arvoreTitulo: 'Universo das Descobertas',
   arvoreSubtitulo: 'Veja como tudo começou e no que cada mistura se transformou.',
-  arvoreDica: 'Toque num item para ver de onde ele veio. Segure para jogar no tabuleiro.',
+  arvoreDica: 'Toque numa descoberta para explorar suas conexões ✨ Segure para jogar no tabuleiro.',
   arvoreVimDisso: 'Vim disso',
   arvoreAjudeiCriar: 'Ajudei a criar',
   arvoreOrigemBase: 'Item base — começou tudo por aqui.',

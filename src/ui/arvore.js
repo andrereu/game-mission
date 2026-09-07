@@ -575,7 +575,9 @@ export function montarArvore({
     overlay.setAttribute('aria-label', T.arvoreTitulo);
     overlay.innerHTML = `
       <div class="arvore-cabecalho">
+        <div class="arvore-cabecalho-estrelas" aria-hidden="true"></div>
         <div class="arvore-cabecalho-topo">
+          <img class="arvore-cabecalho-logo" src="assets/cartas/logo-header.png" alt="" aria-hidden="true" />
           <div class="arvore-cabecalho-titulo">
             <h2 class="arvore-titulo">${T.arvoreTitulo}</h2>
             <p class="arvore-subtitulo">${T.arvoreSubtitulo}</p>
@@ -583,8 +585,11 @@ export function montarArvore({
           <button type="button" class="arvore-fechar">${T.fechar}</button>
         </div>
         <div class="arvore-ferramentas">
-          <input class="arvore-busca" type="search" placeholder="${T.buscar}" aria-label="${T.buscar}" />
-          <button type="button" class="arvore-ver-tudo">${T.arvoreVerTudo}</button>
+          <div class="arvore-busca-caixa">
+            <span class="arvore-busca-icone" aria-hidden="true">🔭</span>
+            <input class="arvore-busca" type="search" placeholder="${T.buscar}" aria-label="${T.buscar}" />
+          </div>
+          <button type="button" class="arvore-ver-tudo"><span class="arvore-ver-tudo-icone" aria-hidden="true">✨</span><span class="arvore-ver-tudo-texto">${T.arvoreVerTudo}</span></button>
           <div class="arvore-atalhos-scroll"><div class="arvore-atalhos"></div></div>
         </div>
       </div>
@@ -605,6 +610,8 @@ export function montarArvore({
         </div>
       </div>
       <div class="arvore-bandeja">
+        <div class="arvore-bandeja-estrelas" aria-hidden="true"></div>
+        <img class="arvore-bandeja-mascote" src="assets/cartas/mascote-feliz.png" alt="" aria-hidden="true" />
         <p class="arvore-bandeja-dica">${T.arvoreDica}</p>
         <div class="arvore-bandeja-conteudo" hidden></div>
       </div>`;
