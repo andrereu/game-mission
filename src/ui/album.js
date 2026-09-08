@@ -46,12 +46,16 @@ const PROPORCAO = { desktop: 3344 / 1882, mobile: 2048 / 3072 };
 // as abas. Um único valor por variante responsiva — jamais por era; os PNGs
 // não são tocados. top/right/bottom/left em % do canvas; raio arredonda os
 // cantos do papel. Ajustar este bloco inteiro se a base mudar.
+// Calibrado varrendo a cor do papel nas próprias base-*.png (marcha do centro
+// de cada folha até o fim da superfície clara contígua) + ~0,5% de margem.
+// Desktop: papel a left 8,7% / right 10,4% / top 4,9% / bottom 9,9% do canvas.
+// Mobile: left 13,8% / right 13,2% / top 9,3% / bottom 13,2%.
 const AREA_PAPEL = {
   desktop: {
-    top: 3.5, right: 8, bottom: 4.5, left: 5.5, raio: 2.5,
+    top: 6, right: 11, bottom: 10.5, left: 9.5, raio: 3,
   },
   mobile: {
-    top: 4, right: 12, bottom: 4, left: 6, raio: 3,
+    top: 10, right: 15.5, bottom: 13.5, left: 14.5, raio: 3.5,
   },
 };
 
