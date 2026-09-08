@@ -70,24 +70,39 @@ class SpeechSynthesisUtteranceStub {
 }
 class SpeechSynthesisStub {
   constructor() {
-    this._vozes = [];
+    // não-vazia por padrão: simula o caminho feliz (desktop/Android 16),
+    // onde getVoices() já responde na hora. O cenário Android 14 (vazia no
+    // início, chega depois) é simulado explicitamente via _definirVozes([])
+    // + _dispararVoiceschanged() nos testes que o exercitam.
+    this._vozes = [{ lang: 'pt-BR', name: 'Voz Padrão de Teste', voiceURI: 'padrao' }];
     this._ouvintes = new Map();
     this.speaking = false;
+    this.pending = false;
+    this.paused = false;
   }
   getVoices() { return this._vozes; }
   speak(utterance) {
+    this.paused = false;
     this.speaking = true;
     queueMicrotask(() => {
       this.speaking = false;
       utterance.onend?.();
     });
   }
-  cancel() { this.speaking = false; }
+  cancel() { this.speaking = false; this.pending = false; }
+  resume() { this.paused = false; }
+  pause() { this.paused = true; }
   addEventListener(tipo, fn) {
     if (!this._ouvintes.has(tipo)) this._ouvintes.set(tipo, new Set());
     this._ouvintes.get(tipo).add(fn);
   }
   removeEventListener(tipo, fn) { this._ouvintes.get(tipo)?.delete(fn); }
+  // helpers só de teste: simulam o cenário Android onde getVoices() começa
+  // vazia e a lista real chega depois via 'voiceschanged'.
+  _definirVozes(lista) { this._vozes = lista; }
+  _dispararVoiceschanged() {
+    for (const fn of this._ouvintes.get('voiceschanged') || []) fn();
+  }
 }
 definir('SpeechSynthesisUtterance', SpeechSynthesisUtteranceStub);
 definir('speechSynthesis', new SpeechSynthesisStub());

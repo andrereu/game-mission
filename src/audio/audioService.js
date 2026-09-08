@@ -188,11 +188,27 @@ export function criarAudioService({ getSom, getVoz } = {}) {
   }
 
   // ---- fala: nome do item/resultado, preferindo voz pt-BR ----
+  //
+  // BUG CORRIGIDO (rodada "Compatibilidade de voz — Android 14"): tablet
+  // Android 14 tocava os efeitos Web Audio normalmente, mas a fala nunca
+  // saía — mesmo notebook e um celular Android 16 falavam sem problema.
+  // Causa provável, documentada em várias implementações Android de
+  // speechSynthesis: `getVoices()` volta vazia por mais tempo que o normal
+  // (às vezes o evento `voiceschanged` demora ou nunca chega a disparar
+  // antes do 1º speak()), e falar imediatamente nesse estado pode resultar
+  // em silêncio total, não só numa voz "errada". Corrigido com espera
+  // limitada (nunca indefinida) antes da 1ª fala quando getVoices() está
+  // vazia, sem nunca EXIGIR uma voz encontrada pra realmente falar.
+  const ESPERA_VOZES_MS = 300; // limite curto: não trava a fala além disso
+
+  function obterVozes() {
+    if (typeof speechSynthesis === 'undefined') return [];
+    try { return speechSynthesis.getVoices() || []; } catch { return []; }
+  }
+
   let vozPreferida = null;
   function resolverVoz() {
-    if (typeof speechSynthesis === 'undefined') return null;
-    let vozes = [];
-    try { vozes = speechSynthesis.getVoices() || []; } catch { vozes = []; }
+    const vozes = obterVozes();
     if (!vozes.length) return null;
     return vozes.find((v) => v.lang === 'pt-BR')
       || vozes.find((v) => (v.lang || '').toLowerCase() === 'pt_br')
@@ -204,7 +220,8 @@ export function criarAudioService({ getSom, getVoz } = {}) {
     vozPreferida = resolverVoz();
     // getVoices() costuma vir vazia no 1º tick em vários navegadores — a
     // lista real chega depois, via este evento (nunca falha se não disparar:
-    // resolverVoz() é tentada de novo a cada falar()).
+    // resolverVoz() é tentada de novo a cada falar()). Um único listener
+    // fixo por instância do serviço — nunca duplicado por chamada de falar().
     try {
       speechSynthesis.addEventListener?.('voiceschanged', () => { vozPreferida = resolverVoz(); });
     } catch { /* navegador sem esse evento: segue sem voz preferida fixada cedo */ }
@@ -213,34 +230,85 @@ export function criarAudioService({ getSom, getVoz } = {}) {
   // debounce/cancelamento + prioridade: um novo toque cancela a fala
   // anterior (mesmo nível), mas nunca interrompe uma fala de prioridade
   // maior já em andamento (resultado > seleção). `token` evita que o
-  // onend/onerror de uma fala JÁ cancelada resete o estado da fala atual.
+  // onend/onerror de uma fala JÁ cancelada resete o estado da fala atual,
+  // e também identifica qual pedido "venceu" quando há espera por vozes.
   let falandoNivel = -1;
   let token = 0;
-  function falar(texto, prioridade) {
-    if (!vozAtiva() || !texto) return;
-    if (typeof speechSynthesis === 'undefined' || typeof SpeechSynthesisUtterance === 'undefined') return;
-    const nivel = PRIORIDADE[prioridade] ?? 0;
-    if (falandoNivel > nivel) return; // algo mais prioritário está falando: ignora
+  // pedido ainda esperando getVoices() carregar (no máx. ESPERA_VOZES_MS) —
+  // um novo falar() cancela essa espera antes de começar a sua própria,
+  // exatamente como cancela uma fala já em andamento.
+  let esperaPendente = null;
+  function cancelarEsperaPendente() {
+    if (esperaPendente) { esperaPendente(); esperaPendente = null; }
+  }
+
+  // dispara a fala de verdade — nunca exige voz encontrada: sem uma voz
+  // pt-BR (ou nenhuma voz), ainda assim chama speak() com só `lang`
+  // definido, deixando o sistema escolher (fallback do SO/navegador).
+  function falarAgora(texto, meuToken) {
+    if (token !== meuToken) return; // um pedido mais novo já assumiu
     try {
-      speechSynthesis.cancel();
+      // aba retomada de um estado pausado, ou o SO pausou a síntese sozinho
+      // (visto em alguns Android): sem resume(), speak() pode não sair som
+      // nenhum mesmo sem lançar erro.
+      if (speechSynthesis.paused && typeof speechSynthesis.resume === 'function') {
+        speechSynthesis.resume();
+      }
+      if (speechSynthesis.speaking || speechSynthesis.pending) speechSynthesis.cancel();
       if (!vozPreferida) vozPreferida = resolverVoz();
       const u = new SpeechSynthesisUtterance(String(texto));
       u.lang = 'pt-BR';
-      if (vozPreferida) u.voice = vozPreferida;
-      const meuToken = ++token;
-      falandoNivel = nivel;
+      if (vozPreferida) u.voice = vozPreferida; // achou: usa; não achou: fallback do sistema
       const limpar = () => { if (token === meuToken) falandoNivel = -1; };
       u.onend = limpar;
       u.onerror = limpar;
       speechSynthesis.speak(u);
     } catch {
-      /* sem voz: nunca quebra o jogo */
-      falandoNivel = -1;
+      // API existe mas o SO não conseguiu sintetizar: falha em silêncio,
+      // nunca quebra o jogo (não é pra "mascarar" — é pra não travar nada).
+      if (token === meuToken) falandoNivel = -1;
     }
+  }
+
+  function falar(texto, prioridade) {
+    if (!vozAtiva() || !texto) return;
+    if (typeof speechSynthesis === 'undefined' || typeof SpeechSynthesisUtterance === 'undefined') return;
+    const nivel = PRIORIDADE[prioridade] ?? 0;
+    if (falandoNivel > nivel) return; // algo mais prioritário está falando: ignora
+
+    cancelarEsperaPendente(); // novo pedido: qualquer espera anterior perde
+    const meuToken = ++token;
+    falandoNivel = nivel;
+
+    if (obterVozes().length > 0) {
+      falarAgora(texto, meuToken);
+      return;
+    }
+
+    // getVoices() vazia agora (cenário Android relatado): espera limitada
+    // por 'voiceschanged' OU o timeout, o que vier primeiro — nunca os
+    // dois (um `disparado` local evita falar duas vezes pro mesmo pedido).
+    let disparado = false;
+    const disparar = () => {
+      if (disparado) return;
+      disparado = true;
+      try { speechSynthesis.removeEventListener?.('voiceschanged', aoVozesCarregarem); } catch { /* nada */ }
+      clearTimeout(timer);
+      falarAgora(texto, meuToken);
+    };
+    const aoVozesCarregarem = () => disparar();
+    const timer = setTimeout(disparar, ESPERA_VOZES_MS);
+    try { speechSynthesis.addEventListener?.('voiceschanged', aoVozesCarregarem); } catch { /* nada */ }
+    esperaPendente = () => {
+      disparado = true; // marca como "resolvida" sem chamar falarAgora
+      try { speechSynthesis.removeEventListener?.('voiceschanged', aoVozesCarregarem); } catch { /* nada */ }
+      clearTimeout(timer);
+    };
   }
   function falarSelecao(nome) { falar(nome, 'selecao'); }
   function falarResultado(nome) { falar(nome, 'resultado'); }
   function cancelarFala() {
+    cancelarEsperaPendente();
     try { speechSynthesis?.cancel(); } catch { /* nada */ }
     falandoNivel = -1;
   }

@@ -66,15 +66,24 @@ test('falarSelecao/falarResultado só falam quando getVoz() é true', () => {
 test('um novo toque cancela a fala anterior do mesmo nível (debounce)', () => {
   const audio = criarAudioService({ getSom: () => true, getVoz: () => true });
   let cancelamentos = 0;
+  const chamadas = [];
   const origCancel = speechSynthesis.cancel.bind(speechSynthesis);
+  const origSpeak = speechSynthesis.speak.bind(speechSynthesis);
   speechSynthesis.cancel = () => { cancelamentos += 1; origCancel(); };
+  speechSynthesis.speak = (u) => { chamadas.push(u.text); origSpeak(u); };
   try {
     audio.falarSelecao('Água');
     audio.falarSelecao('Fogo');
     audio.falarSelecao('Terra');
-    assert.equal(cancelamentos, 3, 'cada toque cancela a fala anterior antes de falar de novo');
+    // a 1ª fala não tem nada pra cancelar (nada estava falando ainda); a 2ª
+    // e a 3ª cada uma cancela a anterior, que ainda estava em curso —
+    // cancel() só é chamado quando há mesmo algo pra cancelar (evita o
+    // cancel()+speak() sem necessidade que alguns Android tratam mal).
+    assert.equal(cancelamentos, 2, 'a 2ª e a 3ª fala cancelam a anterior, que ainda estava em curso');
+    assert.deepEqual(chamadas, ['Água', 'Fogo', 'Terra'], 'as 3 chegam a chamar speak(), mesmo que canceladas em seguida');
   } finally {
     speechSynthesis.cancel = origCancel;
+    speechSynthesis.speak = origSpeak;
   }
 });
 
@@ -154,7 +163,112 @@ test('navegador sem nenhuma voz disponível: fala sem `voice` definido, nunca la
   try {
     assert.doesNotThrow(() => audio.falarSelecao('Água'));
   } finally {
+    // getVoices() vazia dispara a espera limitada (ver bloco Android 14
+    // abaixo) — cancela o timer pendente antes de sair, senão ele fica
+    // pendurado e pode disparar no meio de um teste seguinte.
+    audio.cancelarFala();
     speechSynthesis.getVoices = origGetVoices;
+  }
+});
+
+// ---- diagnóstico: cenário Android 14 relatado — getVoices() começa vazia
+// e a lista real só chega depois via 'voiceschanged' ----
+test('Android 14: getVoices() começa vazia e chega depois via voiceschanged — a fala espera e sai com a voz certa', async () => {
+  speechSynthesis._definirVozes([]); // estado inicial no aparelho relatado
+  const audio = criarAudioService({ getSom: () => true, getVoz: () => true });
+  const chamadas = [];
+  const origSpeak = speechSynthesis.speak.bind(speechSynthesis);
+  speechSynthesis.speak = (u) => { chamadas.push({ texto: u.text, voz: u.voice?.name }); origSpeak(u); };
+  try {
+    audio.falarSelecao('Água');
+    assert.equal(chamadas.length, 0, 'ainda não falou: está esperando as vozes carregarem');
+
+    // simula o carregamento tardio (o bug relatado): as vozes chegam, o
+    // navegador dispara 'voiceschanged'
+    speechSynthesis._definirVozes([{ lang: 'pt-BR', name: 'Google português do Brasil' }]);
+    speechSynthesis._dispararVoiceschanged();
+
+    assert.equal(chamadas.length, 1, 'assim que as vozes chegaram, a fala pendente saiu');
+    assert.equal(chamadas[0].texto, 'Água');
+    assert.equal(chamadas[0].voz, 'Google português do Brasil', 'já usa a voz pt-BR recém-carregada');
+  } finally {
+    speechSynthesis.speak = origSpeak;
+    speechSynthesis._definirVozes([{ lang: 'pt-BR', name: 'Voz Padrão de Teste', voiceURI: 'padrao' }]);
+  }
+});
+
+test('Android 14: se voiceschanged nunca disparar, a espera é limitada — fala mesmo assim, sem voice definido', async () => {
+  speechSynthesis._definirVozes([]); // nunca chega a carregar (falha real do TTS do SO)
+  const audio = criarAudioService({ getSom: () => true, getVoz: () => true });
+  const chamadas = [];
+  const origSpeak = speechSynthesis.speak.bind(speechSynthesis);
+  speechSynthesis.speak = (u) => { chamadas.push({ texto: u.text, voz: u.voice }); origSpeak(u); };
+  try {
+    audio.falarSelecao('Água');
+    assert.equal(chamadas.length, 0, 'ainda esperando');
+    await new Promise((r) => setTimeout(r, 350)); // além do limite de espera
+    assert.equal(chamadas.length, 1, 'a espera é LIMITADA: fala mesmo sem voz nenhuma ter chegado');
+    assert.equal(chamadas[0].texto, 'Água');
+    assert.equal(chamadas[0].voz, null, 'sem voz encontrada: speak() sai sem .voice, fallback do sistema');
+  } finally {
+    speechSynthesis.speak = origSpeak;
+    speechSynthesis._definirVozes([{ lang: 'pt-BR', name: 'Voz Padrão de Teste', voiceURI: 'padrao' }]);
+  }
+});
+
+test('Android 14: voiceschanged disparando DEPOIS do timeout não fala uma 2ª vez (sem duplicação)', async () => {
+  speechSynthesis._definirVozes([]);
+  const audio = criarAudioService({ getSom: () => true, getVoz: () => true });
+  const chamadas = [];
+  const origSpeak = speechSynthesis.speak.bind(speechSynthesis);
+  speechSynthesis.speak = (u) => { chamadas.push(u.text); origSpeak(u); };
+  try {
+    audio.falarSelecao('Água');
+    await new Promise((r) => setTimeout(r, 350)); // dispara pelo timeout
+    assert.equal(chamadas.length, 1);
+    // voiceschanged chega tarde, depois do timeout já ter resolvido a fala
+    speechSynthesis._definirVozes([{ lang: 'pt-BR', name: 'Tardia' }]);
+    speechSynthesis._dispararVoiceschanged();
+    assert.equal(chamadas.length, 1, 'não fala de novo só porque as vozes chegaram depois');
+  } finally {
+    speechSynthesis.speak = origSpeak;
+    speechSynthesis._definirVozes([{ lang: 'pt-BR', name: 'Voz Padrão de Teste', voiceURI: 'padrao' }]);
+  }
+});
+
+test('Android 14: um novo toque durante a espera cancela a espera anterior — só o mais recente fala', () => {
+  speechSynthesis._definirVozes([]);
+  const audio = criarAudioService({ getSom: () => true, getVoz: () => true });
+  const chamadas = [];
+  const origSpeak = speechSynthesis.speak.bind(speechSynthesis);
+  speechSynthesis.speak = (u) => { chamadas.push(u.text); origSpeak(u); };
+  try {
+    audio.falarSelecao('Água'); // começa a esperar vozes
+    audio.falarSelecao('Fogo'); // cancela a espera da "Água" antes dela sair
+    speechSynthesis._definirVozes([{ lang: 'pt-BR', name: 'Chegou' }]);
+    speechSynthesis._dispararVoiceschanged();
+    assert.deepEqual(chamadas, ['Fogo'], '"Água" nunca chegou a falar — foi cancelada pelo toque seguinte');
+  } finally {
+    speechSynthesis.speak = origSpeak;
+    speechSynthesis._definirVozes([{ lang: 'pt-BR', name: 'Voz Padrão de Teste', voiceURI: 'padrao' }]);
+  }
+});
+
+test('Android 14: resultado chega durante a espera de uma seleção — cancela a espera e fala o resultado (prioridade preservada)', () => {
+  speechSynthesis._definirVozes([]);
+  const audio = criarAudioService({ getSom: () => true, getVoz: () => true });
+  const chamadas = [];
+  const origSpeak = speechSynthesis.speak.bind(speechSynthesis);
+  speechSynthesis.speak = (u) => { chamadas.push(u.text); origSpeak(u); };
+  try {
+    audio.falarSelecao('Água'); // seleção começa a esperar vozes
+    audio.falarResultado('Vapor'); // resultado chega antes das vozes: deve assumir
+    speechSynthesis._definirVozes([{ lang: 'pt-BR', name: 'Chegou' }]);
+    speechSynthesis._dispararVoiceschanged();
+    assert.deepEqual(chamadas, ['Vapor'], 'só o resultado fala — prioridade sobre a seleção continua valendo mesmo em espera');
+  } finally {
+    speechSynthesis.speak = origSpeak;
+    speechSynthesis._definirVozes([{ lang: 'pt-BR', name: 'Voz Padrão de Teste', voiceURI: 'padrao' }]);
   }
 });
 
@@ -172,6 +286,22 @@ test('cancelarFala() para a síntese na hora e libera prioridade', () => {
     assert.deepEqual(chamadas, ['Água']);
   } finally {
     speechSynthesis.speak = origSpeak;
+  }
+});
+
+test('speechSynthesis.paused === true: chama resume() antes de falar', () => {
+  const audio = criarAudioService({ getSom: () => true, getVoz: () => true });
+  speechSynthesis.paused = true;
+  let resumiu = false;
+  const origResume = speechSynthesis.resume.bind(speechSynthesis);
+  speechSynthesis.resume = () => { resumiu = true; origResume(); };
+  try {
+    audio.falarSelecao('Água');
+    assert.equal(resumiu, true, 'resume() foi chamado porque a síntese estava pausada');
+    assert.equal(speechSynthesis.paused, false);
+  } finally {
+    speechSynthesis.resume = origResume;
+    speechSynthesis.paused = false;
   }
 });
 
