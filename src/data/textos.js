@@ -69,6 +69,8 @@ export const T = {
   perfilEditar: 'Editar',
   perfilEscolherCarinha: 'Escolha uma carinha',
   perfilCarinha: (n) => `Carinha ${n}`,
+  perfilNovo: 'Novo explorador',
+  perfilEscolherSimbolo: 'Escolha um símbolo do universo',
   trocarPerfil: 'Trocar',
   modoPequenos: 'Pequenos',
   modoMedio: 'Médio',

@@ -13,19 +13,20 @@ export function montarSeletorPerfis({
   let avatarEscolhido = AVATARES[0].id;
   let modoEscolhido = MODO_PADRAO;
 
-  // fileira de carinhas selecionáveis — reaproveitada na criação e na edição.
+  // fileira de símbolos selecionáveis — reaproveitada na criação e na edição.
   // `aoTrocar(avatarId)` é chamado no clique; marca a opção ativa visualmente.
   function fileiraAvatares(atual, aoTrocar) {
     const box = document.createElement('div');
     box.className = 'perfil-avatares';
     box.setAttribute('role', 'group');
-    box.setAttribute('aria-label', T.perfilEscolherCarinha);
+    box.setAttribute('aria-label', T.perfilEscolherSimbolo || T.perfilEscolherCarinha);
     AVATARES.forEach((av, i) => {
       const b = document.createElement('button');
       b.type = 'button';
       b.className = 'perfil-avatar-opcao';
       b.dataset.avatar = av.id;
-      b.setAttribute('aria-label', T.perfilCarinha(i + 1));
+      b.setAttribute('aria-label', av.nome || T.perfilCarinha(i + 1));
+      b.title = av.nome || '';
       b.innerHTML = avatarSvgMarkup(av.id);
       if (av.id === atual) b.classList.add('escolhida');
       b.addEventListener('click', (ev) => {
@@ -134,6 +135,7 @@ export function montarSeletorPerfis({
         </div>
         <div class="perfis-grade"></div>
         <div class="perfil-novo">
+          <p class="perfil-novo-titulo">${T.perfilNovo || 'Novo explorador'}</p>
           <form>
             <input type="text" maxlength="16" placeholder="${T.perfilNome}" aria-label="${T.perfilNome}" />
           </form>

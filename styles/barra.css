@@ -96,6 +96,7 @@ body[data-era="ficcao"]     .barra { border-bottom-color: color-mix(in srgb, var
 }
 .barra-avatar { --orbe-tam: 22px; overflow: hidden; }
 .barra-avatar svg { display: block; width: 100%; height: 100%; }
+.barra-avatar text { font-size: 54px; }
 .barra-perfil-nome {
   overflow: hidden;
   text-overflow: ellipsis;
