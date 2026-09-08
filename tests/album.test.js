@@ -107,7 +107,7 @@ test('5. mobile: primeira tela é a abertura (sem grade e sem figurinhas); as se
     assert.equal(raiz.querySelector('.album-grade'), null, 'abertura não tem grade');
     assert.equal(raiz.querySelector('.figurinha-mini'), null, 'abertura não tem figurinha');
 
-    raiz.querySelector('.album-nav-proxima').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+    raiz.querySelector('.album-pag-avancar').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
     assert.match(
       raiz.querySelector('.album-pagina-overlay').src,
       /elementos-mobile-folha-2048x3072\.png$/,
@@ -124,7 +124,7 @@ test('6. total de telas segue a fórmula da spec (desktop ceil/9; mobile 1 + cei
     const album = montarAlbum({ raiz, store, catalogo: cat, T });
     abrirMiolo(album, raiz);
     raiz.querySelector('.album-tab[data-era="vida"]').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
-    assert.equal(raiz.querySelector('.album-rodape').textContent, T.albumPaginaDe(1, gradesVida));
+    assert.equal(raiz.querySelector('.album-pag-status').textContent, T.albumPaginaDe(1, gradesVida));
     album.fechar();
   });
 
@@ -132,7 +132,7 @@ test('6. total de telas segue a fórmula da spec (desktop ceil/9; mobile 1 + cei
     const album = montarAlbum({ raiz, store, catalogo: cat, T });
     abrirMiolo(album, raiz);
     raiz.querySelector('.album-tab[data-era="vida"]').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
-    assert.equal(raiz.querySelector('.album-rodape').textContent, T.albumPaginaDe(1, 1 + gradesVida));
+    assert.equal(raiz.querySelector('.album-pag-status').textContent, T.albumPaginaDe(1, 1 + gradesVida));
   });
 });
 
@@ -304,7 +304,7 @@ test('17. progresso canônico exibido não muda ao navegar pelo Álbum', () => {
     abrirMiolo(album, raiz);
     const antes = raiz.querySelector('.album-cabecalho-contagem').textContent;
     raiz.querySelector('.album-tab[data-era="ficcao"]').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
-    raiz.querySelector('.album-nav-proxima').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+    raiz.querySelector('.album-pag-avancar').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
     assert.equal(raiz.querySelector('.album-cabecalho-contagem').textContent, antes);
     assert.match(antes, /1 \/ 283 do mapa/);
   });
@@ -344,7 +344,7 @@ test('19. figurinha "além do mapa" preserva a identidade platina', () => {
     // pagina dentro da era até a folha que contém o item
     let el = raiz.querySelector(`.figurinha-mini[data-id="${alem.id}"]`);
     for (let i = 0; i < 40 && !el; i += 1) {
-      raiz.querySelector('.album-nav-proxima').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+      raiz.querySelector('.album-pag-avancar').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
       if (raiz.querySelector('.album-tab[aria-current="true"]').dataset.era !== alem.era) break;
       el = raiz.querySelector(`.figurinha-mini[data-id="${alem.id}"]`);
     }
@@ -398,27 +398,160 @@ test('23. reabrir o Álbum volta pela capa, sem persistir posição interna', ()
   assert.ok(raiz.querySelector('.album-capa-imagem'));
 });
 
-test('24. próxima tela avança de era quando a coleção atual acaba (desktop)', () => {
+test('24. paginador: ← Voltar · Página X de Y · Avançar →; setas laterais antigas removidas', () => {
   const { cat, store, raiz } = ambiente();
   comViewport(true, () => {
     const album = montarAlbum({ raiz, store, catalogo: cat, T });
     abrirMiolo(album, raiz);
-    const telasElementos = Math.max(1, Math.ceil(TOTAL_ERA.elementos / 9));
-    for (let i = 0; i < telasElementos; i += 1) {
-      raiz.querySelector('.album-nav-proxima').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
-    }
-    assert.equal(raiz.querySelector('.album-tab[aria-current="true"]').dataset.era, 'natureza');
+    const pag = raiz.querySelector('.album-paginador');
+    assert.ok(pag, 'paginador existe abaixo do livro');
+    assert.equal(pag.getAttribute('aria-label'), T.albumPaginacao);
+    assert.ok(raiz.querySelector('.album-pag-voltar'));
+    assert.ok(raiz.querySelector('.album-pag-avancar'));
+    assert.equal(raiz.querySelector('.album-pag-status').textContent, T.albumPaginaDe(1, 4)); // elementos: 4 telas desktop
+    // sem controles duplicados
+    assert.equal(raiz.querySelector('.album-nav, .album-nav-anterior, .album-nav-proxima'), null);
   });
 });
 
-test('25. página anterior volta pra era anterior, na última tela dela (desktop)', () => {
+test('25. paginador nas pontas: Voltar desabilitado na 1ª página, Avançar desabilitado na última; ambos visíveis', () => {
   const { cat, store, raiz } = ambiente();
   comViewport(true, () => {
     const album = montarAlbum({ raiz, store, catalogo: cat, T });
     abrirMiolo(album, raiz);
-    raiz.querySelector('.album-tab[data-era="natureza"]').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
-    raiz.querySelector('.album-nav-anterior').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+    const telas = Math.max(1, Math.ceil(TOTAL_ERA.elementos / 9));
+    let voltar = raiz.querySelector('.album-pag-voltar');
+    let avancar = raiz.querySelector('.album-pag-avancar');
+    assert.equal(voltar.disabled, true, '1ª página: Voltar desabilitado');
+    assert.equal(voltar.hidden, false, '1ª página: Voltar ainda visível');
+    assert.equal(avancar.disabled, false);
+
+    for (let i = 0; i < telas - 1; i += 1) {
+      raiz.querySelector('.album-pag-avancar').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+    }
+    voltar = raiz.querySelector('.album-pag-voltar');
+    avancar = raiz.querySelector('.album-pag-avancar');
+    assert.equal(raiz.querySelector('.album-pag-status').textContent, T.albumPaginaDe(telas, telas));
+    assert.equal(avancar.disabled, true, 'última página: Avançar desabilitado');
+    assert.equal(avancar.hidden, false, 'última página: Avançar ainda visível');
+    assert.equal(voltar.disabled, false);
+    // clicar no Avançar desabilitado não passa da última página
+    raiz.querySelector('.album-pag-avancar').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+    assert.equal(raiz.querySelector('.album-pag-status').textContent, T.albumPaginaDe(telas, telas));
+    // o paginador nunca troca de era
     assert.equal(raiz.querySelector('.album-tab[aria-current="true"]').dataset.era, 'elementos');
+  });
+});
+
+test('25b. trocar de era abre sempre a 1ª página daquela era e atualiza Página X de Y', () => {
+  const { cat, store, raiz } = ambiente();
+  comViewport(true, () => {
+    const album = montarAlbum({ raiz, store, catalogo: cat, T });
+    abrirMiolo(album, raiz);
+    raiz.querySelector('.album-pag-avancar').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+    assert.equal(raiz.querySelector('.album-pag-status').textContent, T.albumPaginaDe(2, 4));
+    raiz.querySelector('.album-tab[data-era="vida"]').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+    const telasVida = Math.max(1, Math.ceil(TOTAL_ERA.vida / 9));
+    assert.equal(raiz.querySelector('.album-pag-status').textContent, T.albumPaginaDe(1, telasVida));
+    assert.equal(raiz.querySelector('.album-pag-voltar').disabled, true);
+  });
+});
+
+test('25c. teclado: ArrowRight/ArrowLeft paginam dentro da coleção, respeitando as pontas', () => {
+  const { cat, store, raiz } = ambiente();
+  comViewport(true, () => {
+    const album = montarAlbum({ raiz, store, catalogo: cat, T });
+    abrirMiolo(album, raiz);
+    document.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'ArrowLeft' })); // já na 1ª: sem efeito
+    assert.equal(raiz.querySelector('.album-pag-status').textContent, T.albumPaginaDe(1, 4));
+    document.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'ArrowRight' }));
+    assert.equal(raiz.querySelector('.album-pag-status').textContent, T.albumPaginaDe(2, 4));
+    document.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'ArrowLeft' }));
+    assert.equal(raiz.querySelector('.album-pag-status').textContent, T.albumPaginaDe(1, 4));
+  });
+});
+
+test('25d. mobile: a abertura artística é a Página 1', () => {
+  const { cat, store, raiz } = ambiente({ agua: { em: 1, via: null, fonte: 'base' } });
+  comViewport(false, () => {
+    const album = montarAlbum({ raiz, store, catalogo: cat, T });
+    abrirMiolo(album, raiz);
+    const telas = 1 + Math.max(1, Math.ceil(TOTAL_ERA.elementos / 9));
+    assert.equal(raiz.querySelector('.album-pag-status').textContent, T.albumPaginaDe(1, telas));
+    assert.equal(raiz.querySelector('.album-grade'), null, 'página 1 é a abertura, sem grade');
+    assert.equal(raiz.querySelector('.album-pag-voltar').disabled, true);
+    raiz.querySelector('.album-pag-avancar').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+    assert.equal(raiz.querySelector('.album-pag-status').textContent, T.albumPaginaDe(2, telas));
+    assert.equal(raiz.querySelectorAll('.album-grade > *').length, 9);
+  });
+});
+
+// helpers de toque (jsdom não tem Touch/TouchEvent)
+function toque(el, tipo, x, y) {
+  const ev = new window.Event(tipo, { bubbles: true, cancelable: true });
+  const ponto = { clientX: x, clientY: y };
+  ev.touches = tipo === 'touchend' ? [] : [ponto];
+  ev.changedTouches = [ponto];
+  el.dispatchEvent(ev);
+  return ev;
+}
+
+test('25e. swipe mobile: gesto horizontal intencional vira uma página só, respeitando as pontas', () => {
+  const { cat, store, raiz } = ambiente({ agua: { em: 1, via: null, fonte: 'base' } });
+  comViewport(false, () => {
+    const album = montarAlbum({ raiz, store, catalogo: cat, T });
+    abrirMiolo(album, raiz);
+    const telas = 1 + Math.max(1, Math.ceil(TOTAL_ERA.elementos / 9));
+    const area = () => raiz.querySelector('.album-pagina-area');
+
+    // horizontal para a esquerda -> avança 1
+    toque(area(), 'touchstart', 300, 400);
+    toque(area(), 'touchmove', 240, 402);
+    toque(area(), 'touchend', 200, 402);
+    assert.equal(raiz.querySelector('.album-pag-status').textContent, T.albumPaginaDe(2, telas));
+
+    // gesto predominantemente vertical -> ignorado
+    toque(area(), 'touchstart', 200, 200);
+    toque(area(), 'touchmove', 210, 340);
+    toque(area(), 'touchend', 215, 420);
+    assert.equal(raiz.querySelector('.album-pag-status').textContent, T.albumPaginaDe(2, telas));
+
+    // horizontal para a direita -> volta 1
+    toque(area(), 'touchstart', 100, 400);
+    toque(area(), 'touchmove', 180, 402);
+    toque(area(), 'touchend', 240, 402);
+    assert.equal(raiz.querySelector('.album-pag-status').textContent, T.albumPaginaDe(1, telas));
+
+    // na 1ª página, swipe para a direita não passa da página 1
+    toque(area(), 'touchstart', 100, 400);
+    toque(area(), 'touchmove', 200, 402);
+    toque(area(), 'touchend', 260, 402);
+    assert.equal(raiz.querySelector('.album-pag-status').textContent, T.albumPaginaDe(1, telas));
+  });
+});
+
+test('25f. swipe não dispara quando o toque começa numa mini-figurinha, e o clique ainda abre a carta grande', () => {
+  const { cat, store, raiz } = ambiente({ agua: { em: 1, via: null, fonte: 'base' } });
+  comViewport(false, () => {
+    const album = montarAlbum({ raiz, store, catalogo: cat, T });
+    abrirMiolo(album, raiz);
+    raiz.querySelector('.album-pag-avancar').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+    const statusAntes = raiz.querySelector('.album-pag-status').textContent;
+    const fig = raiz.querySelector('.figurinha-mini[data-id="agua"]');
+    assert.ok(fig, 'figurinha da água na folha');
+
+    // toque + pequeno movimento começando na figurinha: não pagina
+    toque(fig, 'touchstart', 150, 300);
+    toque(fig, 'touchmove', 120, 302);
+    toque(fig, 'touchend', 110, 302);
+    assert.equal(raiz.querySelector('.album-pag-status').textContent, statusAntes, 'swipe não roubou o gesto');
+
+    // e o clique continua abrindo a carta grande
+    fig.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+    const carta = raiz.querySelector('.carta-overlay .carta');
+    assert.ok(carta, 'carta grande abriu');
+    assert.match(carta.textContent, /Água/);
+    assert.ok(carta.querySelector('.carta-btn-exportar') && carta.querySelector('.carta-btn-fechar'));
   });
 });
 

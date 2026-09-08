@@ -145,7 +145,57 @@ export function montarAlbum({
   }
 
   function aoTeclar(ev) {
-    if (ev.key === 'Escape') fechar();
+    if (ev.key === 'Escape') { fechar(); return; }
+    if (modo !== 'aberto') return;
+    if (ev.key === 'ArrowRight') { ev.preventDefault(); proximaTela(); }
+    else if (ev.key === 'ArrowLeft') { ev.preventDefault(); telaAnterior(); }
+  }
+
+  // Swipe horizontal é navegação SECUNDÁRIA no mobile — o paginador continua
+  // sendo o método principal e sempre disponível. Não arma quando o toque
+  // começa sobre uma mini-figurinha, slot, tab, botão ou outro controle, para
+  // não roubar o clique que abre a carta grande.
+  function armarSwipe(area) {
+    if (!area || matchDesktop.matches) return;
+    const alvoInterativo = (el) => el
+      && el.closest('.figurinha-mini, .album-slot-vazio, .album-tab, button, a, input, textarea, select, [role="button"]');
+    let x0 = 0;
+    let y0 = 0;
+    let ativo = false;
+    let armado = false;
+    area.addEventListener('touchstart', (ev) => {
+      const t = ev.touches && ev.touches[0];
+      if (!t || alvoInterativo(ev.target)) { ativo = false; return; }
+      ativo = true;
+      armado = false;
+      x0 = t.clientX;
+      y0 = t.clientY;
+    }, { passive: true });
+    area.addEventListener('touchmove', (ev) => {
+      if (!ativo) return;
+      const t = ev.touches && ev.touches[0];
+      if (!t) return;
+      const dx = t.clientX - x0;
+      const dy = t.clientY - y0;
+      // só considera swipe após deslocamento horizontal intencional; ignora
+      // gestos predominantemente verticais (rolagem).
+      if (!armado && Math.abs(dx) > 12 && Math.abs(dx) > Math.abs(dy) * 1.5) armado = true;
+      if (armado && ev.cancelable) ev.preventDefault();
+    }, { passive: false });
+    area.addEventListener('touchend', (ev) => {
+      const estava = ativo && armado;
+      ativo = false;
+      armado = false;
+      if (!estava) return;
+      const t = ev.changedTouches && ev.changedTouches[0];
+      if (!t) return;
+      const dx = t.clientX - x0;
+      if (Math.abs(dx) < 40) return; // gesto curto: não vira página
+      // no máximo uma página por gesto; proximaTela/telaAnterior já respeitam
+      // os limites da coleção.
+      if (dx < 0) proximaTela();
+      else telaAnterior();
+    });
   }
 
   function aoMudarBreakpoint() {
@@ -193,29 +243,19 @@ export function montarAlbum({
     return matchDesktop.matches ? grades : 1 + grades;
   }
 
+  // O paginador é sempre relativo à coleção ativa: nunca pula de era (isso é
+  // papel das tabs). Nas pontas fica sem efeito — o botão correspondente é
+  // renderizado desabilitado.
   function proximaTela() {
-    const colecoes = colecoesDisponiveis();
-    const colecao = colecoes[colecaoIdx];
-    if (tela + 1 < totalTelas(colecao)) {
-      tela += 1;
-    } else if (colecaoIdx + 1 < colecoes.length) {
-      colecaoIdx += 1;
-      tela = 0;
-    } else {
-      return;
-    }
+    const colecao = colecoesDisponiveis()[colecaoIdx];
+    if (tela + 1 >= totalTelas(colecao)) return;
+    tela += 1;
     renderizarMiolo();
   }
 
   function telaAnterior() {
-    if (tela > 0) {
-      tela -= 1;
-    } else if (colecaoIdx > 0) {
-      colecaoIdx -= 1;
-      tela = totalTelas(colecoesDisponiveis()[colecaoIdx]) - 1;
-    } else {
-      return;
-    }
+    if (tela <= 0) return;
+    tela -= 1;
     renderizarMiolo();
   }
 
@@ -357,7 +397,6 @@ export function montarAlbum({
         ${completa ? `<span class="album-selo">${T.albumSeloCompleto}</span>` : ''}
       </div>
       <div class="album-miolo" data-modo="${desktop ? 'desktop' : 'mobile'}">
-        <button type="button" class="album-nav album-nav-anterior" aria-label="${T.albumAnterior}">‹</button>
         <div class="album-pagina-area" data-era="${colecao}">
           <div class="album-pagina-moldura">
             <img class="album-pagina-base" alt="" aria-hidden="true" />
@@ -366,9 +405,16 @@ export function montarAlbum({
             <img class="album-pagina-overlay" alt="" aria-hidden="true" />
           </div>
         </div>
-        <button type="button" class="album-nav album-nav-proxima" aria-label="${T.albumProxima}">›</button>
       </div>
-      <div class="album-rodape">${T.albumPaginaDe(tela + 1, telas)}</div>`;
+      <nav class="album-paginador" aria-label="${T.albumPaginacao}">
+        <button type="button" class="album-pag-btn album-pag-voltar" aria-label="${T.albumVoltar}"${tela <= 0 ? ' disabled' : ''}>
+          <span aria-hidden="true">←</span> ${T.albumVoltar}
+        </button>
+        <span class="album-pag-status" aria-live="polite">${T.albumPaginaDe(tela + 1, telas)}</span>
+        <button type="button" class="album-pag-btn album-pag-avancar" aria-label="${T.albumAvancar}"${tela >= telas - 1 ? ' disabled' : ''}>
+          ${T.albumAvancar} <span aria-hidden="true">→</span>
+        </button>
+      </nav>`;
 
     const totalCanonico = catalogo.allItems().filter((it) => !it.ia).length;
     const feitosCanonico = Object.keys(descobertos)
@@ -396,8 +442,9 @@ export function montarAlbum({
     }
 
     overlay.querySelector('.album-fechar').addEventListener('click', fechar);
-    overlay.querySelector('.album-nav-anterior').addEventListener('click', telaAnterior);
-    overlay.querySelector('.album-nav-proxima').addEventListener('click', proximaTela);
+    overlay.querySelector('.album-pag-voltar').addEventListener('click', telaAnterior);
+    overlay.querySelector('.album-pag-avancar').addEventListener('click', proximaTela);
+    armarSwipe(overlay.querySelector('.album-pagina-area'));
 
     ajustarMoldura();
     prefetchProximaColecao(colecoes);

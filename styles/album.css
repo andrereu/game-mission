@@ -365,42 +365,67 @@
 }
 .album-slot-vazio-marca { font-size: clamp(10px, 4cqw, 18px); font-weight: 700; opacity: 0.32; }
 
-/* ---- navegação ---- */
-.album-nav {
-  position: absolute;
-  top: 50%;
-  z-index: 5;
-  transform: translateY(-50%);
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  background: rgba(10, 14, 26, 0.55);
-  color: #fff;
-  font-size: 20px;
-  line-height: 1;
-  cursor: pointer;
-}
-.album-nav:disabled { opacity: 0.35; cursor: default; }
-.album-nav-anterior { left: 2px; }
-.album-nav-proxima { right: 2px; }
-
-.album-rodape {
+/* ---- paginador integrado abaixo do livro: ← Voltar · Página X de Y · Avançar → ---- */
+.album-paginador {
   flex-shrink: 0;
-  padding: 4px 14px max(6px, env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 6px 12px max(8px, env(safe-area-inset-bottom));
+}
+.album-pag-btn {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 8px 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--era-elementos) 40%, rgba(255, 255, 255, 0.28));
+  background:
+    radial-gradient(120% 140% at 50% 0%, rgba(255, 255, 255, 0.08), transparent 70%),
+    rgba(10, 14, 26, 0.6);
+  color: var(--cor-texto);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease, opacity 120ms ease;
+}
+.album-pag-btn:hover:not(:disabled),
+.album-pag-btn:focus-visible:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--era-elementos) 55%, transparent),
+    0 6px 14px -8px rgba(0, 0, 0, 0.6);
+}
+.album-pag-btn:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+.album-pag-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.album-pag-status {
+  min-width: 108px;
   text-align: center;
-  font-size: 11.5px;
-  opacity: 0.7;
+  font-size: 12.5px;
+  font-weight: 700;
+  opacity: 0.9;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .figurinha-mini { transition: none; }
+  .figurinha-mini,
+  .album-pag-btn { transition: none; }
 }
 
 /* ---- mobile: cabeçalho mais enxuto ---- */
 @media (max-width: 640px) {
   .album-cabecalho-logo { display: none; }
-  .album-nav { width: 32px; height: 32px; font-size: 16px; }
+  .album-pag-btn { padding: 8px 14px; font-size: 12px; }
+  .album-pag-status { min-width: 92px; font-size: 12px; }
 }
 @media (max-height: 480px) and (orientation: landscape) {
   .album-cabecalho { padding: 6px 10px; }
