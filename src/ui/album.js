@@ -82,9 +82,66 @@ export function montarAlbum({
     document.removeEventListener('keydown', aoTeclar);
     matchDesktop.removeEventListener?.('change', aoMudarBreakpoint);
     window.removeEventListener?.('resize', ajustarMoldura);
+    // limpa o conteúdo visual antes de destruir o nó, para que nenhum resquício
+    // (era selecionada, grade meio montada) possa reaparecer na próxima abertura.
+    const conteudo = overlay.querySelector('.album-conteudo');
+    if (conteudo) conteudo.innerHTML = '';
     overlay.remove();
     overlay = null;
     modo = 'capa';
+    colecaoIdx = 0;
+    tela = 0;
+  }
+
+  // decode() só existe em navegador real; em jsdom (testes) revelamos de forma
+  // síncrona. Quando existe, seguramos o conteúdo escondido até a arte crítica
+  // estar decodificada e revelamos atomicamente no próximo requestAnimationFrame.
+  function podeDecodificar() {
+    return typeof Image === 'function' && typeof Image.prototype.decode === 'function';
+  }
+
+  function decodificar(...srcs) {
+    if (!podeDecodificar()) return Promise.resolve();
+    return Promise.all(srcs.filter(Boolean).map((src) => {
+      const img = new Image();
+      img.src = src;
+      return img.decode().catch(() => {});
+    }));
+  }
+
+  function esconderConteudo() {
+    if (!overlay || !podeDecodificar()) return;
+    overlay.classList.add('album-carregando');
+    const conteudo = overlay.querySelector('.album-conteudo');
+    if (conteudo) conteudo.hidden = true;
+    if (!overlay.querySelector('.album-loader')) {
+      const loader = document.createElement('div');
+      loader.className = 'album-loader';
+      loader.setAttribute('role', 'status');
+      loader.setAttribute('aria-live', 'polite');
+      loader.textContent = T.albumCarregando;
+      overlay.insertBefore(loader, conteudo);
+    }
+  }
+
+  function revelarJa() {
+    if (!overlay) return;
+    overlay.classList.remove('album-carregando');
+    overlay.querySelector('.album-loader')?.remove();
+    const conteudo = overlay.querySelector('.album-conteudo');
+    if (conteudo) conteudo.hidden = false;
+    ajustarMoldura();
+  }
+
+  // Espera a decodificação das imagens críticas e revela o Álbum pronto num
+  // único frame. Sem suporte a decode (testes): revela na hora.
+  function aguardarErevelar(...srcs) {
+    if (!podeDecodificar()) { revelarJa(); return; }
+    decodificar(...srcs).then(() => {
+      if (!overlay) return;
+      if (typeof requestAnimationFrame === 'function') requestAnimationFrame(revelarJa);
+      else revelarJa();
+    });
   }
 
   function aoTeclar(ev) {
@@ -283,7 +340,8 @@ export function montarAlbum({
     else if (ehAbertura) overlaySrc = overlayAsset(colecao, 'mobile-abertura-2048x3072');
     else overlaySrc = overlayAsset(colecao, 'mobile-folha-2048x3072');
 
-    overlay.innerHTML = `
+    const alvo = overlay.querySelector('.album-conteudo');
+    alvo.innerHTML = `
       <div class="album-cabecalho">
         <div class="album-cabecalho-estrelas" aria-hidden="true"></div>
         <img class="album-cabecalho-logo" src="assets/cartas/logo-header.png" alt="" aria-hidden="true" />
@@ -369,34 +427,53 @@ export function montarAlbum({
   }
 
   function renderizarCapa() {
-    overlay.innerHTML = `
-      <img class="album-capa-fundo" src="${ASSETS}fundo-cosmico.png" alt="" aria-hidden="true" />
+    const alvo = overlay.querySelector('.album-conteudo');
+    alvo.innerHTML = `
       <button type="button" class="album-capa-fechar" aria-label="${T.fechar}">${T.fechar}</button>
       <button type="button" class="album-capa-botao">
         <img class="album-capa-imagem" src="${ASSETS}capa.png" alt="${T.albumTitulo}" />
         <span class="album-capa-dica">${T.albumTocarParaAbrir}</span>
       </button>`;
-    overlay.querySelector('.album-capa-fechar').addEventListener('click', fechar);
-    overlay.querySelector('.album-capa-botao').addEventListener('click', () => {
+    alvo.querySelector('.album-capa-fechar').addEventListener('click', fechar);
+    alvo.querySelector('.album-capa-botao').addEventListener('click', () => {
       modo = 'aberto';
       colecaoIdx = 0;
       tela = 0;
+      // troca capa -> miolo também sem flash: esconde, monta fora da vista,
+      // decodifica base + overlay ativo e revela pronto no próximo frame.
+      esconderConteudo();
       renderizarMiolo();
+      aguardarErevelar(
+        overlay.querySelector('.album-pagina-base')?.src,
+        overlay.querySelector('.album-pagina-overlay')?.src,
+      );
     });
   }
 
   function abrir() {
     if (overlay) return;
     overlay = document.createElement('div');
-    overlay.className = 'album-overlay';
+    overlay.className = 'album-overlay album-carregando';
     overlay.setAttribute('role', 'dialog');
     overlay.setAttribute('aria-label', T.albumTitulo);
+    // Durante a inicialização só aparece o fundo cósmico + um loading neutro;
+    // o conteúdo é montado dentro de .album-conteudo escondido e só é revelado
+    // atomicamente depois que a arte crítica está decodificada. Nenhum frame
+    // pode mostrar a implementação anterior, a era antes selecionada ou uma
+    // montagem parcial.
+    overlay.innerHTML = `
+      <img class="album-capa-fundo" src="${ASSETS}fundo-cosmico.png" alt="" aria-hidden="true" />
+      <div class="album-loader" role="status" aria-live="polite">${T.albumCarregando}</div>
+      <div class="album-conteudo"${podeDecodificar() ? ' hidden' : ''}></div>`;
     document.addEventListener('keydown', aoTeclar);
     matchDesktop.addEventListener?.('change', aoMudarBreakpoint);
     window.addEventListener?.('resize', ajustarMoldura);
     (raiz || document.body).appendChild(overlay);
     modo = 'capa';
+    colecaoIdx = 0;
+    tela = 0;
     renderizarCapa();
+    aguardarErevelar(`${ASSETS}fundo-cosmico.png`, `${ASSETS}capa.png`);
   }
 
   return { abrir, fechar };

@@ -435,6 +435,60 @@ test('26. todos os overlays V2 + base + capa existem no repositório', () => {
   }
 });
 
+test('28. abertura sem flash: conteúdo fica hidden até decode + rAF; nada da versão antiga aparece', async () => {
+  // jsdom não expõe Image global nem decode(); simulamos o navegador real.
+  const tinhaImage = 'Image' in globalThis;
+  if (!tinhaImage) globalThis.Image = window.Image;
+  const proto = globalThis.Image.prototype;
+  const orig = Object.getOwnPropertyDescriptor(proto, 'decode');
+  const resolvers = [];
+  const liberar = () => resolvers.splice(0).forEach((r) => r());
+  proto.decode = function decode() { return new Promise((res) => { resolvers.push(res); }); };
+  try {
+    const { cat, store, raiz } = ambiente();
+    const album = montarAlbum({ raiz, store, catalogo: cat, T });
+    album.abrir();
+
+    const conteudo = raiz.querySelector('.album-conteudo');
+    assert.ok(conteudo, 'wrapper .album-conteudo existe');
+    assert.equal(conteudo.hidden, true, 'conteúdo escondido durante a init');
+    assert.ok(raiz.querySelector('.album-loader'), 'loading neutro visível');
+    assert.ok(raiz.querySelector('.album-capa-fundo'), 'só o fundo cósmico');
+    // nenhum resquício da implementação anterior do Álbum
+    for (const seletor of ['.album-atalhos', '.album-era', '.figurinha-vazia', '.figurinha-icone', '.orbe-album']) {
+      assert.equal(raiz.querySelector(seletor), null, `sem ${seletor} da versão antiga`);
+    }
+
+    liberar();
+    await new Promise((r) => setTimeout(r, 0));
+    await new Promise((r) => (typeof requestAnimationFrame === 'function' ? requestAnimationFrame(r) : setTimeout(r, 16)));
+
+    assert.equal(conteudo.hidden, false, 'revelado depois do decode');
+    assert.equal(raiz.querySelector('.album-loader'), null, 'loader removido ao revelar');
+    assert.ok(raiz.querySelector('.album-capa-imagem'), 'capa pronta e visível');
+  } finally {
+    if (orig) Object.defineProperty(proto, 'decode', orig);
+    else delete proto.decode;
+    if (!tinhaImage) delete globalThis.Image;
+  }
+});
+
+test('29. reabrir nunca mostra a era antes selecionada nem miolo meio montado', () => {
+  const { cat, store, raiz } = ambiente();
+  const album = montarAlbum({ raiz, store, catalogo: cat, T });
+  abrirMiolo(album, raiz);
+  raiz.querySelector('.album-tab[data-era="ficcao"]').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+  assert.equal(raiz.querySelector('.album-tab[aria-current="true"]').dataset.era, 'ficcao');
+  album.fechar();
+  assert.equal(raiz.querySelector('.album-overlay'), null, 'DOM do álbum some ao fechar');
+
+  album.abrir();
+  assert.ok(raiz.querySelector('.album-capa-imagem'), 'reabre pela capa');
+  assert.equal(raiz.querySelector('.album-miolo'), null, 'sem miolo');
+  assert.equal(raiz.querySelector('.album-pagina-overlay'), null, 'sem arte de era');
+  assert.equal(raiz.querySelector('.album-tab[aria-current="true"]'), null, 'nenhuma era marcada');
+});
+
 test('27. mobilidade entre variantes: mesmos percentuais de área de grade nas duas eras (sem AREA_SEGURA por era)', () => {
   const { cat, store, raiz } = ambiente();
   comViewport(true, () => {

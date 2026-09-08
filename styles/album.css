@@ -14,6 +14,33 @@
   overflow: hidden;
 }
 
+/* Abertura sem flash: durante a inicialização mostra só o fundo cósmico + um
+   loading neutro; o conteúdo real fica montado em .album-conteudo escondido e
+   é revelado atomicamente quando pronto (ver src/ui/album.js). */
+.album-conteudo {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.album-conteudo[hidden] { display: none; }
+.album-loader {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  color: #cdd8f5;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  animation: album-capa-pulsar 2.4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .album-loader { animation: none; }
+}
+
 /* ---- capa: tela de entrada (mantida) ---- */
 .album-capa-fundo {
   position: absolute;

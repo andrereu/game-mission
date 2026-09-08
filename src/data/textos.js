@@ -33,6 +33,7 @@ export const T = {
   albumIAContagem: (n) => `${n} descoberta${n === 1 ? '' : 's'}`,
   albumIARodape: 'INVENTADA COM IA',
   albumTocarParaAbrir: 'Toque para abrir ✨',
+  albumCarregando: 'Abrindo o Álbum…',
   albumAnterior: 'Página anterior',
   albumProxima: 'Próxima página',
   albumPaginaDe: (atual, total) => `Página ${atual} de ${total}`,
