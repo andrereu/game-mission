@@ -11,6 +11,12 @@ Pacote visual aprovado para a implementação do álbum de figurinhas.
 - `<era>-desktop.png`: camada temática transparente da era sobre a base desktop.
 - `<era>-mobile.png`: camada temática transparente da era sobre a base mobile.
 
+## Pacote V2 aprovado — páginas 3×3
+
+O pacote definitivo da nova composição está em [`v2/`](./v2/README.md). Ele não substitui silenciosamente os arquivos do piloto acima: são 21 overlays novos, com três arquivos por coleção — dupla página desktop, abertura mobile e folha mobile para grade 3×3.
+
+A implementação deve seguir `docs/ALBUM_V2_IMPLEMENTATION_SPEC.md` e preservar a carta grande já existente.
+
 Eras disponíveis: `elementos`, `natureza`, `vida`, `tecnologia`, `cultura`, `ficcao` e `ia`.
 
 ## Regras canônicas de implementação
@@ -22,4 +28,3 @@ Eras disponíveis: `elementos`, `natureza`, `vida`, `tecnologia`, `cultura`, `fi
 - Itens não descobertos aparecem como espaços vazios/ocultos, sem revelar nome ou imagem.
 - Itens criados por IA ficam na coleção própria e não entram na contagem ou conclusão das eras canônicas.
 - A densidade inicial deve seguir o piloto visual, mas precisa ser validada no jogo real em mobile e desktop; ajustar quantidade por página se leitura ou toque ficarem comprometidos.
-
