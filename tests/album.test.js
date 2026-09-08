@@ -63,7 +63,7 @@ test('3. cada era usa os assets canônicos corretos (base + overlay)', () => {
   assert.match(raiz.querySelector('.album-pagina-base').src, /assets\/album\/base-desktop\.png$/);
   assert.match(raiz.querySelector('.album-pagina-overlay').src, /assets\/album\/elementos-desktop\.png$/);
 
-  raiz.querySelector('.album-atalho[data-era="natureza"]').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+  raiz.querySelector('.album-aba[data-era="natureza"]').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
   assert.match(raiz.querySelector('.album-pagina-overlay').src, /assets\/album\/natureza-desktop\.png$/);
 });
 
@@ -76,14 +76,14 @@ test('4. paginação é derivada da quantidade real de itens da era', () => {
   // elementos: 32 itens, capacidade desktop 28/página × 2 páginas visíveis = 1 tela
   assert.equal(raiz.querySelector('.album-rodape').textContent, T.albumPaginaDe(1, 1));
 
-  raiz.querySelector('.album-atalho[data-era="vida"]').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+  raiz.querySelector('.album-aba[data-era="vida"]').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
   // vida: 66 itens, capacidade 28 → 3 páginas físicas → 2 telas (28+28 / 10+vazio)
   const totalPaginasFisicas = Math.ceil(TOTAL_ERA.vida / 28);
   const totalTelas = Math.ceil(totalPaginasFisicas / 2);
   assert.equal(raiz.querySelector('.album-rodape').textContent, T.albumPaginaDe(1, totalTelas));
 });
 
-test('5. desktop e mobile usam capacidades diferentes', () => {
+test('5. desktop e mobile usam densidades de grade diferentes', () => {
   const { cat, store, raiz } = ambiente();
   const antesMatchMedia = window.matchMedia;
 
@@ -94,7 +94,9 @@ test('5. desktop e mobile usam capacidades diferentes', () => {
     raiz, store, catalogo: cat, T,
   });
   abrirMiolo(albumDesktop, raiz);
-  const celulasDesktop = raiz.querySelectorAll('.album-pagina-slots-esquerda .figurinha-mini, .album-pagina-slots-esquerda .figurinha-vazia').length;
+  const gradeDesktop = raiz.querySelector('.album-pagina-slots-esquerda .album-slots');
+  const colunasDesktop = gradeDesktop.style.gridTemplateColumns;
+  const linhasDesktop = gradeDesktop.style.gridTemplateRows;
   albumDesktop.fechar();
 
   window.matchMedia = (query) => ({
@@ -104,12 +106,48 @@ test('5. desktop e mobile usam capacidades diferentes', () => {
     raiz, store, catalogo: cat, T,
   });
   abrirMiolo(albumMobile, raiz);
-  const celulasMobile = raiz.querySelectorAll('.album-pagina-slots-esquerda .figurinha-mini, .album-pagina-slots-esquerda .figurinha-vazia').length;
+  const gradeMobile = raiz.querySelector('.album-pagina-slots-esquerda .album-slots');
+  const colunasMobile = gradeMobile.style.gridTemplateColumns;
+  const linhasMobile = gradeMobile.style.gridTemplateRows;
 
   window.matchMedia = antesMatchMedia;
-  assert.equal(celulasDesktop, 28, '7 × 4 no desktop');
-  assert.equal(celulasMobile, 20, '4 × 5 no mobile');
-  assert.notEqual(celulasDesktop, celulasMobile);
+  assert.match(colunasDesktop, /repeat\(7,/, '7 colunas no desktop');
+  assert.match(linhasDesktop, /repeat\(4,/, '4 linhas no desktop');
+  assert.match(colunasMobile, /repeat\(4,/, '4 colunas no mobile');
+  assert.match(linhasMobile, /repeat\(4,/, '4 linhas no mobile');
+});
+
+test('paginação distribui os itens de forma equilibrada entre as páginas (não fatia sequencial fixa)', () => {
+  const { cat, store, raiz } = ambiente();
+  const antesMatchMedia = window.matchMedia;
+  window.matchMedia = (query) => ({
+    matches: false, media: query, addEventListener() {}, removeEventListener() {},
+  });
+  const album = montarAlbum({
+    raiz, store, catalogo: cat, T,
+  });
+  abrirMiolo(album, raiz);
+  raiz.querySelector('.album-aba[data-era="natureza"]').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+
+  const contarCelulas = () => raiz.querySelectorAll(
+    '.album-pagina-slots-esquerda .figurinha-mini, .album-pagina-slots-esquerda .figurinha-vazia',
+  ).length;
+
+  const totalNatureza = TOTAL_ERA.natureza;
+  const capacidadeMobile = 16; // 4 × 4
+  const numPaginas = Math.ceil(totalNatureza / capacidadeMobile);
+  const base = Math.floor(totalNatureza / numPaginas);
+  const resto = totalNatureza % numPaginas;
+
+  for (let p = 0; p < numPaginas; p += 1) {
+    const esperado = base + (p < resto ? 1 : 0);
+    assert.equal(contarCelulas(), esperado, `página ${p + 1} de Natureza tem ${esperado} células`);
+    if (p < numPaginas - 1) {
+      raiz.querySelector('.album-nav-proxima').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+    }
+  }
+  album.fechar();
+  window.matchMedia = antesMatchMedia;
 });
 
 test('6. itens descobertos aparecem como figurinhas', () => {
@@ -161,14 +199,14 @@ test('9. fechar a carta mantém a mesma era e a mesma folha do Álbum', () => {
     raiz, store, catalogo: cat, T,
   });
   abrirMiolo(album, raiz);
-  raiz.querySelector('.album-atalho[data-era="vida"]').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+  raiz.querySelector('.album-aba[data-era="vida"]').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
   const rodapeAntes = raiz.querySelector('.album-rodape').textContent;
 
   // "água" não é de vida, mas simula abrir uma carta a partir de outro estado:
   // reabrir a árvore de eventos direto no botão fechar da carta, se existir
   const vazio = raiz.querySelector('.figurinha-vazia');
   assert.ok(vazio, 'ainda em vida, com slots vazios');
-  assert.equal(raiz.querySelector('.album-atalho[aria-current="true"]').dataset.era, 'vida');
+  assert.equal(raiz.querySelector('.album-aba[aria-current="true"]').dataset.era, 'vida');
   assert.equal(raiz.querySelector('.album-rodape').textContent, rodapeAntes);
 });
 
@@ -179,7 +217,7 @@ test('10. progresso canônico exibido não muda ao navegar pelo Álbum', () => {
   });
   abrirMiolo(album, raiz);
   const contagemAntes = raiz.querySelector('.album-cabecalho-contagem').textContent;
-  raiz.querySelector('.album-atalho[data-era="ficcao"]').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+  raiz.querySelector('.album-aba[data-era="ficcao"]').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
   raiz.querySelector('.album-nav-proxima').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
   const contagemDepois = raiz.querySelector('.album-cabecalho-contagem').textContent;
   assert.equal(contagemAntes, contagemDepois);
@@ -206,7 +244,7 @@ test('12. IA mostra somente criações existentes e já descobertas, sem espaço
     raiz, store, catalogo: cat, T,
   });
   abrirMiolo(album, raiz);
-  raiz.querySelector('.album-atalho[data-era="ia"]').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+  raiz.querySelector('.album-aba[data-era="ia"]').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
   assert.equal(raiz.querySelectorAll('.figurinha-mini').length, 1);
   assert.equal(raiz.querySelectorAll('.figurinha-vazia').length, 0, 'sem "???" para criações futuras da IA');
   assert.ok(raiz.querySelector('.figurinha-mini[data-id="nuvem-cosmica"]'));
@@ -218,7 +256,7 @@ test('coleção "IA" não aparece como atalho quando não há nenhuma criação 
     raiz, store, catalogo: cat, T,
   });
   abrirMiolo(album, raiz);
-  assert.equal(raiz.querySelector('.album-atalho[data-era="ia"]'), null);
+  assert.equal(raiz.querySelector('.album-aba[data-era="ia"]'), null);
 });
 
 test('13. abrir, folhear e ver cartas no Álbum nunca grava no save', () => {
@@ -231,7 +269,7 @@ test('13. abrir, folhear e ver cartas no Álbum nunca grava no save', () => {
     raiz, store, catalogo: cat, T,
   });
   abrirMiolo(album, raiz);
-  raiz.querySelector('.album-atalho[data-era="vida"]').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+  raiz.querySelector('.album-aba[data-era="vida"]').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
   raiz.querySelector('.figurinha-mini[data-id="agua"]')?.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
   album.fechar();
   assert.deepEqual(store.getSave(), antes);
@@ -281,7 +319,7 @@ test('próxima tela avança de era quando a coleção atual acaba', () => {
   abrirMiolo(album, raiz);
   // elementos cabe numa única tela (32 itens / 28 por página / 2 páginas por tela)
   raiz.querySelector('.album-nav-proxima').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
-  assert.equal(raiz.querySelector('.album-atalho[aria-current="true"]').dataset.era, 'natureza');
+  assert.equal(raiz.querySelector('.album-aba[aria-current="true"]').dataset.era, 'natureza');
 });
 
 test('página anterior volta pra era anterior, na última tela dela', () => {
@@ -290,9 +328,9 @@ test('página anterior volta pra era anterior, na última tela dela', () => {
     raiz, store, catalogo: cat, T,
   });
   abrirMiolo(album, raiz);
-  raiz.querySelector('.album-atalho[data-era="natureza"]').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+  raiz.querySelector('.album-aba[data-era="natureza"]').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
   raiz.querySelector('.album-nav-anterior').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
-  assert.equal(raiz.querySelector('.album-atalho[aria-current="true"]').dataset.era, 'elementos');
+  assert.equal(raiz.querySelector('.album-aba[aria-current="true"]').dataset.era, 'elementos');
 });
 
 test('era 100% descoberta ganha o selo de completa', () => {
@@ -331,7 +369,7 @@ test('figurinha "além do mapa" preserva a identidade platina', () => {
   });
   abrirMiolo(album, raiz);
   if (alemDoMapa.era !== 'elementos') {
-    raiz.querySelector(`.album-atalho[data-era="${alemDoMapa.era}"]`).dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+    raiz.querySelector(`.album-aba[data-era="${alemDoMapa.era}"]`).dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
   }
   const el = raiz.querySelector(`.figurinha-mini[data-id="${alemDoMapa.id}"]`);
   assert.ok(el, 'a figurinha aparece na página correspondente');
@@ -355,7 +393,7 @@ test('perfil com criações da IA hidratadas continua funcionando no Álbum', ()
     raiz, store, catalogo: cat, T,
   });
   abrirMiolo(album, raiz);
-  raiz.querySelector('.album-atalho[data-era="ia"]').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+  raiz.querySelector('.album-aba[data-era="ia"]').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
   assert.ok(raiz.querySelector('.figurinha-mini[data-id="coisa-da-ia"]'));
 });
 
@@ -365,8 +403,68 @@ test('abrir o Álbum de novo depois de fechado volta a mostrar a capa', () => {
     raiz, store, catalogo: cat, T,
   });
   abrirMiolo(album, raiz);
-  raiz.querySelector('.album-atalho[data-era="vida"]').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+  raiz.querySelector('.album-aba[data-era="vida"]').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
   album.fechar();
   album.abrir();
   assert.ok(raiz.querySelector('.album-capa-imagem'), 'reabre pela capa, sem persistir a posição interna');
+});
+
+test('a fileira de atalhos circulares antiga não existe mais no miolo', () => {
+  const { cat, store, raiz } = ambiente();
+  const album = montarAlbum({
+    raiz, store, catalogo: cat, T,
+  });
+  abrirMiolo(album, raiz);
+  assert.equal(raiz.querySelector('.album-atalhos'), null);
+  assert.equal(raiz.querySelector('.album-atalho'), null);
+});
+
+test('as 6 eras canônicas viram áreas de toque acessíveis sobre as abas físicas do livro', () => {
+  const { cat, store, raiz } = ambiente();
+  const album = montarAlbum({
+    raiz, store, catalogo: cat, T,
+  });
+  abrirMiolo(album, raiz);
+  const abas = raiz.querySelectorAll('.album-abas .album-aba');
+  assert.equal(abas.length, ERAS.length, 'uma aba de toque por era canônica');
+  for (const aba of abas) {
+    assert.ok(aba.getAttribute('aria-label'), 'aba tem aria-label');
+    assert.ok(aba.dataset.era, 'aba tem data-era');
+  }
+  raiz.querySelector('.album-aba[data-era="cultura"]').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+  assert.match(raiz.querySelector('.album-pagina-overlay').src, /assets\/album\/cultura-desktop\.png$/);
+});
+
+test('a área segura de posicionamento vem de AREA_SEGURA (config), não de percentuais soltos no CSS', () => {
+  const { cat, store, raiz } = ambiente();
+  const album = montarAlbum({
+    raiz, store, catalogo: cat, T,
+  });
+  abrirMiolo(album, raiz);
+  const moldura = raiz.querySelector('.album-pagina-moldura');
+  assert.equal(moldura.style.getPropertyValue('--as-top'), '29%');
+  assert.equal(moldura.style.getPropertyValue('--as-esq-left'), '12%');
+  assert.equal(moldura.style.getPropertyValue('--as-dir-right'), '11%');
+});
+
+test('miniatura não herda o tamanho fixo de ícone da carta completa (isolada do orbe grande)', () => {
+  const { cat, store, raiz } = ambiente({ agua: { em: 1, via: null, fonte: 'base' } });
+  const album = montarAlbum({
+    raiz, store, catalogo: cat, T,
+  });
+  abrirMiolo(album, raiz);
+  const orbeMini = raiz.querySelector('.figurinha-mini[data-id="agua"] .orbe-figurinha-mini');
+  assert.ok(orbeMini, 'a miniatura tem seu orbe');
+  assert.ok(orbeMini.className.includes('orbe-figurinha-mini'));
+});
+
+test('espaço vazio da figurinha não descoberta é um cartão discreto, não um círculo cheio', () => {
+  const { cat, store, raiz } = ambiente({ agua: { em: 1, via: null, fonte: 'base' } });
+  const album = montarAlbum({
+    raiz, store, catalogo: cat, T,
+  });
+  abrirMiolo(album, raiz);
+  const vazia = raiz.querySelector('.figurinha-vazia');
+  assert.ok(vazia);
+  assert.equal(vazia.querySelector('.figurinha-vazia-marca').textContent, '?');
 });

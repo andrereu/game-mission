@@ -12,26 +12,84 @@ const ASSETS = 'assets/album/';
 // Densidade "piloto": centralizada aqui de propósito, pra ajustar sem tocar
 // na lógica de paginação (ver assets/album/README.md — validar no jogo real
 // antes de considerar definitiva).
+// mobile: 4×5 (20/página) foi testado nesta rodada e deixou os cartões
+// baixos demais pra caber ícone + nome com folga (~35px de altura); caiu
+// pro fallback documentado (README) de 4×4 — cartões ~45% mais altos.
 const DENSIDADE = {
   desktop: { colunas: 7, linhas: 4 },
-  mobile: { colunas: 4, linhas: 5 },
+  mobile: { colunas: 4, linhas: 4 },
 };
 
 // Área do miolo livre de decoração/título do overlay temático, em % da
 // imagem inteira. Desktop é uma dupla página só (spine no meio: metade
 // esquerda/direita); mobile é uma página única. Piloto visual — mesma nota
 // do README: ajustar caso as artes aprovadas mudem ou a leitura piore.
+//
+// Esta é a fonte real de verdade do posicionamento: os valores viram
+// variáveis CSS (--as-*) aplicadas em .album-pagina-moldura a cada render
+// (ver aplicarAreaSegura), e styles/album.css só lê essas variáveis — não
+// existe mais nenhum percentual de posicionamento hardcoded em paralelo no
+// CSS. Cada coleção pode ter um ajuste próprio (chave = era, ou "ia"); na
+// ausência de um específico, usa-se "default" da variante.
 const AREA_SEGURA = {
   desktop: {
-    top: 29, bottom: 82, esquerda: [12, 45], direita: [55, 89],
+    default: {
+      top: 29, bottom: 18, esquerda: { left: 12, right: 55 }, direita: { left: 55, right: 11 },
+    },
   },
-  mobile: { top: 24, bottom: 58, esquerda: 14, direita: 87 },
+  mobile: {
+    default: {
+      top: 22, bottom: 36, esquerda: { left: 14, right: 13 },
+    },
+  },
 };
+
+function areaSeguraPara(variante, colecao) {
+  const porVariante = AREA_SEGURA[variante];
+  return porVariante[colecao] || porVariante.default;
+}
+
+function aplicarAreaSegura(moldura, variante, colecao) {
+  const area = areaSeguraPara(variante, colecao);
+  moldura.style.setProperty('--as-top', `${area.top}%`);
+  moldura.style.setProperty('--as-bottom', `${area.bottom}%`);
+  moldura.style.setProperty('--as-esq-left', `${area.esquerda.left}%`);
+  moldura.style.setProperty('--as-esq-right', `${area.esquerda.right}%`);
+  if (area.direita) {
+    moldura.style.setProperty('--as-dir-left', `${area.direita.left}%`);
+    moldura.style.setProperty('--as-dir-right', `${area.direita.right}%`);
+  }
+}
+
+// Faixa (% da imagem) onde ficam as 6 abas físicas do livro, na borda
+// externa direita — fora da área das páginas. Mesmo valor pras duas
+// variantes porque a ilustração usa a mesma proporção de moldura ali.
+const ABAS_FISICAS = { left: 89, right: 99.5, top: 14, bottom: 84 };
 
 const LARGURA_DESKTOP = 860; // abaixo disso: miolo em página única (mobile)
 
 function eraAsset(colecao, variante) {
   return `${ASSETS}${colecao}-${variante}.png`;
+}
+
+// Distribui `itens` em páginas de tamanho o mais equilibrado possível (nunca
+// excedendo `capacidade`), em vez de simplesmente fatiar sequencialmente —
+// evita últimas páginas quase vazias (ex.: 32 itens / capacidade 20 vira
+// 16+16, não 20+12). Ordem determinística de `itens` é preservada.
+function paginasBalanceadas(itens, capacidade) {
+  const total = itens.length;
+  if (total === 0) return [[]];
+  const numPaginas = Math.max(1, Math.ceil(total / capacidade));
+  const base = Math.floor(total / numPaginas);
+  const resto = total % numPaginas;
+  const paginas = [];
+  let indice = 0;
+  for (let p = 0; p < numPaginas; p += 1) {
+    const tamanho = base + (p < resto ? 1 : 0);
+    paginas.push(itens.slice(indice, indice + tamanho));
+    indice += tamanho;
+  }
+  return paginas;
 }
 
 export function montarAlbum({
@@ -100,7 +158,7 @@ export function montarAlbum({
   }
 
   function totalPaginasFisicas(colecao) {
-    return Math.max(1, Math.ceil(itensDaColecao(colecao).length / capacidadePorPagina()));
+    return paginasBalanceadas(itensDaColecao(colecao), capacidadePorPagina()).length;
   }
 
   function totalTelas(colecao) {
@@ -157,11 +215,10 @@ export function montarAlbum({
   }
 
   // Preenche uma página física (grade fixa colunas×linhas) com as figurinhas
-  // (ou espaços vazios) dos itens no intervalo [inicio, inicio+capacidade).
-  function montarGradePagina(itens, paginaFisica) {
-    const capacidade = capacidadePorPagina();
-    const inicio = paginaFisica * capacidade;
-    const fatia = itens.slice(inicio, inicio + capacidade);
+  // (ou espaços vazios) da fatia balanceada correspondente (ver
+  // paginasBalanceadas) — os itens já vêm pré-distribuídos por página.
+  function montarGradePagina(paginas, paginaFisica) {
+    const fatia = paginas[paginaFisica] || [];
     const grade = document.createElement('div');
     grade.className = 'album-slots';
     const d = matchDesktop.matches ? DENSIDADE.desktop : DENSIDADE.mobile;
@@ -189,22 +246,43 @@ export function montarAlbum({
     });
   }
 
-  function renderizarAtalhos(colecoes, colecao) {
-    const cont = overlay.querySelector('.album-atalhos');
+  // Substitui a antiga fileira de ícones circulares (duplicava as abas já
+  // desenhadas na própria arte do livro): agora só posicionamos áreas de
+  // toque acessíveis por cima das 6 abas físicas (uma por era canônica),
+  // na borda direita da página. A IA não tem aba física no livro — ganha um
+  // botão-selo próprio, discreto, só quando já existe alguma criação.
+  function renderizarAbas(colecoes, colecao) {
+    const cont = overlay.querySelector('.album-abas');
     cont.innerHTML = '';
-    colecoes.forEach((c, idx) => {
+    const alturaBanda = (ABAS_FISICAS.bottom - ABAS_FISICAS.top) / ERAS.length;
+    ERAS.forEach((era, idx) => {
       const btn = document.createElement('button');
       btn.type = 'button';
-      btn.className = 'album-atalho';
-      btn.dataset.era = c;
-      btn.innerHTML = c === 'ia' ? '✨' : (T.erasIcone[c] || '✨');
-      const rotulo = c === 'ia' ? T.albumIATitulo : (T.eras[c] || c);
+      btn.className = 'album-aba';
+      btn.dataset.era = era;
+      const rotulo = T.eras[era] || era;
       btn.title = rotulo;
       btn.setAttribute('aria-label', rotulo);
-      if (c === colecao) btn.setAttribute('aria-current', 'true');
-      btn.addEventListener('click', () => irParaColecao(idx));
+      if (era === colecao) btn.setAttribute('aria-current', 'true');
+      btn.style.setProperty('--aba-left', `${ABAS_FISICAS.left}%`);
+      btn.style.setProperty('--aba-right', `${100 - ABAS_FISICAS.right}%`);
+      btn.style.setProperty('--aba-top', `${ABAS_FISICAS.top + idx * alturaBanda}%`);
+      btn.style.setProperty('--aba-bottom', `${100 - (ABAS_FISICAS.top + (idx + 1) * alturaBanda)}%`);
+      btn.addEventListener('click', () => irParaColecao(colecoes.indexOf(era)));
       cont.appendChild(btn);
     });
+    if (colecoes.includes('ia')) {
+      const btnIA = document.createElement('button');
+      btnIA.type = 'button';
+      btnIA.className = 'album-aba album-aba-ia';
+      btnIA.dataset.era = 'ia';
+      btnIA.textContent = '✨';
+      btnIA.title = T.albumIATitulo;
+      btnIA.setAttribute('aria-label', T.albumIATitulo);
+      if (colecao === 'ia') btnIA.setAttribute('aria-current', 'true');
+      btnIA.addEventListener('click', () => irParaColecao(colecoes.indexOf('ia')));
+      cont.appendChild(btnIA);
+    }
   }
 
   function renderizarMiolo() {
@@ -234,9 +312,8 @@ export function montarAlbum({
           <h2>${T.albumTitulo}</h2>
           <span class="album-cabecalho-contagem"></span>
         </div>
-        <button type="button" class="album-fechar">${T.fechar}</button>
+        <button type="button" class="album-fechar" aria-label="${T.fechar}" title="${T.fechar}">✕</button>
       </div>
-      <div class="album-atalhos"></div>
       <div class="album-colecao-info">
         <span class="album-colecao-contagem">${colecao === 'ia' ? T.albumIAContagem(itens.length) : `${feitos} / ${itens.length}`}</span>
         ${completa ? `<span class="album-selo">${T.albumSeloCompleto}</span>` : ''}
@@ -249,6 +326,7 @@ export function montarAlbum({
             <img class="album-pagina-overlay" alt="" aria-hidden="true" />
             <div class="album-pagina-slots album-pagina-slots-esquerda"></div>
             ${desktop ? '<div class="album-pagina-slots album-pagina-slots-direita"></div>' : ''}
+            <div class="album-abas"></div>
           </div>
         </div>
         <button type="button" class="album-nav album-nav-proxima" aria-label="${T.albumProxima}">›</button>
@@ -262,7 +340,7 @@ export function montarAlbum({
     overlay.querySelector('.album-cabecalho-contagem').textContent =
       T.albumContagemGeral(feitosCanonico, totalCanonico, iaTotal);
 
-    renderizarAtalhos(colecoes, colecao);
+    renderizarAbas(colecoes, colecao);
 
     const base = overlay.querySelector('.album-pagina-base');
     const overlayArt = overlay.querySelector('.album-pagina-overlay');
@@ -272,13 +350,17 @@ export function montarAlbum({
     const area = overlay.querySelector('.album-pagina-area');
     area.dataset.era = colecao;
 
+    const moldura = overlay.querySelector('.album-pagina-moldura');
+    aplicarAreaSegura(moldura, variante, colecao);
+
+    const paginas = paginasBalanceadas(itens, capacidadePorPagina());
     const slotsEsquerda = overlay.querySelector('.album-pagina-slots-esquerda');
-    slotsEsquerda.appendChild(montarGradePagina(itens, paginaEsquerda));
+    slotsEsquerda.appendChild(montarGradePagina(paginas, paginaEsquerda));
 
     if (desktop) {
       const slotsDireita = overlay.querySelector('.album-pagina-slots-direita');
       if (temPaginaDireita) {
-        slotsDireita.appendChild(montarGradePagina(itens, paginaDireita));
+        slotsDireita.appendChild(montarGradePagina(paginas, paginaDireita));
       } else {
         const fim = document.createElement('p');
         fim.className = 'album-fim-colecao';
@@ -324,7 +406,7 @@ export function montarAlbum({
   function renderizarCapa() {
     overlay.innerHTML = `
       <img class="album-capa-fundo" src="${ASSETS}fundo-cosmico.png" alt="" aria-hidden="true" />
-      <button type="button" class="album-capa-fechar" aria-label="${T.fechar}">${T.fechar}</button>
+      <button type="button" class="album-capa-fechar" aria-label="${T.fechar}" title="${T.fechar}">✕</button>
       <button type="button" class="album-capa-botao">
         <img class="album-capa-imagem" src="${ASSETS}capa.png" alt="${T.albumTitulo}" />
         <span class="album-capa-dica">${T.albumTocarParaAbrir}</span>
