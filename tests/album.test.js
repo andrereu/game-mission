@@ -555,6 +555,84 @@ test('25f. swipe não dispara quando o toque começa numa mini-figurinha, e o cl
   });
 });
 
+test('30. clique real pointerdown → pointerup → click numa mini-figurinha descoberta abre a carta grande', () => {
+  const { cat, store, raiz } = ambiente({
+    agua: { em: 1, via: null, fonte: 'base' },
+    ar: { em: 2, via: null, fonte: 'base' },
+  });
+  comViewport(true, () => {
+    const album = montarAlbum({ raiz, store, catalogo: cat, T });
+    abrirMiolo(album, raiz);
+    for (const id of ['agua', 'ar']) {
+      const fig = raiz.querySelector(`.figurinha-mini[data-id="${id}"]`);
+      assert.ok(fig, `figurinha de ${id} na grade`);
+      assert.equal(fig.tagName, 'BUTTON', 'mini-figurinha é um botão real');
+      fig.dispatchEvent(new window.Event('pointerdown', { bubbles: true }));
+      fig.dispatchEvent(new window.Event('pointerup', { bubbles: true }));
+      fig.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+      const carta = raiz.querySelector('.carta-overlay .carta');
+      assert.ok(carta, `carta grande abriu para ${id}`);
+      assert.ok(carta.querySelector('.carta-btn-exportar') && carta.querySelector('.carta-btn-fechar'));
+      carta.querySelector('.carta-btn-fechar').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+    }
+  });
+});
+
+test('31. camadas não interativas com pointer-events:none; container de tabs não intercepta a grade', () => {
+  const { cat, store, raiz } = ambiente({ agua: { em: 1, via: null, fonte: 'base' } });
+  comViewport(true, () => {
+    const album = montarAlbum({ raiz, store, catalogo: cat, T });
+    abrirMiolo(album, raiz);
+    assert.equal(raiz.querySelector('.album-tabs').style.pointerEvents, 'none', 'container de tabs não captura clique');
+    assert.equal(raiz.querySelector('.album-pagina-overlay').style.pointerEvents, 'none', 'overlay decorativo não captura clique');
+    for (const tab of raiz.querySelectorAll('.album-tab')) {
+      assert.equal(tab.style.pointerEvents, 'auto', 'cada aba física é interativa');
+      assert.ok(parseFloat(tab.style.left) >= 88, 'aba fica na borda direita, fora da coluna da grade');
+    }
+    for (const slot of raiz.querySelectorAll('.album-slot-vazio')) {
+      assert.equal(slot.style.pointerEvents, 'none');
+    }
+    // grade renderizada acima do overlay decorativo
+    assert.ok(Number(raiz.querySelector('.album-grade-area').style.zIndex)
+      > Number(getComputedStyle(raiz.querySelector('.album-pagina-overlay')).zIndex || 3));
+    // geometria: borda esquerda das abas > borda direita da grade (sem sobreposição)
+    const bordaDireitaGrade = 100 - 13; // AREA_GRADE.desktop.right
+    for (const tab of raiz.querySelectorAll('.album-tab:not(.album-tab-ia)')) {
+      assert.ok(parseFloat(tab.style.left) > bordaDireitaGrade, 'hitbox da aba não invade a área da grade');
+    }
+  });
+});
+
+test('32. AREA_PAPEL: máscara global única recorta todos os overlays igual, independente da era', () => {
+  const { cat, store, raiz } = ambiente();
+  comViewport(true, () => {
+    const album = montarAlbum({ raiz, store, catalogo: cat, T });
+    abrirMiolo(album, raiz);
+    const m1 = raiz.querySelector('.album-pagina-overlay').dataset.mascaraPapel;
+    assert.match(m1, /^inset\([\d.]+% [\d.]+% [\d.]+% [\d.]+% round [\d.]+%\)$/);
+    assert.ok(raiz.querySelector('.album-pagina-overlay').style.getPropertyValue('clip-path'));
+    raiz.querySelector('.album-tab[data-era="ficcao"]').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+    const m2 = raiz.querySelector('.album-pagina-overlay').dataset.mascaraPapel;
+    assert.equal(m1, m2, 'mesma máscara para Elementos e Ficção');
+    raiz.querySelector('.album-tab[data-era="natureza"]').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+    assert.equal(raiz.querySelector('.album-pagina-overlay').dataset.mascaraPapel, m1, 'mesma máscara para Natureza');
+  });
+});
+
+test('33. mini-figurinha: wordmark presente e contrato preservado (3:4, selo, medalhão, nome, era)', () => {
+  const { cat, store } = ambiente({ agua: { em: 1, via: null, fonte: 'base' } });
+  raizLimpa();
+  const dados = calcularDadosCarta('agua', { store, catalogo: cat });
+  const mini = criarFigurinhaCompacta(dados, { T });
+  const logo = mini.querySelector('.figurinha-mini-logo');
+  assert.ok(logo && logo.getAttribute('src'), 'wordmark real Misturária no topo');
+  assert.equal(logo.getAttribute('alt'), 'Misturária');
+  assert.ok(mini.querySelector('.figurinha-mini-selo'));
+  assert.ok(mini.querySelector('.orbe-figurinha-mini'));
+  assert.ok(mini.querySelector('.figurinha-mini-nome'));
+  assert.equal(mini.querySelector('.figurinha-mini-era').textContent.trim(), 'ELEMENTOS');
+});
+
 test('26. todos os overlays V2 + base + capa existem no repositório', () => {
   const base = fileURLToPath(new URL('../assets/album/', import.meta.url));
   const v2 = `${base}v2/`;

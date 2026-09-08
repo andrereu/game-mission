@@ -40,16 +40,31 @@ const AREA_GRADE = {
 
 const PROPORCAO = { desktop: 3344 / 1882, mobile: 2048 / 3072 };
 
+// MÁSCARA GLOBAL DO PAPEL — recorta TODOS os overlays temáticos exatamente
+// dentro da superfície física das páginas (base-*.png). Nenhuma era pode vazar
+// sobre o fundo cósmico, a moldura azul/dourada, a lombada, as cantoneiras ou
+// as abas. Um único valor por variante responsiva — jamais por era; os PNGs
+// não são tocados. top/right/bottom/left em % do canvas; raio arredonda os
+// cantos do papel. Ajustar este bloco inteiro se a base mudar.
+const AREA_PAPEL = {
+  desktop: {
+    top: 3.5, right: 8, bottom: 4.5, left: 5.5, raio: 2.5,
+  },
+  mobile: {
+    top: 4, right: 12, bottom: 4, left: 6, raio: 3,
+  },
+};
+
 // Tabs físicas do livro, já desenhadas na base-*.png: seis retângulos na borda
 // direita, um por era na ordem de ERAS (de cima para baixo). Aqui só definimos
 // as áreas clicáveis/acessíveis sobre o bitmap — a arte da tab não é
 // redesenhada. Percentuais do canvas; ajustar em conjunto se a base mudar.
 const TABS = {
   desktop: {
-    left: 92, largura: 8, top: 12, alturaItem: 10.5, gap: 1.6,
+    left: 92, largura: 7.5, top: 12.5, alturaItem: 10.5, gap: 1.7,
   },
   mobile: {
-    left: 89.5, largura: 10.5, top: 17.5, alturaItem: 8.6, gap: 1.2,
+    left: 89, largura: 9, top: 18, alturaItem: 7.5, gap: 2,
   },
 };
 
@@ -137,7 +152,11 @@ export function montarAlbum({
   // único frame. Sem suporte a decode (testes): revela na hora.
   function aguardarErevelar(...srcs) {
     if (!podeDecodificar()) { revelarJa(); return; }
+    // rede de segurança: se o rAF não disparar (ex.: aba em segundo plano) ou
+    // o decode travar, revela mesmo assim. revelarJa é idempotente.
+    const rede = setTimeout(revelarJa, 2000);
     decodificar(...srcs).then(() => {
+      clearTimeout(rede);
       if (!overlay) return;
       if (typeof requestAnimationFrame === 'function') requestAnimationFrame(revelarJa);
       else revelarJa();
@@ -271,6 +290,7 @@ export function montarAlbum({
     const div = document.createElement('div');
     div.className = 'album-slot-vazio';
     div.setAttribute('aria-hidden', 'true');
+    div.style.pointerEvents = 'none'; // não interativo: nunca intercepta clique
     div.innerHTML = '<span class="album-slot-vazio-marca">?</span>';
     return div;
   }
@@ -279,6 +299,7 @@ export function montarAlbum({
     const dados = calcularDadosCarta(id, { store, catalogo });
     if (!dados) return slotVazio();
     const el = criarFigurinhaCompacta(dados, { T });
+    // clique simples -> abre imediatamente a carta grande já existente.
     el.addEventListener('click', () => carta.abrir(id));
     return el;
   }
@@ -323,7 +344,19 @@ export function montarAlbum({
   function renderizarTabs(colecoes, colecao) {
     const cont = overlay.querySelector('.album-tabs');
     cont.innerHTML = '';
+    // o container cobre a moldura só para posicionar os hitboxes em %; ele
+    // nunca pode interceptar clique (senão engole os toques na grade).
+    cont.style.pointerEvents = 'none';
     const geo = matchDesktop.matches ? TABS.desktop : TABS.mobile;
+    const posicionar = (btn, topo) => {
+      btn.style.pointerEvents = 'auto';
+      btn.style.minWidth = '44px';
+      btn.style.minHeight = '44px';
+      btn.style.left = `${geo.left}%`;
+      btn.style.width = `${geo.largura}%`;
+      btn.style.top = `${topo}%`;
+      btn.style.height = `${geo.alturaItem}%`;
+    };
     ERAS.forEach((era, i) => {
       const btn = document.createElement('button');
       btn.type = 'button';
@@ -332,10 +365,7 @@ export function montarAlbum({
       const rotulo = T.eras[era] || era;
       btn.title = rotulo;
       btn.setAttribute('aria-label', rotulo);
-      btn.style.left = `${geo.left}%`;
-      btn.style.width = `${geo.largura}%`;
-      btn.style.top = `${geo.top + i * (geo.alturaItem + geo.gap)}%`;
-      btn.style.height = `${geo.alturaItem}%`;
+      posicionar(btn, geo.top + i * (geo.alturaItem + geo.gap));
       if (era === colecao) btn.setAttribute('aria-current', 'true');
       btn.addEventListener('click', () => irParaColecao(i));
       cont.appendChild(btn);
@@ -348,10 +378,7 @@ export function montarAlbum({
       btn.textContent = '✨';
       btn.title = T.albumIATitulo;
       btn.setAttribute('aria-label', T.albumIATitulo);
-      btn.style.left = `${geo.left}%`;
-      btn.style.width = `${geo.largura}%`;
-      btn.style.top = `${geo.top + ERAS.length * (geo.alturaItem + geo.gap)}%`;
-      btn.style.height = `${geo.alturaItem}%`;
+      posicionar(btn, geo.top + ERAS.length * (geo.alturaItem + geo.gap));
       if (colecao === 'ia') btn.setAttribute('aria-current', 'true');
       btn.addEventListener('click', () => irParaColecao(colecoes.indexOf('ia')));
       cont.appendChild(btn);
@@ -427,11 +454,20 @@ export function montarAlbum({
     const overlayArt = overlay.querySelector('.album-pagina-overlay');
     base.src = `${ASSETS}base-${desktop ? 'desktop' : 'mobile'}.png`;
     overlayArt.src = overlaySrc;
+    overlayArt.style.pointerEvents = 'none'; // camada decorativa: nunca captura clique
+    // recorta o overlay pela máscara global do papel (mesma para todas as eras)
+    const papel = AREA_PAPEL[desktop ? 'desktop' : 'mobile'];
+    const mascara = `inset(${papel.top}% ${papel.right}% ${papel.bottom}% ${papel.left}% round ${papel.raio}%)`;
+    overlayArt.style.setProperty('clip-path', mascara);
+    overlayArt.dataset.mascaraPapel = mascara;
 
     renderizarTabs(colecoes, colecao);
 
     const gradeArea = overlay.querySelector('.album-grade-area');
     if (gradeArea) {
+      // acima do overlay decorativo (z-index 3) — as mini-figurinhas (botões
+      // reais) recebem o clique antes de qualquer camada não interativa.
+      gradeArea.style.zIndex = '5';
       const geo = AREA_GRADE[desktop ? 'desktop' : 'mobile'];
       gradeArea.style.left = `${geo.left}%`;
       gradeArea.style.right = `${geo.right}%`;
