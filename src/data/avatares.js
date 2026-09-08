@@ -1,17 +1,34 @@
-// Carinhas de perfil: substituem a cor abstrata como escolha principal.
-// 8 opções visualmente distintas, sem gênero, sem emoji nativo do sistema
-// (que muda de aparência entre Android/iOS/desktop) — SVGs internos simples,
-// coerentes com o resto do universo do Misturária. A cor de cada carinha
-// continua existindo (vira o aro/fundo), só deixou de ser a escolha em si.
+// Medalhões de perfil: cada um representa um pequeno universo do Misturária
+// (Eu, Natureza, Bichos, Elementos, Tecnologia, Ciência, Espaço, Mistério),
+// não mais uma cor abstrata. `id` é o identificador persistente — nunca o
+// emoji/tema, que pode mudar de nome ou arte sem quebrar saves antigos.
+// `assetSrc` fica pronto pra receber uma ilustração própria (PNG/WebP) no
+// futuro: null aqui = usa o ícone SVG embutido (ver ./ui/avatarSvg.js).
 export const AVATARES = [
-  { id: 'nova', cor: '#4aa3ff', olhos: 'felizes', boca: 'sorriso' },
-  { id: 'lumen', cor: '#45c26b', olhos: 'redondos', boca: 'aberta' },
-  { id: 'astra', cor: '#ff8a5c', olhos: 'estrela', boca: 'reta' },
-  { id: 'cosmo', cor: '#b57cff', olhos: 'piscando', boca: 'sorriso' },
-  { id: 'orbe', cor: '#ffd25c', olhos: 'redondos', boca: 'oh' },
-  { id: 'nebula', cor: '#ff5c8a', olhos: 'felizes', boca: 'lingua' },
-  { id: 'vega', cor: '#4ad0e6', olhos: 'oculos', boca: 'sorriso' },
-  { id: 'polar', cor: '#dfe6f5', olhos: 'sonolento', boca: 'reta' },
+  {
+    id: 'nova', tema: 'eu', emoji: '🙂', cor: '#4aa3ff', icone: 'carinha', assetSrc: null,
+  },
+  {
+    id: 'lumen', tema: 'natureza', emoji: '🌳', cor: '#45c26b', icone: 'natureza', assetSrc: null,
+  },
+  {
+    id: 'astra', tema: 'bichos', emoji: '🐾', cor: '#ff8a5c', icone: 'bichos', assetSrc: null,
+  },
+  {
+    id: 'cosmo', tema: 'elementos', emoji: '🔥', cor: '#ff6b4a', icone: 'elementos', assetSrc: null,
+  },
+  {
+    id: 'orbe', tema: 'tecnologia', emoji: '⚙️', cor: '#8fa3c9', icone: 'tecnologia', assetSrc: null,
+  },
+  {
+    id: 'nebula', tema: 'ciencia', emoji: '🧪', cor: '#ff5c8a', icone: 'ciencia', assetSrc: null,
+  },
+  {
+    id: 'vega', tema: 'espaco', emoji: '🪐', cor: '#b57cff', icone: 'espaco', assetSrc: null,
+  },
+  {
+    id: 'polar', tema: 'misterio', emoji: '✨', cor: '#ffd25c', icone: 'misterio', assetSrc: null,
+  },
 ];
 
 const POR_ID = new Map(AVATARES.map((a) => [a.id, a]));
@@ -20,9 +37,10 @@ export function getAvatar(avatarId) {
   return POR_ID.get(avatarId) || AVATARES[0];
 }
 
-// Determinístico: o mesmo id de perfil sempre cai na mesma carinha — nunca
+// Determinístico: o mesmo id de perfil sempre cai no mesmo medalhão — nunca
 // muda sozinho entre aberturas, nem depende de Math.random. Usado como
-// padrão pra perfis antigos que ainda não tinham avatarId.
+// padrão pra perfis antigos que ainda não tinham avatarId (também cobre
+// perfis que só tinham `cor`, sem avatarId nenhum).
 export function avatarPadrao(perfilId) {
   const s = String(perfilId || '');
   let h = 0;

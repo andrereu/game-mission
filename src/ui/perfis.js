@@ -2,7 +2,7 @@
 // formulário pra criar um novo. Só desenha e dispara os callbacks; quem
 // persiste e recarrega o jogo é o app.js.
 import { MODOS, MODO_PADRAO } from '../data/modos.js';
-import { AVATARES, avatarPadrao } from '../data/avatares.js';
+import { AVATARES, avatarPadrao, getAvatar } from '../data/avatares.js';
 import { avatarSvgMarkup } from './avatarSvg.js';
 
 export function montarSeletorPerfis({
@@ -25,7 +25,9 @@ export function montarSeletorPerfis({
       b.type = 'button';
       b.className = 'perfil-avatar-opcao';
       b.dataset.avatar = av.id;
-      b.setAttribute('aria-label', T.perfilCarinha(i + 1));
+      b.dataset.tema = av.tema;
+      const rotuloTema = T.perfilAvatarTema?.[av.tema];
+      b.setAttribute('aria-label', rotuloTema || T.perfilCarinha(i + 1));
       b.innerHTML = avatarSvgMarkup(av.id);
       if (av.id === atual) b.classList.add('escolhida');
       b.addEventListener('click', (ev) => {
@@ -78,8 +80,9 @@ export function montarSeletorPerfis({
       card.className = 'perfil-card';
       card.dataset.id = p.id;
       if (estado.ativo === p.id) card.classList.add('ativo');
+      const avatarAtivo = getAvatar(p.avatarId || avatarPadrao(p.id));
       card.innerHTML = `
-        <span class="perfil-avatar">${avatarSvgMarkup(p.avatarId || avatarPadrao(p.id))}</span>
+        <span class="perfil-avatar" data-tema="${avatarAtivo.tema}">${avatarSvgMarkup(avatarAtivo.id)}</span>
         <span class="perfil-nome"></span>
         <span class="perfil-modo-tag"></span>
         <button type="button" class="perfil-editar" aria-label="${T.perfilEditar}">✎</button>

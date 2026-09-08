@@ -1,8 +1,10 @@
 /* .barra-perfil e .rede-status agora vivem em styles/barra.css */
 
-/* entrada no universo do Misturária: nebulosa + estrelas bem discretas atrás
-   do cartão — a marca pode se mostrar por inteiro aqui, é a única tela onde
-   isso faz sentido (ver styles/carta.css e canvas.css pro resto do jogo). */
+/* entrada no universo do Misturária — mesma família visual do Álbum V2:
+   profundidade cósmica (nebulosa + campo de estrelas + orbe distante) atrás
+   de um cartão translúcido, sem virar poluição visual. A marca pode se
+   mostrar por inteiro aqui, é a única tela onde isso faz sentido (ver
+   styles/album.css pro vocabulário de brilho/gradiente reaproveitado). */
 .perfis-overlay {
   position: fixed;
   inset: 0;
@@ -10,22 +12,41 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: auto;
   background:
-    radial-gradient(120% 90% at 50% 0%, rgba(120, 140, 255, 0.10), transparent 60%),
+    radial-gradient(1.4px 1.4px at 8% 22%, rgba(255,255,255,0.6), transparent),
+    radial-gradient(1.2px 1.2px at 18% 68%, rgba(255,255,255,0.4), transparent),
+    radial-gradient(1.6px 1.6px at 32% 40%, rgba(255,255,255,0.5), transparent),
+    radial-gradient(1.2px 1.2px at 48% 82%, rgba(255,255,255,0.35), transparent),
+    radial-gradient(1.4px 1.4px at 64% 18%, rgba(255,255,255,0.5), transparent),
+    radial-gradient(1.2px 1.2px at 78% 55%, rgba(255,255,255,0.4), transparent),
+    radial-gradient(1.6px 1.6px at 90% 30%, rgba(255,255,255,0.5), transparent),
+    radial-gradient(1.2px 1.2px at 96% 76%, rgba(255,255,255,0.35), transparent),
+    radial-gradient(130% 95% at 50% 0%, rgba(120, 140, 255, 0.14), transparent 60%),
     url('../assets/decor/nebulosa.png') -10% -10% / 55% no-repeat,
-    url('../assets/decor/estrelas.png') 92% 85% / 70px no-repeat,
-    rgba(4, 8, 16, 0.92);
-  background-blend-mode: screen, screen, normal, normal;
+    url('../assets/decor/orbe-galaxia.png') 96% 92% / 140px no-repeat,
+    linear-gradient(180deg, #060a16, #0a0f1f 55%, #060a16);
+  background-blend-mode: screen, screen, screen, screen, screen, screen, screen, screen, screen, screen, screen, normal;
   padding: 16px;
 }
 .perfis-cartao {
+  position: relative;
   width: 100%;
   max-width: 420px;
-  background: var(--cor-drawer);
+  background:
+    radial-gradient(120% 80% at 50% 0%, rgba(120, 140, 255, 0.12), transparent 65%),
+    color-mix(in srgb, var(--cor-drawer) 92%, transparent);
+  backdrop-filter: blur(2px);
   border: 1px solid var(--cor-borda);
-  border-radius: 14px;
+  border-radius: 16px;
   padding: 18px;
-  box-shadow: 0 0 40px rgba(90, 120, 255, 0.12);
+  box-shadow:
+    0 0 0 1px rgba(120, 140, 255, 0.08),
+    0 0 40px rgba(90, 120, 255, 0.16),
+    0 16px 40px -12px rgba(0, 0, 0, 0.55);
+}
+@media (min-width: 640px) {
+  .perfis-cartao { max-width: 560px; padding: 24px; }
 }
 .perfis-logo {
   display: block;
@@ -43,12 +64,19 @@
 }
 .perfis-cabecalho h2 { margin: 0; font-size: 18px; }
 .perfil-fechar {
-  padding: 6px 12px;
-  border-radius: 8px;
-  border: 1px solid var(--cor-borda);
-  background: var(--cor-peca);
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background:
+    radial-gradient(120% 140% at 50% 0%, rgba(255, 255, 255, 0.08), transparent 70%),
+    rgba(10, 14, 26, 0.6);
   color: var(--cor-texto);
   cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+.perfil-fechar:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px -8px rgba(0, 0, 0, 0.6);
 }
 
 .perfis-grade {
@@ -65,11 +93,19 @@
   gap: 6px;
   padding: 14px 10px;
   border-radius: 12px;
-  background: var(--cor-peca);
+  background:
+    radial-gradient(120% 80% at 50% 0%, rgba(120, 140, 255, 0.1), transparent 70%),
+    var(--cor-peca);
   border: 2px solid var(--cor-borda);
   cursor: pointer;
+  overflow: hidden;
+  transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease;
 }
-.perfil-card.ativo { border-color: var(--cor-texto); }
+.perfil-card:hover { transform: translateY(-1px); }
+.perfil-card.ativo {
+  border-color: var(--cor-texto);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.18), 0 0 16px -4px rgba(120, 140, 255, 0.5);
+}
 .perfil-avatar {
   display: block;
   width: 40px;
@@ -77,8 +113,10 @@
   border-radius: 50%;
   overflow: hidden;
   border: 2px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 0 10px -2px rgba(120, 140, 255, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.12);
 }
-.perfil-avatar svg { display: block; width: 100%; height: 100%; }
+.perfil-avatar svg,
+.perfil-avatar img { display: block; width: 100%; height: 100%; }
 .perfil-nome { font-size: 13px; text-align: center; word-break: break-word; }
 .perfil-apagar {
   position: absolute;
@@ -116,25 +154,52 @@
   background: #0e1930;
   color: var(--cor-texto);
 }
+/* os 8 medalhões precisam sempre pertencer ao mesmo conjunto visual — grade
+   fixa (nunca flex-wrap livre), pra nenhum deles nunca ficar órfão numa
+   linha sozinha: 4x2 equilibrado no mobile, uma única fileira de 8 a partir
+   do tablet. Ver PROJECT: bug "8º medalhão quebrando de linha". */
 .perfil-avatares {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
   width: 100%;
-  margin-top: 2px;
+  margin-top: 4px;
+}
+/* a virada pra 8 numa fileira só depende do espaço real disponível (não do
+   viewport inteiro): no formulário de criação (cartão largo) vira 1 fileira;
+   dentro de um card de edição (estreito, na grade de perfis) continua 4x2 —
+   assim o medalhão nunca aperta nem estoura a largura do card. */
+.perfil-novo,
+.perfil-card { container-type: inline-size; }
+@container (min-width: 260px) {
+  .perfil-avatar-opcao { min-width: 40px; min-height: 40px; }
+}
+@container (min-width: 340px) {
+  .perfil-avatares { grid-template-columns: repeat(8, 1fr); gap: 8px; }
 }
 .perfil-avatar-opcao {
-  width: 34px;
-  height: 34px;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  min-width: 30px;
+  min-height: 30px;
+  max-width: 56px;
+  margin: 0 auto;
   padding: 0;
   border-radius: 50%;
   overflow: hidden;
   border: 2px solid transparent;
   cursor: pointer;
-  background: none;
+  background: rgba(10, 14, 26, 0.35);
+  box-shadow: 0 0 8px -2px rgba(120, 140, 255, 0.35);
+  transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease;
 }
-.perfil-avatar-opcao svg { display: block; width: 100%; height: 100%; }
-.perfil-avatar-opcao.escolhida { border-color: var(--cor-texto); box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2); }
+.perfil-avatar-opcao svg,
+.perfil-avatar-opcao img { display: block; width: 100%; height: 100%; }
+.perfil-avatar-opcao:hover { transform: translateY(-1px); }
+.perfil-avatar-opcao.escolhida {
+  border-color: #fff;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.25), 0 0 14px -2px rgba(120, 140, 255, 0.7);
+}
 .perfil-avatar-opcao:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 .perfil-card .perfil-avatares {
   grid-column: 1 / -1;
@@ -184,10 +249,18 @@
 .perfil-editar:hover { opacity: 1; }
 
 .perfil-novo button[type='submit'] {
-  padding: 8px 14px;
-  border-radius: 8px;
+  padding: 8px 16px;
+  border-radius: 999px;
   border: 1px solid var(--cor-peca-borda);
-  background: var(--cor-peca);
+  background:
+    radial-gradient(120% 140% at 50% 0%, rgba(255, 255, 255, 0.1), transparent 70%),
+    var(--cor-peca);
   color: var(--cor-texto);
+  font-weight: 700;
   cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+.perfil-novo button[type='submit']:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px -8px rgba(0, 0, 0, 0.6);
 }
