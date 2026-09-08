@@ -133,4 +133,32 @@ export const T = {
     cultura: 'Cultura',
     ficcao: 'Ficção',
   },
+  dioramaTitulo: 'Meu Mundo',
+  dioramaSubtitulo: 'O mundo que nasceu das suas descobertas.',
+  dioramaFechar: 'Fechar',
+  dioramaBotaoRotulo: 'Meu Mundo',
+  dioramaVazio: 'Ainda não há nada aqui. Descubra algo novo e volte!',
+  dioramaEraTitulo: (era) => `Uma nova era chegou ao seu mundo: ${era}!`,
+  dioramaIaPortalRotulo: 'Suas criações de IA',
+  dioramaIaPortalTexto: 'Este perfil já tem descobertas inventadas com IA — coisas que só existem no SEU mundo.',
+  dioramaFamilias: {
+    terreno: 'Terreno',
+    agua: 'Água',
+    vegetacao: 'Vegetação',
+    vida: 'Vida',
+    civilizacao: 'Civilização',
+    tecnologia: 'Tecnologia',
+    cosmico: 'Cósmico',
+  },
+  // rótulo curto do estado de cada família, por nível (0..4) — só pra fala/
+  // legenda; nunca representa uma descoberta específica, é o agregado.
+  dioramaEstagios: {
+    terreno: ['Rocha nua', 'Solo formado', 'Relevo', 'Paisagem rica', 'Terreno pleno'],
+    agua: ['Seco', 'Orvalho', 'Riacho', 'Rio', 'Oceano'],
+    vegetacao: ['Solo', 'Broto', 'Arbusto', 'Árvore', 'Pequeno bosque'],
+    vida: ['Quieto', 'Primeiros bichos', 'Pequena variedade', 'Fauna ativa', 'Ecossistema'],
+    civilizacao: ['Nada ainda', 'Primeiros sinais', 'Vila', 'Povoado', 'Pequena civilização'],
+    tecnologia: ['Nada ainda', 'Ferramentas', 'Máquinas simples', 'Engenhocas', 'Tecnologia avançada'],
+    cosmico: ['Céu comum', 'Uma estrela', 'Poucas estrelas', 'Céu estelar', 'Fenômeno cósmico'],
+  },
 };

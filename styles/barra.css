@@ -124,6 +124,7 @@
 /* botão vira círculo discreto — ícone já reconhecível, rótulo some visualmente
    (fica acessível pra leitor de tela, não precisa mais só esconder <520px) */
 .barra-botao {
+  position: relative;
   width: 36px;
   height: 36px;
   padding: 0;
@@ -167,6 +168,21 @@ body[data-era="ficcao"]     .barra-botao:hover, body[data-era="ficcao"]     .bar
   overflow: hidden;
   clip-path: inset(50%);
   white-space: nowrap;
+}
+/* indicador discreto de "algo aconteceu no mundo" (Diorama) — marco
+   pendente ainda não visto. Nunca abre nada sozinho, só sinaliza. */
+.barra-botao-ponto {
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--era-cultura);
+  box-shadow: 0 0 6px 1px color-mix(in srgb, var(--era-cultura) 70%, transparent), 0 0 0 2px var(--cor-fundo);
+  /* sobrescreve o clip-path sr-only herdado da regra "span" acima */
+  clip-path: none !important;
+  overflow: visible !important;
 }
 
 /* indicador de rede: dot + texto, agora inline na barra */

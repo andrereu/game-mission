@@ -83,5 +83,14 @@ export function criarStore(save) {
       save.ajustes[chave] = valor;
       emit('ajuste:mudou', { chave, valor });
     },
+
+    // Diorama: só o mínimo pra saber o que já foi mostrado (níveis por
+    // família + era) — nunca o cenário inteiro. Chave opcional: saves sem
+    // ela (antigos ou nunca abriram o Diorama) continuam funcionando, ver
+    // src/engine/diorama.js.
+    setDiorama(progressoVisto) {
+      save.diorama = progressoVisto;
+      emit('diorama:mudou', progressoVisto);
+    },
   };
 }

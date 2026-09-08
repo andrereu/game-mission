@@ -11,6 +11,7 @@ import { criarAudioService } from './audio/audioService.js';
 import { montarDrawer } from './ui/drawer.js';
 import { mostrarRecompensaDescoberta } from './ui/descoberta-carta.js';
 import { montarArvore } from './ui/arvore.js';
+import { montarDiorama } from './ui/diorama.js';
 import { montarAjustes } from './ui/ajustes.js';
 import { montarStatusRede } from './ui/rede.js';
 import { mostrarDesfazer } from './ui/desfazer.js';
@@ -142,6 +143,7 @@ async function iniciar() {
   const elArvore = document.getElementById('arvore');
   const elEras = document.getElementById('eras');
   const elAjustes = document.getElementById('ajustes');
+  const elDiorama = document.getElementById('diorama');
   const modoPequenos = modo === 'pequenos';
 
   let drawer;
@@ -255,6 +257,28 @@ async function iniciar() {
     },
   });
   elArvore.addEventListener('click', () => arvore.abrir()); // rótulo já está no HTML
+
+  // Diorama V0 ("Meu Mundo"): estado 100% derivado das descobertas, nunca
+  // abre sozinho — só sinaliza discretamente que algo mudou (ver §6/§10 do
+  // briefing). Bootstrap silencioso no boot: um save que nunca abriu o
+  // Diorama (novo ou veterano) começa "em dia" com o estado atual, sem
+  // inundar a 1ª visita com dezenas de marcos que já existiam antes dele.
+  const diorama = montarDiorama({
+    raiz: document.getElementById('diorama-raiz'), store, catalogo, T, audio,
+  });
+  diorama.garantirBootstrap();
+  const elDioramaPonto = elDiorama.querySelector('.barra-botao-ponto');
+  function atualizarIndicadorDiorama() {
+    if (elDioramaPonto) elDioramaPonto.hidden = !diorama.temPendentes();
+  }
+  atualizarIndicadorDiorama();
+  store.on('descoberta:nova', atualizarIndicadorDiorama);
+  // 'diorama:mudou' dispara quando a visita termina de reproduzir a fila e
+  // persiste o progresso visto (ver store.setDiorama em ui/diorama.js) —
+  // é o sinal certo pra apagar o indicador, não o clique em si (a
+  // reprodução ainda está rodando quando o clique acontece).
+  store.on('diorama:mudou', atualizarIndicadorDiorama);
+  elDiorama.addEventListener('click', () => diorama.abrir());
 
   const album = montarAlbum({
     raiz: document.getElementById('eras-raiz'),
