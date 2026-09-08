@@ -432,3 +432,121 @@ test('trava contra envio duplicado: nova fusão ignorada enquanto uma está em a
   await Promise.all([p1, p2]);
   assert.equal(chamadas, 1, 'combinar só rodou uma vez');
 });
+
+// ---- camada de áudio: conectada aos eventos de gameplay já existentes,
+// nunca duplicando a lógica de seleção/arrasto/combinação em si (ver
+// PROJECT/rodada "Modo Pequenos 2.0 — voz + sound design") ----
+function audioEspiao() {
+  const chamadas = [];
+  const registrar = (nome) => (...args) => chamadas.push([nome, ...args]);
+  return {
+    chamadas,
+    tocarSelecao: registrar('selecao'),
+    tocarWhoosh: registrar('whoosh'),
+    tocarAproximacao: registrar('aproximacao'),
+    tocarCombinacaoValida: registrar('combinacaoValida'),
+    tocarNada: registrar('nada'),
+    tocarNovaDescoberta: registrar('novaDescoberta'),
+    falarSelecao: registrar('falarSelecao'),
+    falarResultado: registrar('falarResultado'),
+    cancelarFala: registrar('cancelarFala'),
+  };
+}
+
+test('montarCanvas sem `audio` explícito usa o serviço padrão, sem quebrar', () => {
+  const { cat, store, combinar, raiz } = ambiente();
+  assert.doesNotThrow(() => {
+    const api = montarCanvas({ raiz, store, catalogo: cat, combinar, aoResultado() {} });
+    api.soltarItem('agua', 10, 10);
+  });
+});
+
+test('soltarItem (trazer do inventário/árvore) toca a seleção e fala o nome do item', () => {
+  const { cat, store, combinar, raiz } = ambiente();
+  const audio = audioEspiao();
+  const api = montarCanvas({
+    raiz, store, catalogo: cat, combinar, aoResultado() {}, audio,
+  });
+  api.soltarItem('agua', 10, 10);
+  assert.deepEqual(audio.chamadas, [
+    ['selecao'],
+    ['falarSelecao', 'Água'],
+  ]);
+});
+
+test('tocar numa peça já no tabuleiro também toca a seleção e fala o nome', () => {
+  const { cat, store, combinar, raiz } = ambiente();
+  const audio = audioEspiao();
+  const api = montarCanvas({
+    raiz, store, catalogo: cat, combinar, aoResultado() {}, audio,
+  });
+  const a = api.soltarItem('agua', 0, 0);
+  audio.chamadas.length = 0; // limpa a seleção do soltarItem acima
+  const el = raiz.querySelector(`.peca[data-uid="${a.uid}"]`);
+  el.dispatchEvent(ponteiro('pointerdown', 100, 100));
+  assert.deepEqual(audio.chamadas, [
+    ['selecao'],
+    ['falarSelecao', 'Água'],
+  ]);
+});
+
+test('início de arrasto (movimento além do limiar) toca o whoosh uma única vez por gesto', () => {
+  const { cat, store, combinar, raiz } = ambiente();
+  const audio = audioEspiao();
+  const api = montarCanvas({
+    raiz, store, catalogo: cat, combinar, aoResultado() {}, audio,
+  });
+  const a = api.soltarItem('agua', 0, 0);
+  audio.chamadas.length = 0;
+  const el = raiz.querySelector(`.peca[data-uid="${a.uid}"]`);
+  el.dispatchEvent(ponteiro('pointerdown', 100, 100));
+  el.dispatchEvent(ponteiro('pointermove', 140, 140)); // além do limiar: 1º whoosh
+  el.dispatchEvent(ponteiro('pointermove', 150, 150)); // continua arrastando: sem whoosh de novo
+  el.dispatchEvent(ponteiro('pointermove', 160, 160));
+  const whooshes = audio.chamadas.filter(([nome]) => nome === 'whoosh');
+  assert.equal(whooshes.length, 1);
+});
+
+test('toque parado (sem passar do limiar) nunca toca whoosh', () => {
+  const { cat, store, combinar, raiz } = ambiente();
+  const audio = audioEspiao();
+  const api = montarCanvas({
+    raiz, store, catalogo: cat, combinar, aoResultado() {}, audio,
+  });
+  const a = api.soltarItem('agua', 0, 0);
+  audio.chamadas.length = 0;
+  const el = raiz.querySelector(`.peca[data-uid="${a.uid}"]`);
+  el.dispatchEvent(ponteiro('pointerdown', 100, 100));
+  el.dispatchEvent(ponteiro('pointermove', 102, 101)); // < 6px: ainda toque longo
+  assert.equal(audio.chamadas.some(([nome]) => nome === 'whoosh'), false);
+});
+
+test('combinação válida: toca aproximação + chime e fala o nome do resultado', async () => {
+  const { cat, store, combinar, raiz } = ambiente();
+  const audio = audioEspiao();
+  const api = montarCanvas({
+    raiz, store, catalogo: cat, combinar, aoResultado() {}, audio,
+  });
+  const a = api.soltarItem('agua', 100, 100);
+  const b = api.soltarItem('fogo', 100, 100);
+  audio.chamadas.length = 0;
+  await api._fundirParaTeste(a.uid, b.uid);
+  const nomes = audio.chamadas.map(([nome]) => nome);
+  assert.deepEqual(nomes, ['aproximacao', 'combinacaoValida', 'falarResultado']);
+  assert.equal(audio.chamadas.at(-1)[1], 'Vapor');
+});
+
+test('combinação inválida: toca aproximação + som de "nada", sem chime nem fala', async () => {
+  const { cat, store, raiz } = ambiente();
+  const combinar = async () => ({ tipo: 'nada' });
+  const audio = audioEspiao();
+  const api = montarCanvas({
+    raiz, store, catalogo: cat, combinar, aoResultado() {}, audio,
+  });
+  const a = api.soltarItem('agua', 100, 100);
+  const b = api.soltarItem('fogo', 100, 100);
+  audio.chamadas.length = 0;
+  await api._fundirParaTeste(a.uid, b.uid);
+  const nomes = audio.chamadas.map(([nome]) => nome);
+  assert.deepEqual(nomes, ['aproximacao', 'nada']);
+});

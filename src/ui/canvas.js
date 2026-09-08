@@ -3,34 +3,17 @@ import { T } from '../data/textos.js';
 import { ligarPanZoom } from './panzoom.js';
 import { ehAlemDoMapaVisivel, atributosOrbeAlemDoMapa, srOnlyAlemDoMapa } from './alemDoMapaUI.js';
 import { mostrarConviteIA } from './convite-ia.js';
+import { criarAudioService } from '../audio/audioService.js';
 
 const ZOOM_MIN = 0.4;
 const ZOOM_MAX = 2.5;
 const TOQUE_LONGO_MS = 500;
 const TOLERANCIA_TOQUE_LONGO = 6; // px: acima disso é arrasto, não toque longo
 
-// Som fraco de "nada aconteceu" (mais grave e baixo que o bipe de descoberta).
-function tocarNada() {
-  try {
-    const Ctx = window.AudioContext || window.webkitAudioContext;
-    const ctx = new Ctx();
-    const o = ctx.createOscillator();
-    const g = ctx.createGain();
-    o.connect(g);
-    g.connect(ctx.destination);
-    o.frequency.value = 180;
-    g.gain.setValueAtTime(0.06, ctx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.18);
-    o.start();
-    o.stop(ctx.currentTime + 0.18);
-  } catch {
-    /* sem som */
-  }
-}
-
 export function montarCanvas({
   raiz, store, catalogo, combinar, aoResultado, margemFusao = 0,
   iaElegivel = () => false, iaLigadaMasOffline = () => false,
+  audio = criarAudioService(),
 }) {
   raiz.innerHTML = '';
   const mundo = document.createElement('div');
@@ -187,6 +170,7 @@ export function montarCanvas({
     const py = (a.y + b.y) / 2;
 
     combinando = true;
+    audio.tocarAproximacao(); // duas peças se tocaram: tenta misturar (ainda sem saber o resultado)
     try {
       let resultado;
       const semComboOficial = !catalogo.findCombo(a.id, b.id);
@@ -206,6 +190,8 @@ export function montarCanvas({
 
       if (resultado.tipo === 'ok') {
         esconderToast();
+        audio.tocarCombinacaoValida();
+        audio.falarResultado(resultado.item.nome);
         const novo = !store.isDiscovered(resultado.item.id);
         store.removeInstance(uidArrastada);
         store.removeInstance(uidAlvo);
@@ -240,7 +226,7 @@ export function montarCanvas({
           esconderToast();
           aviso.textContent = T.nadaAconteceu;
         }
-        if (store.getSave().ajustes?.som) tocarNada();
+        audio.tocarNada();
         aoResultado(resultado, { x: origem.x, y: origem.y, novo: false });
       }
     } finally {
@@ -266,6 +252,13 @@ export function montarCanvas({
       const inst = store.getInstance(uid);
       if (!inst) return;
       inicio = { mx: ev.clientX, my: ev.clientY, x: inst.x, y: inst.y };
+      // toque numa peça já no tabuleiro: mesma "seleção" de trazer um item pro
+      // canvas (ver soltarItem) — efeito curto + fala o nome.
+      const itemTocado = catalogo.getItem(inst.id);
+      if (itemTocado) {
+        audio.tocarSelecao();
+        audio.falarSelecao(itemTocado.nome);
+      }
       cancelarLongo();
       timerLongo = setTimeout(() => {
         timerLongo = null;
@@ -280,8 +273,13 @@ export function montarCanvas({
       if (!arrastando || !inicio) return;
       const dxTela = ev.clientX - inicio.mx;
       const dyTela = ev.clientY - inicio.my;
-      // só cancela o toque longo se o ponteiro realmente saiu do lugar
-      if (Math.hypot(dxTela, dyTela) > TOLERANCIA_TOQUE_LONGO) cancelarLongo();
+      // só cancela o toque longo se o ponteiro realmente saiu do lugar —
+      // esse é também o exato momento em que o toque vira arrasto de verdade
+      // (timerLongo só existe até aqui: dispara o whoosh uma vez por gesto)
+      if (Math.hypot(dxTela, dyTela) > TOLERANCIA_TOQUE_LONGO) {
+        if (timerLongo) audio.tocarWhoosh();
+        cancelarLongo();
+      }
       const nx = inicio.x + dxTela / vista.escala;
       const ny = inicio.y + dyTela / vista.escala;
       el.style.left = `${nx}px`;
@@ -329,7 +327,8 @@ export function montarCanvas({
     render,
     // sx/sy são coordenadas de TELA relativas à raiz; convertemos para o mundo.
     soltarItem(id, sx, sy) {
-      if (!catalogo.getItem(id)) return null;
+      const item = catalogo.getItem(id);
+      if (!item) return null;
       const { x, y } = paraMundo(sx, sy);
       const inst = store.addInstance(id, x, y);
       const el = elementoPeca(inst);
@@ -337,6 +336,10 @@ export function montarCanvas({
         mundo.appendChild(el);
         pecas.set(inst.uid, el);
       }
+      // trazer um item do inventário/árvore pro canvas é a "seleção" da
+      // descoberta: mesmo efeito+fala de tocar numa peça já no tabuleiro.
+      audio.tocarSelecao();
+      audio.falarSelecao(item.nome);
       return inst;
     },
     destruirTudo() {

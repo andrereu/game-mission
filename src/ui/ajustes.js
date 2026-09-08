@@ -2,6 +2,7 @@
 // Só lê/escreve via callbacks; quem persiste é o app.
 const CONFIG_LINHA = {
   som: { icone: '🔊' },
+  vozDescobertas: { icone: '🗣️' },
   iaLigada: { icone: '✨' },
 };
 
@@ -151,6 +152,7 @@ export function montarAjustes({ raiz, T, get, set, sync }) {
       </div>`;
     const lista = overlay.querySelector('.ajustes-lista');
     lista.appendChild(linha('som', T.ajusteSom, T.ajusteSomDesc));
+    lista.appendChild(linha('vozDescobertas', T.ajusteVoz, T.ajusteVozDesc));
     lista.appendChild(linha('iaLigada', T.ajusteIA, T.ajusteIADesc));
     const linhaFS = linhaTelaCheia();
     if (linhaFS) lista.appendChild(linhaFS);

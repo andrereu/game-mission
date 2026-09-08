@@ -7,6 +7,7 @@ import { criarStore } from './engine/state.js';
 import { criarCombinador } from './engine/combinar.js';
 import { criarProviderEndpoint } from './ai/provider.js';
 import { montarCanvas } from './ui/canvas.js';
+import { criarAudioService } from './audio/audioService.js';
 import { montarDrawer } from './ui/drawer.js';
 import { mostrarRecompensaDescoberta } from './ui/descoberta-carta.js';
 import { montarArvore } from './ui/arvore.js';
@@ -95,6 +96,22 @@ async function iniciar() {
   const agendarSalvar = criarAgendadorSalvar(() => store.getSave(), 400, chaveDoSave);
   store.on('estado:mudou', agendarSalvar);
 
+  // "Voz das descobertas": Pequenos vem ligada, Médio/Completo vem desligada
+  // — mas só como PADRÃO. Assim que a pessoa mexe no switch em Ajustes, a
+  // escolha dela vira explícita (true/false gravado) e passa a valer sempre,
+  // independente do modo (mesmo se o perfil trocar de modo depois). Saves
+  // antigos (ajustes.vozDescobertas nunca gravado) caem no padrão do modo
+  // sem precisar de migração — fallback não destrutivo.
+  const vozPadraoDoModo = modo === 'pequenos';
+  const vozEfetiva = () => {
+    const explicita = store.getSave().ajustes.vozDescobertas;
+    return explicita == null ? vozPadraoDoModo : explicita;
+  };
+  const audio = criarAudioService({
+    getSom: () => store.getSave().ajustes.som,
+    getVoz: vozEfetiva,
+  });
+
   // Progressão de eras: snapshot das eras já alcançadas + pinta o fundo.
   const erasVistas = erasAlcancadas(store.getSave().descobertos, catalogo);
   document.body.dataset.era = eraMaisAvancada(erasVistas);
@@ -146,6 +163,7 @@ async function iniciar() {
     combinar,
     iaElegivel,
     iaLigadaMasOffline,
+    audio,
     margemFusao: configDoModo(modo).margemFusao,
     aoResultado: async (resultado, ctx) => {
       // uma geração de IA bem-sucedida prova que a IA está de pé — atualiza o
@@ -156,6 +174,10 @@ async function iniciar() {
 
       // já disponível no drawer/álbum: não espera a animação de recompensa
       drawer.adicionarCard(resultado.item.id);
+
+      // assinatura sonora de "item inédito" — antes/junto da celebração de
+      // sempre (carta + voo), nunca no lugar dela.
+      audio.tocarNovaDescoberta();
 
       await mostrarRecompensaDescoberta({
         id: resultado.item.id,
@@ -241,8 +263,13 @@ async function iniciar() {
   const ajustes = montarAjustes({
     raiz: document.getElementById('ajustes-raiz'),
     T,
-    get: (chave) => store.getSave().ajustes[chave],
-    set: (chave, valor) => store.setAjuste(chave, valor),
+    get: (chave) => (chave === 'vozDescobertas' ? vozEfetiva() : store.getSave().ajustes[chave]),
+    set: (chave, valor) => {
+      store.setAjuste(chave, valor);
+      // desligou som ou voz com uma fala em andamento: para na hora, não
+      // espera a frase terminar sozinha.
+      if (chave === 'vozDescobertas' && !valor) audio.cancelarFala();
+    },
     sync: {
       carregar: carregarSync,
       ativar: async () => { await definirCodigo(gerarCodigo()); return carregarSync(); },

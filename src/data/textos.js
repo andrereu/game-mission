@@ -92,6 +92,8 @@ export const T = {
   ajustesRodape: 'Seus dados ficam seguros e são seus. Leve o Misturária para onde quiser!',
   ajusteSom: 'Som',
   ajusteSomDesc: 'Efeitos sonoros de descoberta e das telas do jogo.',
+  ajusteVoz: 'Voz das descobertas',
+  ajusteVozDesc: 'Fala o nome de cada item ao tocar, arrastar ou combinar no tabuleiro.',
   ajusteIA: 'Misturas inventadas com IA',
   ajusteIADesc: 'Quando não houver uma combinação oficial, a IA pode imaginar uma descoberta extra.',
   conviteIATitulo: 'Essa mistura ainda não existe no mapa…',

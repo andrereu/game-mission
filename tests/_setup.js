@@ -38,3 +38,46 @@ class AudioContextStub {
   }
 }
 definir('AudioContext', AudioContextStub);
+// o código de produção sempre lê `window.AudioContext` (nunca a global nua);
+// como `window` aqui é o objeto dom.window (distinto de globalThis), o stub
+// precisa existir nos dois pra valer nos testes que espiam criação de som.
+if (dom.window.AudioContext === undefined) dom.window.AudioContext = AudioContextStub;
+
+// speechSynthesis não existe em jsdom; stub controlável pelos testes de
+// áudio (fala é assíncrona nos navegadores reais, mas aqui resolve na hora
+// pra não deixar timers pendurados nos testes).
+class SpeechSynthesisUtteranceStub {
+  constructor(text) {
+    this.text = text;
+    this.lang = '';
+    this.voice = null;
+    this.rate = 1;
+    this.pitch = 1;
+    this.volume = 1;
+    this.onend = null;
+    this.onerror = null;
+  }
+}
+class SpeechSynthesisStub {
+  constructor() {
+    this._vozes = [];
+    this._ouvintes = new Map();
+    this.speaking = false;
+  }
+  getVoices() { return this._vozes; }
+  speak(utterance) {
+    this.speaking = true;
+    queueMicrotask(() => {
+      this.speaking = false;
+      utterance.onend?.();
+    });
+  }
+  cancel() { this.speaking = false; }
+  addEventListener(tipo, fn) {
+    if (!this._ouvintes.has(tipo)) this._ouvintes.set(tipo, new Set());
+    this._ouvintes.get(tipo).add(fn);
+  }
+  removeEventListener(tipo, fn) { this._ouvintes.get(tipo)?.delete(fn); }
+}
+definir('SpeechSynthesisUtterance', SpeechSynthesisUtteranceStub);
+definir('speechSynthesis', new SpeechSynthesisStub());

@@ -19,18 +19,30 @@ function ambiente(valores) {
 const clique = () => new window.MouseEvent('click', { bubbles: true });
 
 test('abrir mostra os interruptores refletindo o estado atual', () => {
-  const { api, raiz } = ambiente({ som: true, iaLigada: false });
+  const { api, raiz } = ambiente({ som: true, vozDescobertas: true, iaLigada: false });
   api.abrir();
   const checks = raiz.querySelectorAll('input[type="checkbox"]');
-  assert.equal(checks.length, 2);
+  assert.equal(checks.length, 3);
   const som = raiz.querySelector('input[data-chave="som"]');
+  const voz = raiz.querySelector('input[data-chave="vozDescobertas"]');
   const ia = raiz.querySelector('input[data-chave="iaLigada"]');
   assert.equal(som.checked, true);
+  assert.equal(voz.checked, true);
   assert.equal(ia.checked, false);
 });
 
+test('ligar/desligar "Voz das descobertas" chama set com o valor booleano', () => {
+  const { api, set, raiz } = ambiente({ som: true, vozDescobertas: false, iaLigada: false });
+  api.abrir();
+  const voz = raiz.querySelector('input[data-chave="vozDescobertas"]');
+  assert.equal(voz.checked, false);
+  voz.checked = true;
+  voz.dispatchEvent(new window.Event('change', { bubbles: true }));
+  assert.deepEqual(set, [['vozDescobertas', true]]);
+});
+
 test('ligar a IA chama set com o valor booleano', () => {
-  const { api, set, raiz } = ambiente({ som: true, iaLigada: false });
+  const { api, set, raiz } = ambiente({ som: true, vozDescobertas: true, iaLigada: false });
   api.abrir();
   const ia = raiz.querySelector('input[data-chave="iaLigada"]');
   ia.checked = true;
@@ -39,10 +51,10 @@ test('ligar a IA chama set com o valor booleano', () => {
 });
 
 test('cada linha mostra ícone, título e descrição (não é mais um checkbox nu)', () => {
-  const { api, raiz } = ambiente({ som: true, iaLigada: false });
+  const { api, raiz } = ambiente({ som: true, vozDescobertas: true, iaLigada: false });
   api.abrir();
   const linhas = raiz.querySelectorAll('.ajuste-linha');
-  assert.equal(linhas.length, 2);
+  assert.equal(linhas.length, 3);
   for (const l of linhas) {
     assert.ok(l.querySelector('.ajuste-icone').textContent.length > 0);
     assert.ok(l.querySelector('.ajuste-titulo').textContent.length > 0);
@@ -52,7 +64,7 @@ test('cada linha mostra ícone, título e descrição (não é mais um checkbox 
 });
 
 test('a descrição da IA reflete o funcionamento real (consultada quando não houver combinação oficial)', () => {
-  const { api, raiz } = ambiente({ som: false, iaLigada: false });
+  const { api, raiz } = ambiente({ som: false, vozDescobertas: false, iaLigada: false });
   api.abrir();
   const desc = raiz.querySelector('input[data-chave="iaLigada"]')
     .closest('.ajuste-linha').querySelector('.ajuste-desc').textContent;
@@ -61,7 +73,7 @@ test('a descrição da IA reflete o funcionamento real (consultada quando não h
 });
 
 test('fechar tira o overlay', () => {
-  const { api, raiz } = ambiente({ som: false, iaLigada: false });
+  const { api, raiz } = ambiente({ som: false, vozDescobertas: false, iaLigada: false });
   api.abrir();
   raiz.querySelector('.ajustes-fechar').dispatchEvent(clique());
   assert.equal(raiz.querySelector('.ajustes-overlay'), null);
@@ -163,7 +175,7 @@ async function comFullscreenApi(disponivel, corpo) {
 
 test('sem Fullscreen API: a opção "Tela cheia" nem aparece', () => {
   comFullscreenApi(false, () => {
-    const { api, raiz } = ambiente({ som: true, iaLigada: false });
+    const { api, raiz } = ambiente({ som: true, vozDescobertas: true, iaLigada: false });
     api.abrir();
     assert.equal(raiz.querySelector('input[data-chave="telaCheia"]'), null);
   });
@@ -171,7 +183,7 @@ test('sem Fullscreen API: a opção "Tela cheia" nem aparece', () => {
 
 test('com Fullscreen API: ligar "Tela cheia" entra em tela cheia; fullscreenchange mantém o switch em dia', async () => {
   await comFullscreenApi(true, async () => {
-    const { api, raiz } = ambiente({ som: true, iaLigada: false });
+    const { api, raiz } = ambiente({ som: true, vozDescobertas: true, iaLigada: false });
     api.abrir();
     const inp = raiz.querySelector('input[data-chave="telaCheia"]');
     assert.ok(inp, 'a opção aparece quando a API existe');
@@ -191,7 +203,7 @@ test('com Fullscreen API: ligar "Tela cheia" entra em tela cheia; fullscreenchan
 
 test('fechar os Ajustes remove o listener de fullscreenchange (sem vazar entre aberturas)', async () => {
   await comFullscreenApi(true, async () => {
-    const { api, raiz } = ambiente({ som: true, iaLigada: false });
+    const { api, raiz } = ambiente({ som: true, vozDescobertas: true, iaLigada: false });
     api.abrir();
     api.fechar();
     // dispara depois de fechado: não deve quebrar nem reabrir nada
