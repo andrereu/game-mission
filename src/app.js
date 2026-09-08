@@ -194,6 +194,10 @@ async function iniciar() {
       if (!resultado.item.ia && eraNova && !erasVistas.has(eraNova)) {
         erasVistas.add(eraNova);
         document.body.dataset.era = eraMaisAvancada(erasVistas);
+        // assinatura sonora própria de Nova Era — claramente mais importante
+        // que a de "nova descoberta" acima; toca junto da celebração visual
+        // de sempre, sem alterá-la.
+        audio.tocarNovaEra();
         await mostrarEraNova({
           era: eraNova,
           progresso: progressoPorEra(store.getSave().descobertos, catalogo),

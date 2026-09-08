@@ -189,6 +189,122 @@ test('nomes muito longos ainda são falados por inteiro', () => {
   }
 });
 
+// ---- correção do bug "efeitos inaudíveis": AudioContext nasce suspenso
+// (política de autoplay) e precisa ser retomado antes de qualquer som ----
+test('tom() retoma o AudioContext quando ele está suspenso, antes de agendar o oscilador', () => {
+  const chamadasResume = [];
+  const OrigCtx = window.AudioContext;
+  class CtxEspiao extends OrigCtx {
+    constructor(...args) {
+      super(...args);
+      this.state = 'suspended';
+    }
+    resume() {
+      chamadasResume.push(this.state);
+      return super.resume();
+    }
+  }
+  window.AudioContext = CtxEspiao;
+  try {
+    const audio = criarAudioService({ getSom: () => true, getVoz: () => false });
+    audio.tocarSelecao();
+    assert.equal(chamadasResume.length, 1, 'resume() foi chamado ao tocar um efeito com o contexto suspenso');
+  } finally {
+    window.AudioContext = OrigCtx;
+  }
+});
+
+test('o 1º gesto do usuário em qualquer lugar da página já desbloqueia o AudioContext (antes de qualquer efeito ser pedido)', () => {
+  const chamadasResume = [];
+  const OrigCtx = window.AudioContext;
+  class CtxEspiao extends OrigCtx {
+    constructor(...args) {
+      super(...args);
+      this.state = 'suspended';
+    }
+    resume() {
+      chamadasResume.push(1);
+      return super.resume();
+    }
+  }
+  window.AudioContext = CtxEspiao;
+  try {
+    criarAudioService({ getSom: () => true, getVoz: () => false });
+    assert.equal(chamadasResume.length, 0, 'ainda não houve gesto nenhum');
+    document.dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true }));
+    // >= 1 (não === 1): outras instâncias de audioService criadas por testes
+    // anteriores neste mesmo arquivo também escutam gestos em `document` e
+    // ainda não dispararam a sua vez — o que importa aqui é que ESTE gesto já
+    // desbloqueou o contexto, sem esperar um efeito ser pedido.
+    assert.ok(chamadasResume.length >= 1, 'o gesto na página já retomou o contexto, sem esperar um efeito ser chamado');
+  } finally {
+    window.AudioContext = OrigCtx;
+  }
+});
+
+// ---- assinatura de Nova Era ----
+function espiarNotas() {
+  const notas = [];
+  const OrigCtx = window.AudioContext;
+  class CtxEspiao extends OrigCtx {
+    createOscillator() {
+      const o = super.createOscillator();
+      const nota = { freq: null, inicio: null, fim: null };
+      notas.push(nota);
+      const origSetFreq = o.frequency.setValueAtTime.bind(o.frequency);
+      o.frequency.setValueAtTime = (v, t) => { nota.freq = v; return origSetFreq(v, t); };
+      const origStart = o.start.bind(o);
+      o.start = (t) => { nota.inicio = t; return origStart(t); };
+      const origStop = o.stop.bind(o);
+      o.stop = (t) => { nota.fim = t; return origStop(t); };
+      return o;
+    }
+  }
+  window.AudioContext = CtxEspiao;
+  return {
+    notas,
+    restaurar: () => { window.AudioContext = OrigCtx; },
+  };
+}
+
+test('tocarNovaEra toca em 3 fases (várias notas), só quando o Som está ligado', () => {
+  let somLigado = false;
+  const audio = criarAudioService({ getSom: () => somLigado, getVoz: () => false });
+  const espiao = espiarNotas();
+  try {
+    audio.tocarNovaEra();
+    assert.equal(espiao.notas.length, 0, 'Som desligado: nenhuma nota tocou');
+    somLigado = true;
+    audio.tocarNovaEra();
+    assert.ok(espiao.notas.length >= 5, `esperava várias notas (subida+impacto+acorde), veio ${espiao.notas.length}`);
+  } finally {
+    espiao.restaurar();
+  }
+});
+
+test('tocarNovaEra dura entre ~1 e ~2 segundos no total (subida -> impacto -> chime)', () => {
+  const audio = criarAudioService({ getSom: () => true, getVoz: () => false });
+  const espiao = espiarNotas();
+  try {
+    audio.tocarNovaEra();
+    const duracaoTotal = Math.max(...espiao.notas.map((n) => n.fim));
+    assert.ok(duracaoTotal >= 1 && duracaoTotal <= 2, `duração total esperada entre 1 e 2s, veio ${duracaoTotal}s`);
+  } finally {
+    espiao.restaurar();
+  }
+});
+
+test('tocarNovaEra nunca lança mesmo se o AudioContext falhar ao construir', () => {
+  const OrigCtx = window.AudioContext;
+  window.AudioContext = class { constructor() { throw new Error('sem áudio'); } };
+  const audio = criarAudioService({ getSom: () => true, getVoz: () => false });
+  try {
+    assert.doesNotThrow(() => audio.tocarNovaEra());
+  } finally {
+    window.AudioContext = OrigCtx;
+  }
+});
+
 test('efeitos nunca lançam mesmo se o AudioContext falhar ao construir', () => {
   const OrigCtx = window.AudioContext;
   window.AudioContext = class { constructor() { throw new Error('sem áudio'); } };

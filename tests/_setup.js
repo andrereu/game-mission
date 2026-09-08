@@ -26,14 +26,24 @@ class AudioContextStub {
   constructor() {
     this.currentTime = 0;
     this.destination = {};
+    this.state = 'suspended'; // como no Chrome real: começa suspenso até resume()
+  }
+  resume() {
+    this.state = 'running';
+    return Promise.resolve();
   }
   createOscillator() {
-    return { connect() {}, start() {}, stop() {}, frequency: { value: 0 } };
+    return {
+      connect() {},
+      start() {},
+      stop() {},
+      frequency: { value: 0, setValueAtTime() {}, exponentialRampToValueAtTime() {}, linearRampToValueAtTime() {} },
+    };
   }
   createGain() {
     return {
       connect() {},
-      gain: { setValueAtTime() {}, exponentialRampToValueAtTime() {} },
+      gain: { setValueAtTime() {}, exponentialRampToValueAtTime() {}, linearRampToValueAtTime() {} },
     };
   }
 }
