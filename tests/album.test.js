@@ -44,6 +44,15 @@ test('1. capa aparece antes do miolo', () => {
   assert.equal(raiz.querySelector('.album-pagina-overlay'), null, '18. nenhum overlay de era carregado ainda');
 });
 
+test('capa usa o recorte sem margem transparente excessiva (crop puro da arte aprovada)', () => {
+  const { cat, store, raiz } = ambiente();
+  const album = montarAlbum({
+    raiz, store, catalogo: cat, T,
+  });
+  album.abrir();
+  assert.match(raiz.querySelector('.album-capa-imagem').src, /assets\/album\/capa-recortada\.png$/);
+});
+
 test('2. tocar/clicar na capa abre o Álbum (miolo)', () => {
   const { cat, store, raiz } = ambiente();
   const album = montarAlbum({
@@ -302,7 +311,7 @@ test('botão Fechar da capa e do miolo removem o overlay', () => {
 test('16. nenhum caminho de imagem quebrado: todos os assets canônicos existem no repositório', () => {
   const base = fileURLToPath(new URL('../assets/album/', import.meta.url));
   const arquivos = [
-    'capa.png', 'fundo-cosmico.png', 'base-desktop.png', 'base-mobile.png',
+    'capa.png', 'capa-recortada.png', 'fundo-cosmico.png', 'base-desktop.png', 'base-mobile.png',
     ...ERAS.flatMap((era) => [`${era}-desktop.png`, `${era}-mobile.png`]),
     'ia-desktop.png', 'ia-mobile.png',
   ];
@@ -373,7 +382,7 @@ test('figurinha "além do mapa" preserva a identidade platina', () => {
   }
   const el = raiz.querySelector(`.figurinha-mini[data-id="${alemDoMapa.id}"]`);
   assert.ok(el, 'a figurinha aparece na página correspondente');
-  assert.equal(el.querySelector('.orbe').getAttribute('data-alem'), 'mapa');
+  assert.equal(el.dataset.alem, 'mapa');
 });
 
 test('perfil com criações da IA hidratadas continua funcionando no Álbum', () => {
@@ -442,20 +451,50 @@ test('a área segura de posicionamento vem de AREA_SEGURA (config), não de perc
   });
   abrirMiolo(album, raiz);
   const moldura = raiz.querySelector('.album-pagina-moldura');
-  assert.equal(moldura.style.getPropertyValue('--as-top'), '29%');
-  assert.equal(moldura.style.getPropertyValue('--as-esq-left'), '12%');
-  assert.equal(moldura.style.getPropertyValue('--as-dir-right'), '11%');
+  // "elementos" no desktop: valores calibrados a partir da densidade real
+  // do PNG daquela era (ver AREA_SEGURA em src/ui/album.js).
+  assert.equal(moldura.style.getPropertyValue('--as-top'), '39%');
+  assert.equal(moldura.style.getPropertyValue('--as-esq-left'), '13%');
+  assert.equal(moldura.style.getPropertyValue('--as-dir-right'), '12%');
 });
 
-test('miniatura não herda o tamanho fixo de ícone da carta completa (isolada do orbe grande)', () => {
+test('cada era tem sua própria área segura calibrada (não usa mais um único "default" pra todas)', () => {
+  const { cat, store, raiz } = ambiente();
+  const album = montarAlbum({
+    raiz, store, catalogo: cat, T,
+  });
+  abrirMiolo(album, raiz);
+  const moldura = raiz.querySelector('.album-pagina-moldura');
+  const topElementos = moldura.style.getPropertyValue('--as-top');
+
+  raiz.querySelector('.album-aba[data-era="natureza"]').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+  const topNatureza = raiz.querySelector('.album-pagina-moldura').style.getPropertyValue('--as-top');
+  assert.notEqual(topElementos, topNatureza, 'natureza tem uma área segura própria, diferente de elementos');
+});
+
+test('miniatura é um componente próprio: não usa a classe/estrutura ".orbe" da carta grande', () => {
   const { cat, store, raiz } = ambiente({ agua: { em: 1, via: null, fonte: 'base' } });
   const album = montarAlbum({
     raiz, store, catalogo: cat, T,
   });
   abrirMiolo(album, raiz);
-  const orbeMini = raiz.querySelector('.figurinha-mini[data-id="agua"] .orbe-figurinha-mini');
-  assert.ok(orbeMini, 'a miniatura tem seu orbe');
-  assert.ok(orbeMini.className.includes('orbe-figurinha-mini'));
+  const mini = raiz.querySelector('.figurinha-mini[data-id="agua"]');
+  assert.ok(mini, 'a miniatura existe');
+  assert.equal(mini.querySelector('.orbe'), null, 'não reaproveita o DOM do orbe grande');
+  assert.equal(mini.className.includes('orbe'), false);
+  assert.ok(mini.querySelector('.figurinha-mini-icone'), 'tem seu próprio container de ícone');
+  assert.equal(mini.dataset.raridade, 'comum');
+});
+
+test('miniatura não mostra a palavra da raridade espremida no visual (só no aria-label acessível)', () => {
+  const { cat, store, raiz } = ambiente({ agua: { em: 1, via: null, fonte: 'base' } });
+  const album = montarAlbum({
+    raiz, store, catalogo: cat, T,
+  });
+  abrirMiolo(album, raiz);
+  const mini = raiz.querySelector('.figurinha-mini[data-id="agua"]');
+  assert.equal(mini.querySelector('.figurinha-mini-selo'), null);
+  assert.match(mini.getAttribute('aria-label'), /Água/);
 });
 
 test('espaço vazio da figurinha não descoberta é um cartão discreto, não um círculo cheio', () => {

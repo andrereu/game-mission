@@ -22,24 +22,79 @@ const DENSIDADE = {
 
 // Área do miolo livre de decoração/título do overlay temático, em % da
 // imagem inteira. Desktop é uma dupla página só (spine no meio: metade
-// esquerda/direita); mobile é uma página única. Piloto visual — mesma nota
-// do README: ajustar caso as artes aprovadas mudem ou a leitura piore.
+// esquerda/direita); mobile é uma página única.
+//
+// top/bottom por era foram derivados medindo a densidade real de pixels não
+// transparentes de cada PNG (assets/album/<era>-<variante>.png), banda a
+// banda, pra achar onde o título/decoração superior termina e onde a
+// paisagem inferior começa — não são mais o mesmo valor "default" chutado
+// pra todas as eras (ver scripts/calibrar-area-segura.py). "vida" e "ia" têm
+// ilustração espalhada por quase toda a página (sem uma faixa central limpa
+// como as demais); os valores usados pra essas duas são um meio-termo mais
+// conservador e ficam marcados como pendentes de conferência visual final
+// no dispositivo do André (ver fechamento da rodada).
+//
+// esquerda/direita (margens laterais e da lombada) não têm o mesmo processo
+// de medição automática ainda — são um ajuste conservador sobre o valor
+// anterior, também pendente de confirmação visual.
 //
 // Esta é a fonte real de verdade do posicionamento: os valores viram
 // variáveis CSS (--as-*) aplicadas em .album-pagina-moldura a cada render
 // (ver aplicarAreaSegura), e styles/album.css só lê essas variáveis — não
-// existe mais nenhum percentual de posicionamento hardcoded em paralelo no
-// CSS. Cada coleção pode ter um ajuste próprio (chave = era, ou "ia"); na
-// ausência de um específico, usa-se "default" da variante.
+// existe nenhum percentual de posicionamento hardcoded em paralelo no CSS.
+// Cada coleção tem um ajuste próprio (chave = era, ou "ia"); "default" é só
+// uma rede de segurança caso uma coleção nova apareça sem entrada aqui.
 const AREA_SEGURA = {
   desktop: {
     default: {
-      top: 29, bottom: 18, esquerda: { left: 12, right: 55 }, direita: { left: 55, right: 11 },
+      top: 32, bottom: 40, esquerda: { left: 13, right: 48 }, direita: { left: 52, right: 12 },
+    },
+    elementos: {
+      top: 39, bottom: 47, esquerda: { left: 13, right: 48 }, direita: { left: 52, right: 12 },
+    },
+    natureza: {
+      top: 29, bottom: 34, esquerda: { left: 13, right: 48 }, direita: { left: 52, right: 12 },
+    },
+    vida: {
+      top: 37, bottom: 44, esquerda: { left: 17, right: 48 }, direita: { left: 52, right: 15 },
+    },
+    tecnologia: {
+      top: 34, bottom: 34, esquerda: { left: 13, right: 48 }, direita: { left: 52, right: 12 },
+    },
+    cultura: {
+      top: 37, bottom: 47, esquerda: { left: 13, right: 48 }, direita: { left: 52, right: 12 },
+    },
+    ficcao: {
+      top: 39, bottom: 37, esquerda: { left: 13, right: 48 }, direita: { left: 52, right: 12 },
+    },
+    ia: {
+      top: 39, bottom: 42, esquerda: { left: 13, right: 48 }, direita: { left: 52, right: 12 },
     },
   },
   mobile: {
     default: {
-      top: 22, bottom: 36, esquerda: { left: 14, right: 13 },
+      top: 32, bottom: 42, esquerda: { left: 16, right: 15 },
+    },
+    elementos: {
+      top: 32, bottom: 37, esquerda: { left: 16, right: 15 },
+    },
+    natureza: {
+      top: 25, bottom: 32, esquerda: { left: 16, right: 15 },
+    },
+    vida: {
+      top: 32, bottom: 53, esquerda: { left: 16, right: 15 },
+    },
+    tecnologia: {
+      top: 30, bottom: 25, esquerda: { left: 16, right: 15 },
+    },
+    cultura: {
+      top: 27, bottom: 20, esquerda: { left: 16, right: 15 },
+    },
+    ficcao: {
+      top: 30, bottom: 47, esquerda: { left: 16, right: 15 },
+    },
+    ia: {
+      top: 34, bottom: 40, esquerda: { left: 16, right: 15 },
     },
   },
 };
@@ -408,7 +463,7 @@ export function montarAlbum({
       <img class="album-capa-fundo" src="${ASSETS}fundo-cosmico.png" alt="" aria-hidden="true" />
       <button type="button" class="album-capa-fechar" aria-label="${T.fechar}" title="${T.fechar}">✕</button>
       <button type="button" class="album-capa-botao">
-        <img class="album-capa-imagem" src="${ASSETS}capa.png" alt="${T.albumTitulo}" />
+        <img class="album-capa-imagem" src="${ASSETS}capa-recortada.png" alt="${T.albumTitulo}" />
         <span class="album-capa-dica">${T.albumTocarParaAbrir}</span>
       </button>`;
     overlay.querySelector('.album-capa-fechar').addEventListener('click', fechar);
