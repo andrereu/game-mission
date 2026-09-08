@@ -31,6 +31,7 @@ export const T = {
   albumIATitulo: '✨ Inventadas com IA',
   albumIATexto: 'Criações especiais, fora do mapa oficial. Não contam pra completar nenhuma era.',
   albumIAContagem: (n) => `${n} descoberta${n === 1 ? '' : 's'}`,
+  albumIARodape: 'INVENTADA COM IA',
   albumTocarParaAbrir: 'Toque para abrir ✨',
   albumAnterior: 'Página anterior',
   albumProxima: 'Próxima página',
