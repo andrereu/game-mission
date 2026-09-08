@@ -15,7 +15,7 @@
   position: relative;
   width: 100%;
   max-width: 400px;
-  max-height: min(88dvh, 720px);
+  max-height: min(92dvh, 740px);
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -201,6 +201,7 @@
 .ajustes-rodape {
   margin: 4px 2px 0;
   padding-top: 12px;
+  padding-bottom: 2px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   font-size: 11px;
   line-height: 1.4;

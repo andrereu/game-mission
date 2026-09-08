@@ -27,16 +27,19 @@
   flex-direction: column;
   gap: 8px;
   padding: 10px 14px;
-  border-bottom: 1px solid var(--cor-borda);
+  border-bottom: 1px solid rgba(150, 175, 255, 0.22);
   background: linear-gradient(
     100deg,
-    color-mix(in srgb, var(--era-elementos) 26%, transparent),
-    color-mix(in srgb, var(--era-natureza) 22%, transparent) 22%,
-    color-mix(in srgb, var(--era-vida) 20%, transparent) 42%,
-    color-mix(in srgb, var(--era-tecnologia) 20%, transparent) 62%,
-    color-mix(in srgb, var(--era-cultura) 22%, transparent) 82%,
-    color-mix(in srgb, var(--era-ficcao) 26%, transparent)
-  ), var(--cor-drawer);
+    color-mix(in srgb, var(--era-elementos) 20%, transparent),
+    color-mix(in srgb, var(--era-natureza) 17%, transparent) 22%,
+    color-mix(in srgb, var(--era-vida) 15%, transparent) 42%,
+    color-mix(in srgb, var(--era-tecnologia) 15%, transparent) 62%,
+    color-mix(in srgb, var(--era-cultura) 17%, transparent) 82%,
+    color-mix(in srgb, var(--era-ficcao) 20%, transparent)
+  ), color-mix(in srgb, var(--cor-drawer) 72%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 1px 0 rgba(150, 175, 255, 0.12) inset, 0 8px 24px -16px rgba(0, 0, 0, 0.6);
   overflow: hidden;
 }
 .arvore-cabecalho-estrelas {
@@ -68,7 +71,7 @@
 .arvore-cabecalho-titulo { min-width: 0; flex: 1; }
 .arvore-titulo {
   margin: 0;
-  font-size: 16px;
+  font-size: 17.5px;
   font-weight: 800;
   letter-spacing: 0.2px;
   background: linear-gradient(90deg, #bfe0ff 0%, #8ef0a8 22%, #ffb389 42%, #9ff2ff 62%, #ffdd8a 82%, #ffb3d9 100%);
@@ -81,12 +84,20 @@
 .arvore-fechar {
   position: relative;
   padding: 8px 14px;
-  border-radius: 8px;
+  border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.3);
-  background: rgba(10, 14, 26, 0.45);
+  background:
+    radial-gradient(120% 140% at 50% 0%, rgba(255, 255, 255, 0.1), transparent 70%),
+    rgba(10, 14, 26, 0.5);
   color: var(--cor-texto);
+  font-size: 12.5px;
   cursor: pointer;
   flex-shrink: 0;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+.arvore-fechar:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px -8px rgba(0, 0, 0, 0.6);
 }
 
 .arvore-ferramentas {
@@ -104,8 +115,9 @@
   gap: 6px;
   padding: 0 10px;
   border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--cor-orbe-ia) 25%, var(--cor-borda));
-  background: rgba(8, 13, 28, 0.65);
+  border: 1px solid color-mix(in srgb, var(--cor-orbe-ia) 25%, rgba(150, 175, 255, 0.22));
+  background: rgba(6, 12, 28, 0.5);
+  transition: border-color 120ms ease, box-shadow 120ms ease;
 }
 .arvore-busca-icone { font-size: 13px; opacity: 0.8; flex-shrink: 0; }
 .arvore-busca {

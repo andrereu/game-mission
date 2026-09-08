@@ -27,14 +27,20 @@ body[data-era="ficcao"]     .drawer { --drawer-acento: color-mix(in srgb, var(--
 
 .drawer-puxador { display: none; }
 
-/* cabeçalho: título, contagem canônica + inventadas, e acesso ao Álbum —
-   tudo visível de cara, sem precisar rolar os filtros */
+/* cabeçalho: entrada do catálogo pessoal do jogador — título, contagem
+   canônica + inventadas, e acesso ao Álbum, tudo visível de cara, sem
+   precisar rolar os filtros. Leve painel translúcido próprio, separado do
+   corpo da grade por um fio de luz bem discreto, na mesma linguagem do
+   cabeçalho da Árvore e do cartão de Perfis. */
 .drawer-cabecalho {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  padding: 12px 14px 0;
+  padding: 12px 14px 10px;
+  background: linear-gradient(180deg, rgba(150, 175, 255, 0.06), transparent);
+  border-bottom: 1px solid rgba(150, 175, 255, 0.12);
 }
 .drawer-cabecalho-texto { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .drawer-titulo {
@@ -42,7 +48,7 @@ body[data-era="ficcao"]     .drawer { --drawer-acento: color-mix(in srgb, var(--
   font-size: 14.5px;
   font-weight: 800;
   letter-spacing: 0.2px;
-  opacity: 0.95;
+  opacity: 0.98;
 }
 .drawer-cabecalho-contagem { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
 
@@ -53,7 +59,20 @@ body[data-era="ficcao"]     .drawer { --drawer-acento: color-mix(in srgb, var(--
   padding: 8px 12px 4px;
 }
 
-.drawer-busca { padding: 9px 12px; border-radius: 12px; border: 1px solid var(--cor-borda); background: #0e1930; color: var(--cor-texto); font-size: 13px; }
+.drawer-busca {
+  padding: 9px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(150, 175, 255, 0.22);
+  background: rgba(6, 12, 28, 0.5);
+  color: var(--cor-texto);
+  font-size: 13px;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+.drawer-busca:focus-visible {
+  outline: none;
+  border-color: var(--drawer-acento);
+  box-shadow: 0 0 10px 1px color-mix(in srgb, var(--drawer-acento) 40%, transparent);
+}
 
 /* filtros: seletores visuais (ícone + nome curto), não chips de formulário
    administrativo. "Todos" sempre primeiro, "IA" sempre por último. */

@@ -1,4 +1,26 @@
-.canvas { position: relative; flex: 1; overflow: hidden; background: var(--cor-canvas); touch-action: none; }
+/* fundo do Canvas: mesmo universo do Álbum/Perfis (.fundo-cosmico, ver
+   styles/base.css), só que numa variante bem discreta — escurecida,
+   dessaturada e com um véu azul-marinho por cima, pra não competir com
+   orbes/nós/linhas. Fica num ::before só decorativo (nunca um filho de
+   verdade), então o `filter` que escurece a foto nunca alcança as peças
+   reais, que continuam pintadas por cima, com cor plena. */
+.canvas {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+  background: var(--cor-canvas); /* segue como base sólida antes da imagem decodificar */
+  touch-action: none;
+}
+.canvas::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(9, 13, 26, 0.4), rgba(6, 9, 20, 0.62)),
+    var(--url-fundo-cosmico) center / cover no-repeat;
+  filter: saturate(0.5) brightness(0.4) contrast(0.94);
+  pointer-events: none;
+}
 .canvas-mundo { position: absolute; inset: 0; transform-origin: 0 0; }
 
 /* a peça virou só um wrapper: quem carrega o visual agora é a .orbe dentro dela */

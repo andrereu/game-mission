@@ -15,6 +15,11 @@
   --cor-orbe-ia: #c9a4ff; /* anel próprio do item inventado pela IA */
   --cor-orbe-nucleo: #0a0f1c; /* centro escuro comum a toda orbe */
   --cor-alem-mapa: #d9e6f5; /* platina/perolada fria — nunca o dourado de raridade/era/conclusão */
+  /* fonte única do fundo cósmico full-screen (mesma arte da abertura do
+     Álbum) — qualquer tela que precise dele referencia esta variável em vez
+     de repetir o caminho do arquivo (ver .fundo-cosmico logo abaixo e a
+     variante escurecida em styles/canvas.css). */
+  --url-fundo-cosmico: url('../assets/album/fundo-cosmico.png');
 }
 /* utilitário: some visualmente, continua acessível a leitor de tela (mesmo
    padrão já usado em .barra-botao span, agora reutilizável) */
@@ -42,7 +47,7 @@ body {
    atmosfera de universo (Perfis hoje; Canvas possivelmente depois) usa esta
    classe em vez de recompor nebulosa/estrelas/orbe por conta própria. */
 .fundo-cosmico {
-  background-image: url('../assets/album/fundo-cosmico.png');
+  background-image: var(--url-fundo-cosmico);
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
