@@ -36,6 +36,18 @@ body {
 #jogo { position: relative; height: 100%; display: flex; }
 /* botões de barra e o "limpar" agora vivem em styles/barra.css */
 
+/* ---- Fundo cósmico compartilhado: mesma arte full-screen usada na abertura
+   do Álbum (assets/album/fundo-cosmico.png) — fonte única, sem duplicar em
+   CSS por tela. Qualquer overlay de tela cheia que precise da mesma
+   atmosfera de universo (Perfis hoje; Canvas possivelmente depois) usa esta
+   classe em vez de recompor nebulosa/estrelas/orbe por conta própria. */
+.fundo-cosmico {
+  background-image: url('../assets/album/fundo-cosmico.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
 /* ---- Orbe: linguagem visual comum dos itens (substitui o card quadrado) ----
    Base discreta e neutra; cada contexto (canvas/gaveta/árvore/álbum) ajusta
    tamanho e intensidade do brilho por cima disso — ver respectivo styles/*.css.

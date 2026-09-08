@@ -13,29 +13,46 @@ export function montarSeletorPerfis({
   let avatarEscolhido = AVATARES[0].id;
   let modoEscolhido = MODO_PADRAO;
 
-  // fileira de carinhas selecionáveis — reaproveitada na criação e na edição.
-  // `aoTrocar(avatarId)` é chamado no clique; marca a opção ativa visualmente.
-  function fileiraAvatares(atual, aoTrocar) {
+  // fileira de medalhões selecionáveis — reaproveitada na criação e na
+  // edição. `aoTrocar(avatarId)` é chamado no clique; marca a opção ativa
+  // visualmente. `comRotulo` liga o nome do tema abaixo de cada medalhão
+  // (só cabe confortavelmente no formulário de criação; no card de edição,
+  // mais estreito, os medalhões continuam só com aria-label).
+  function fileiraAvatares(atual, aoTrocar, comRotulo = false) {
     const box = document.createElement('div');
-    box.className = 'perfil-avatares';
+    box.className = comRotulo ? 'perfil-avatares com-rotulo' : 'perfil-avatares';
     box.setAttribute('role', 'group');
     box.setAttribute('aria-label', T.perfilEscolherCarinha);
     AVATARES.forEach((av, i) => {
+      const rotuloTema = T.perfilAvatarTema?.[av.tema];
+      const item = comRotulo ? document.createElement('div') : box;
+      if (comRotulo) item.className = 'perfil-avatar-item';
+
       const b = document.createElement('button');
       b.type = 'button';
       b.className = 'perfil-avatar-opcao';
       b.dataset.avatar = av.id;
       b.dataset.tema = av.tema;
-      const rotuloTema = T.perfilAvatarTema?.[av.tema];
+      b.style.setProperty('--cor-avatar', av.cor);
       b.setAttribute('aria-label', rotuloTema || T.perfilCarinha(i + 1));
       b.innerHTML = avatarSvgMarkup(av.id);
       if (av.id === atual) b.classList.add('escolhida');
       b.addEventListener('click', (ev) => {
         ev.stopPropagation();
-        for (const outro of box.children) outro.classList.toggle('escolhida', outro === b);
+        for (const outro of box.querySelectorAll('.perfil-avatar-opcao')) {
+          outro.classList.toggle('escolhida', outro === b);
+        }
         aoTrocar(av.id);
       });
-      box.appendChild(b);
+      item.appendChild(b);
+
+      if (comRotulo) {
+        const rotulo = document.createElement('span');
+        rotulo.className = 'perfil-avatar-rotulo';
+        rotulo.textContent = rotuloTema || '';
+        item.appendChild(rotulo);
+        box.appendChild(item);
+      }
     });
     return box;
   }
@@ -125,7 +142,7 @@ export function montarSeletorPerfis({
   function abrir(estado) {
     fechar();
     overlay = document.createElement('div');
-    overlay.className = 'perfis-overlay';
+    overlay.className = 'perfis-overlay fundo-cosmico';
     overlay.setAttribute('role', 'dialog');
     overlay.setAttribute('aria-label', T.perfilTitulo);
     overlay.innerHTML = `
@@ -135,10 +152,11 @@ export function montarSeletorPerfis({
           <h2>${T.perfilTitulo}</h2>
           <button type="button" class="perfil-fechar" hidden>${T.fechar}</button>
         </div>
+        <p class="perfis-subtitulo">${T.perfilSubtitulo}</p>
         <div class="perfis-grade"></div>
         <div class="perfil-novo">
           <form>
-            <input type="text" maxlength="16" placeholder="${T.perfilNome}" aria-label="${T.perfilNome}" />
+            <input type="text" maxlength="16" placeholder="${T.perfilNomePlaceholder}" aria-label="${T.perfilNome}" />
           </form>
         </div>
       </div>`;
@@ -146,15 +164,20 @@ export function montarSeletorPerfis({
     const form = overlay.querySelector('.perfil-novo form');
 
     avatarEscolhido = AVATARES[0].id;
-    form.appendChild(fileiraAvatares(avatarEscolhido, (avatarId) => { avatarEscolhido = avatarId; }));
+    form.appendChild(fileiraAvatares(avatarEscolhido, (avatarId) => { avatarEscolhido = avatarId; }, true));
 
     modoEscolhido = MODO_PADRAO;
     form.appendChild(fileiraModos(modoEscolhido, (m) => { modoEscolhido = m; }));
 
     const btnCriar = document.createElement('button');
     btnCriar.type = 'submit';
-    btnCriar.textContent = T.perfilCriar;
+    btnCriar.innerHTML = `<span>${T.perfilCriar}</span><span class="perfil-criar-seta" aria-hidden="true">→</span>`;
     form.appendChild(btnCriar);
+
+    const rodape = document.createElement('p');
+    rodape.className = 'perfis-rodape';
+    rodape.textContent = T.perfilRodape;
+    form.appendChild(rodape);
 
     overlay.querySelector('.perfil-fechar').addEventListener('click', fechar);
     form.addEventListener('submit', async (ev) => {
