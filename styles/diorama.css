@@ -74,9 +74,11 @@
   100% { transform: scale(1); }
 }
 
-/* ---- a maquete propriamente dita: silhueta irregular, lateral de terra
-   visível (espessura), monte elevado e água encaixada na própria borda —
-   nunca uma elipse plana nem tabuleiro. ---- */
+/* ---- geografia fixa da maquete (diorama-mundo.js: GEOGRAFIA_SVG) ----
+   Monte, arco, curso d'água com 2 lagos, cachoeira, 3 clareiras e rochas
+   permanentes — nunca muda de forma por era ou descoberta. Só a "roupa"
+   (cor/brilho das clareiras e da água) reage ao estado, via os atributos
+   data-nivel-* que src/ui/diorama.js escreve no próprio <svg>. ---- */
 .diorama-mundo-svg {
   position: absolute;
   inset: 0;
@@ -84,88 +86,155 @@
   height: 100%;
   overflow: visible;
 }
-.diorama-mundo-lateral { opacity: 0.95; }
-.diorama-mundo-agua {
-  opacity: 0.92;
+.geo-lateral { opacity: 0.95; }
+.geo-topo, .geo-monte, .geo-arco { opacity: 1; }
+.geo-rocha { opacity: 0.6; }
+
+.geo-agua-curso, .geo-lago-intermediario, .geo-lago-frontal, .geo-cachoeira {
+  transition: filter 700ms ease;
   animation: diorama-agua-onda 6s ease-in-out infinite;
   transform-origin: 50% 50%;
 }
 @keyframes diorama-agua-onda {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(1.5px); }
+  50% { transform: translateY(1.2px); }
 }
-.diorama-mundo-topo { opacity: 1; }
-.diorama-mundo-monte { opacity: 1; }
-.diorama-mundo-rocha { opacity: 0.6; }
+/* água ganha vida: nível 1-3 aumenta brilho/saturação da mesma água —
+   nunca troca de forma, só de "energia" (briefing §5: "água avança"). */
+.diorama-mundo-svg[data-nivel-agua='1'] .geo-agua-curso,
+.diorama-mundo-svg[data-nivel-agua='1'] .geo-lago-intermediario,
+.diorama-mundo-svg[data-nivel-agua='1'] .geo-lago-frontal,
+.diorama-mundo-svg[data-nivel-agua='1'] .geo-cachoeira { filter: brightness(1.12) saturate(1.15); }
+.diorama-mundo-svg[data-nivel-agua='2'] .geo-agua-curso,
+.diorama-mundo-svg[data-nivel-agua='2'] .geo-lago-intermediario,
+.diorama-mundo-svg[data-nivel-agua='2'] .geo-lago-frontal,
+.diorama-mundo-svg[data-nivel-agua='2'] .geo-cachoeira { filter: brightness(1.22) saturate(1.3); }
+.diorama-mundo-svg[data-nivel-agua='3'] .geo-agua-curso,
+.diorama-mundo-svg[data-nivel-agua='3'] .geo-lago-intermediario,
+.diorama-mundo-svg[data-nivel-agua='3'] .geo-lago-frontal,
+.diorama-mundo-svg[data-nivel-agua='3'] .geo-cachoeira,
+.diorama-mundo-svg[data-nivel-agua='4'] .geo-agua-curso,
+.diorama-mundo-svg[data-nivel-agua='4'] .geo-lago-intermediario,
+.diorama-mundo-svg[data-nivel-agua='4'] .geo-lago-frontal,
+.diorama-mundo-svg[data-nivel-agua='4'] .geo-cachoeira { filter: brightness(1.34) saturate(1.45); }
+.mundo-pulso-agua .geo-agua-curso,
+.mundo-pulso-agua .geo-lago-intermediario,
+.mundo-pulso-agua .geo-lago-frontal { animation: diorama-agua-onda 6s ease-in-out infinite, diorama-agua-pulso 700ms ease; }
+@keyframes diorama-agua-pulso {
+  0%, 100% { filter: brightness(1); }
+  45% { filter: brightness(1.6) saturate(1.6); }
+}
 
-.diorama-camadas {
+/* vegetação geral: mesma silhueta do terreno, só ganha opacidade — o
+   "grama se espalha" acontece na roupa do mundo, nunca na sua forma. */
+.geo-vegetacao-geral { opacity: 0; pointer-events: none; transition: opacity 1000ms ease; }
+.diorama-mundo-svg[data-nivel-vegetacao='1'] .geo-vegetacao-geral { opacity: 0.14; }
+.diorama-mundo-svg[data-nivel-vegetacao='2'] .geo-vegetacao-geral { opacity: 0.3; }
+.diorama-mundo-svg[data-nivel-vegetacao='3'] .geo-vegetacao-geral,
+.diorama-mundo-svg[data-nivel-vegetacao='4'] .geo-vegetacao-geral { opacity: 0.48; }
+
+/* clareiras: solo nu que a grama vai cobrindo — geometria de estado, não
+   asset avulso (briefing §5: "grama se espalha"). */
+.geo-clareira { fill: #4a3420; transition: fill 900ms ease; }
+.diorama-mundo-svg[data-nivel-vegetacao='1'] .geo-clareira[data-clareira='esquerda'] { fill: #5c7a3a; }
+.diorama-mundo-svg[data-nivel-vegetacao='2'] .geo-clareira[data-clareira='esquerda'],
+.diorama-mundo-svg[data-nivel-vegetacao='2'] .geo-clareira[data-clareira='central'] { fill: #4f8a3f; }
+.diorama-mundo-svg[data-nivel-vegetacao='3'] .geo-clareira,
+.diorama-mundo-svg[data-nivel-vegetacao='4'] .geo-clareira { fill: #3f8a3a; }
+.mundo-pulso-vegetacao .geo-clareira { animation: diorama-clareira-pulso 700ms ease; }
+@keyframes diorama-clareira-pulso {
+  0%, 100% { filter: brightness(1); }
+  45% { filter: brightness(1.5); }
+}
+
+/* caminho + ponte: só existem visualmente a partir do nível de civilização
+   que os justifica — "se desenham" (stroke reveal), nunca aparecem prontos. */
+.geo-caminho { transition: stroke-dashoffset 1100ms ease; }
+.geo-ponte { transition: opacity 500ms ease 500ms; }
+.mundo-tem-caminho .geo-caminho { stroke-dashoffset: 0; }
+.mundo-tem-caminho .geo-ponte { opacity: 1; }
+
+/* cristal/energia discreta na nascente — já existe desde o Mundo
+   Primordial (briefing: "não deve parecer vazio"), pulso bem sutil. */
+.geo-cristal, .geo-cristal-nucleo { animation: diorama-cristal-respiro 4.2s ease-in-out infinite; transform-origin: 196px 64px; }
+@keyframes diorama-cristal-respiro {
+  0%, 100% { opacity: 0.75; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.12); }
+}
+
+/* ---- objetos: cada marco planta um elemento numa âncora fixa (x/y/z
+   vêm de ANCHORS em diorama-mundo.js) — nunca uma célula de grid/slot de
+   inventário; a posição é do MUNDO, não de uma lista. ---- */
+.diorama-objetos {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   pointer-events: none;
 }
-
-/* elementos plantados diretamente sobre o terreno, em coordenadas
-   próprias — nunca num slot/célula de grade nem caixa de inventário. */
-.diorama-camada {
+.diorama-objeto {
   position: absolute;
   transform: translate(-50%, -50%);
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 15%;
+  width: 14%;
   aspect-ratio: 1;
   border: 0;
   background: transparent;
   cursor: pointer;
   pointer-events: auto;
   container-type: inline-size;
-  transition: transform 160ms ease;
 }
-.diorama-camada-vazia { opacity: 0; pointer-events: none; }
-.diorama-camada:focus-visible .diorama-icone { outline: 2px solid #fff; outline-offset: 4px; border-radius: 50%; }
-.diorama-icone {
-  font-size: clamp(18px, 9cqw, 32px);
+.diorama-objeto:focus-visible .diorama-objeto-icone { outline: 2px solid #fff; outline-offset: 4px; border-radius: 50%; }
+.diorama-objeto-icone {
+  font-size: clamp(16px, calc(9cqw * var(--diorama-escala, 1)), 30px);
   line-height: 1;
   filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.55));
   transition: transform 220ms ease;
 }
-.diorama-camada:hover .diorama-icone { transform: scale(1.15); }
-.diorama-camada-toque .diorama-icone { transform: scale(1.3); }
-.diorama-camada-cosmico { width: 13%; }
+.diorama-objeto:hover .diorama-objeto-icone { transform: scale(1.15); }
+.diorama-objeto-toque .diorama-objeto-icone { transform: scale(1.3); }
 
-/* transformação em andamento: um brilho nasce do próprio terreno antes do
-   novo estado aparecer — nunca uma caixa de slot acendendo. */
-.diorama-camada-transformando::before {
-  content: '';
-  position: absolute;
-  inset: -30%;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 226, 150, 0.55), transparent 70%);
-  animation: diorama-brilho-pulso 680ms ease;
+/* transformações de entrada por tipo (§5 — "Grow-like"): cada objeto novo
+   nasce do próprio mundo, nunca só aparece com display:block. */
+.diorama-objeto-anim-nasce-do-solo .diorama-objeto-icone { animation: diorama-nasce-do-solo 640ms ease; }
+@keyframes diorama-nasce-do-solo {
+  0% { transform: scaleY(0.05) translateY(40%); opacity: 0; }
+  60% { transform: scaleY(1.15) translateY(0); opacity: 1; }
+  100% { transform: scaleY(1) translateY(0); opacity: 1; }
 }
-.diorama-camada-transformando .diorama-icone {
-  animation: diorama-marco-pulso 680ms ease;
+.diorama-objeto-anim-cresce .diorama-objeto-icone { animation: diorama-cresce 640ms cubic-bezier(.34,1.56,.64,1); }
+@keyframes diorama-cresce {
+  0% { transform: scale(0.15); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
 }
-@keyframes diorama-marco-pulso {
-  0%, 100% { transform: scale(1); }
-  40% { transform: scale(1.25); }
+.diorama-objeto-anim-entra-voando .diorama-objeto-icone { animation: diorama-entra-voando 620ms ease; }
+@keyframes diorama-entra-voando {
+  0% { transform: translate(-26px, -16px) scale(0.6); opacity: 0; }
+  100% { transform: translate(0, 0) scale(1); opacity: 1; }
 }
-@keyframes diorama-brilho-pulso {
-  0% { opacity: 0; transform: scale(0.6); }
-  40% { opacity: 1; transform: scale(1.1); }
-  100% { opacity: 0; transform: scale(1.3); }
+.diorama-objeto-anim-entra-andando .diorama-objeto-icone { animation: diorama-entra-andando 620ms ease; }
+@keyframes diorama-entra-andando {
+  0% { transform: translateX(22px) scale(0.7); opacity: 0; }
+  100% { transform: translateX(0) scale(1); opacity: 1; }
 }
-
-/* famílias com tema de cor próprio — sutil, só o brilho no toque/transformação */
-.diorama-camada-terreno { --cor-familia: #b9946a; }
-.diorama-camada-agua { --cor-familia: #4aa3ff; }
-.diorama-camada-vegetacao { --cor-familia: #45c26b; }
-.diorama-camada-vida { --cor-familia: #ffb37a; }
-.diorama-camada-civilizacao { --cor-familia: #ffd25c; }
-.diorama-camada-tecnologia { --cor-familia: #b57cff; }
-.diorama-camada-cosmico { --cor-familia: #9ff2ff; }
+.diorama-objeto-anim-acende .diorama-objeto-icone { animation: diorama-acende 560ms ease; }
+@keyframes diorama-acende {
+  0% { opacity: 0; transform: scale(0.5); filter: brightness(2) drop-shadow(0 0 10px rgba(255, 210, 110, 0.9)); }
+  100% { opacity: 1; transform: scale(1); filter: brightness(1) drop-shadow(0 3px 5px rgba(0, 0, 0, 0.55)); }
+}
+.diorama-objeto-anim-monta .diorama-objeto-icone { animation: diorama-monta 720ms ease; }
+@keyframes diorama-monta {
+  0% { transform: translateY(10px) scale(0.6); opacity: 0; }
+  55% { transform: translateY(-3px) scale(1.08); opacity: 1; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+.diorama-objeto-anim-aparece .diorama-objeto-icone { animation: diorama-aparece 480ms ease; }
+@keyframes diorama-aparece {
+  0% { transform: scale(0.5); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
 
 /* portal/orbe de criações da IA — sinal discreto, nunca thresholds canônicos */
 .diorama-ia-portal {
@@ -203,11 +272,20 @@
 
 @media (prefers-reduced-motion: reduce) {
   .diorama-ilha-era-nova,
-  .diorama-camada-transformando,
-  .diorama-camada-transformando::before,
-  .diorama-camada-transformando .diorama-icone,
-  .diorama-mundo-agua { animation: none; }
-  .diorama-camada, .diorama-icone, .diorama-ilha { transition: none; }
+  .geo-agua-curso, .geo-lago-intermediario, .geo-lago-frontal, .geo-cachoeira,
+  .geo-cristal, .geo-cristal-nucleo,
+  .mundo-pulso-agua .geo-agua-curso, .mundo-pulso-agua .geo-lago-intermediario, .mundo-pulso-agua .geo-lago-frontal,
+  .mundo-pulso-vegetacao .geo-clareira,
+  .diorama-objeto-anim-nasce-do-solo .diorama-objeto-icone,
+  .diorama-objeto-anim-cresce .diorama-objeto-icone,
+  .diorama-objeto-anim-entra-voando .diorama-objeto-icone,
+  .diorama-objeto-anim-entra-andando .diorama-objeto-icone,
+  .diorama-objeto-anim-acende .diorama-objeto-icone,
+  .diorama-objeto-anim-monta .diorama-objeto-icone,
+  .diorama-objeto-anim-aparece .diorama-objeto-icone { animation: none; }
+  .diorama-objeto-icone, .diorama-ilha, .geo-clareira, .geo-caminho, .geo-ponte,
+  .geo-vegetacao-geral,
+  .geo-agua-curso, .geo-lago-intermediario, .geo-lago-frontal, .geo-cachoeira { transition: none; }
 }
 
 @media (min-width: 640px) {

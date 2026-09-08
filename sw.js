@@ -54,6 +54,7 @@ const PRECACHE = [
   'src/ui/voo-carta.js',
   'src/ui/desfazer.js',
   'src/ui/diorama.js',
+  'src/ui/diorama-mundo.js',
   'src/ui/drawer.js',
   'src/ui/era-nova.js',
   'src/ui/album.js',

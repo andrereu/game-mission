@@ -1,4 +1,4 @@
-// Diorama V0 — "Meu Mundo": o cenário-maquete que cresce sozinho a partir
+// Diorama V1 — "Meu Mundo": o cenário-maquete que cresce sozinho a partir
 // das descobertas do perfil. Nunca um city-builder: só observa, nunca
 // constrói/arrasta/administra (ver briefing §9).
 //
@@ -6,69 +6,17 @@
 // reproduz a fila de acontecimentos pendentes em sequência curta — nunca
 // decide sozinha o que é "novo", só pergunta pro motor e marca como visto
 // depois de mostrar.
+//
+// A composição visual (geografia fixa + âncoras + tabela estado->objeto)
+// mora em ./diorama-mundo.js — este arquivo só orquestra abrir/fechar,
+// fila de eventos e a ponte entre estado derivado e a engine de
+// composição. Nenhuma posição/escala fica hardcoded aqui.
 import {
   FAMILIAS, resolverEstadoDiorama, calcularAcontecimentosPendentes, proximoProgressoVisto,
 } from '../engine/diorama.js';
-
-// ícone/placeholder por família e nível (0..4) — SVG/CSS/emoji própria da
-// V0, nunca uma descoberta específica: é o agregado da família (briefing
-// §1: "não precisamos representar cada descoberta literalmente").
-const ICONES = {
-  terreno: ['', '⛰️', '⛰️⛰️', '🏔️⛰️', '🏔️⛰️🪨'],
-  agua: ['', '💧', '🏞️', '🌊', '🌊🌊'],
-  vegetacao: ['', '🌱', '🌿', '🌳', '🌳🌳🌳'],
-  vida: ['', '🐛', '🐦🐛', '🦋🐦🐟', '🦁🦋🐦🐟'],
-  civilizacao: ['', '🔥', '🏠', '🏘️', '🏰'],
-  tecnologia: ['', '🔨', '⚙️', '🤖', '🚀'],
-  cosmico: ['', '⭐', '⭐⭐', '🌌', '🪐✨'],
-};
-
-// posição de cada família sobre a maquete (% dentro de .diorama-ilha) —
-// espacial, nunca em slot/grade: cada família mora numa zona física
-// coerente do mundinho (monte alto / planície / borda d'água / céu).
-const POSICOES = {
-  terreno: { left: '27%', top: '32%' },
-  vegetacao: { left: '41%', top: '38%' },
-  vida: { left: '56%', top: '50%' },
-  civilizacao: { left: '32%', top: '66%' },
-  tecnologia: { left: '60%', top: '70%' },
-  agua: { left: '74%', top: '62%' },
-  cosmico: { left: '50%', top: '9%' },
-};
-
-// a maquete em si — sempre presente, mesmo no "Mundo Primordial" com zero
-// descobertas: rocha nua, um pouco de terra e uma poça d'água já existem
-// antes de qualquer marco. As camadas (família) só ganham vida POR CIMA
-// dela; o Diorama nunca começa como uma tela vazia.
-const MUNDO_SVG = `
-<svg class="diorama-mundo-svg" viewBox="0 0 400 260" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
-  <defs>
-    <linearGradient id="diorama-grad-solo" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#5a4128" />
-      <stop offset="100%" stop-color="#2c1e10" />
-    </linearGradient>
-    <linearGradient id="diorama-grad-topo" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#3a6b3f" />
-      <stop offset="55%" stop-color="#22492a" />
-      <stop offset="100%" stop-color="#173620" />
-    </linearGradient>
-    <linearGradient id="diorama-grad-monte" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#4c7d4a" />
-      <stop offset="100%" stop-color="#2b5231" />
-    </linearGradient>
-    <linearGradient id="diorama-grad-agua" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#7fd4e6" />
-      <stop offset="100%" stop-color="#2f8fc2" />
-    </linearGradient>
-  </defs>
-  <path class="diorama-mundo-lateral" d="M40,142 C20,112 40,77 90,67 C130,42 200,37 250,57 C300,42 360,67 370,107 C385,137 365,162 330,167 C350,187 320,207 270,202 C240,222 180,227 140,212 C90,222 50,197 45,172 C20,172 25,152 40,142 Z" fill="url(#diorama-grad-solo)" />
-  <path class="diorama-mundo-agua" d="M255,150 C288,136 333,144 356,168 C374,187 362,212 332,220 C300,230 264,220 246,200 C232,183 233,163 255,150 Z" fill="url(#diorama-grad-agua)" />
-  <path class="diorama-mundo-topo" d="M40,120 C20,90 40,55 90,45 C130,20 200,15 250,35 C300,20 360,45 370,85 C385,115 365,140 330,145 C350,165 320,185 270,180 C240,200 180,205 140,190 C90,200 50,175 45,150 C20,150 25,130 40,120 Z" fill="url(#diorama-grad-topo)" />
-  <path class="diorama-mundo-monte" d="M115,88 C105,58 148,36 190,46 C222,54 228,83 206,99 C184,116 136,116 115,88 Z" fill="url(#diorama-grad-monte)" />
-  <ellipse class="diorama-mundo-rocha" cx="88" cy="118" rx="10" ry="6" fill="#4a3a2a" opacity="0.7" />
-  <ellipse class="diorama-mundo-rocha" cx="300" cy="112" rx="8" ry="5" fill="#4a3a2a" opacity="0.55" />
-  <ellipse class="diorama-mundo-brilho" cx="190" cy="60" rx="140" ry="30" fill="#ffffff" opacity="0.05" />
-</svg>`;
+import {
+  ELEMENTOS, GEOGRAFIA_SVG, NIVEL_CAMINHO_CIVILIZACAO, elementosDaFamilia, posicaoDoObjeto,
+} from './diorama-mundo.js';
 
 function reduzMovimento() {
   return typeof window !== 'undefined' && typeof window.matchMedia === 'function'
@@ -85,7 +33,10 @@ export function montarDiorama({
 }) {
   const falar = audio?.falarSelecao ? (nome) => audio.falarSelecao(nome) : () => {};
   let overlay = null;
-  let camadas = null;
+  let svgMundo = null;
+  let camadaObjetos = null;
+  let objetosMontados = new Map(); // chave "familia:anchor:elemento" -> nó DOM
+  let niveisRenderizados = null; // último niveis realmente desenhado na tela
   let reproduzindo = false;
 
   function estadoAtual() {
@@ -119,20 +70,14 @@ export function montarDiorama({
     document.removeEventListener('keydown', aoTeclar);
     overlay.remove();
     overlay = null;
-    camadas = null;
+    svgMundo = null;
+    camadaObjetos = null;
+    objetosMontados = new Map();
+    niveisRenderizados = null;
   }
 
   function aoTeclar(ev) {
     if (ev.key === 'Escape') fechar();
-  }
-
-  function atualizarCamada(familia, nivel) {
-    const el = camadas?.[familia];
-    if (!el) return;
-    const icone = ICONES[familia]?.[nivel] ?? '';
-    el.querySelector('.diorama-icone').textContent = icone;
-    el.dataset.nivel = String(nivel);
-    el.classList.toggle('diorama-camada-vazia', nivel === 0);
   }
 
   function legenda(texto) {
@@ -140,19 +85,83 @@ export function montarDiorama({
     if (el) el.textContent = texto;
   }
 
-  async function tocarEventoMarco(evento, estadoFinal) {
-    const el = camadas?.[evento.familia];
+  // ---- ponte estado -> geografia (a mesma geografia fixa muda de "roupa",
+  // nunca de forma — §1/§7 do briefing) --------------------------------
+  function aplicarNivelAgua(nivel) {
+    if (svgMundo) svgMundo.dataset.nivelAgua = String(nivel);
+  }
+  function aplicarNivelVegetacao(nivel) {
+    if (svgMundo) svgMundo.dataset.nivelVegetacao = String(nivel);
+  }
+  function aplicarCaminho(nivelCivilizacao) {
+    svgMundo?.classList.toggle('mundo-tem-caminho', nivelCivilizacao >= NIVEL_CAMINHO_CIVILIZACAO);
+  }
+
+  function chaveObjeto(familia, item) {
+    return `${familia}:${item.anchor}:${item.elemento}`;
+  }
+
+  function construirObjeto(familia, item, animarEntrada) {
+    const def = ELEMENTOS[item.elemento];
+    const el = document.createElement('button');
+    el.type = 'button';
+    el.className = 'diorama-objeto';
+    if (animarEntrada && def?.anim) el.classList.add(`diorama-objeto-anim-${def.anim}`);
+    el.dataset.familia = familia;
+    el.dataset.elemento = item.elemento;
+    el.innerHTML = '<span class="diorama-objeto-icone" aria-hidden="true"></span>';
+    el.querySelector('.diorama-objeto-icone').textContent = def?.conteudo || '';
+    el.setAttribute('aria-label', T.dioramaFamilias[familia]);
+    const estilo = posicaoDoObjeto(familia, item.anchor);
+    if (estilo) {
+      el.style.left = estilo.left;
+      el.style.top = estilo.top;
+      el.style.zIndex = String(estilo.zIndex);
+    }
+    el.style.setProperty('--diorama-escala', String(item.escala ?? 1));
+    return el;
+  }
+
+  // sincroniza o DOM de objetos com o estado desejado — estado -> âncora ->
+  // asset, nunca o contrário: nenhum elemento "sabe" onde mora, só a tabela
+  // COMPOSICAO (diorama-mundo.js) sabe. `destacarFamilia` anima só os
+  // objetos novos daquela família (usado durante a fila de marcos); fora
+  // da fila (montagem inicial / resync final) tudo entra sem animação.
+  function sincronizarObjetos(niveis, destacarFamilia) {
+    if (!camadaObjetos) return;
+    const desejado = new Map();
+    for (const familia of FAMILIAS) {
+      for (const item of elementosDaFamilia(familia, niveis[familia])) {
+        desejado.set(chaveObjeto(familia, item), { familia, item });
+      }
+    }
+    for (const [chave, el] of objetosMontados) {
+      if (!desejado.has(chave)) { el.remove(); objetosMontados.delete(chave); }
+    }
+    for (const [chave, { familia, item }] of desejado) {
+      if (objetosMontados.has(chave)) continue;
+      const el = construirObjeto(familia, item, familia === destacarFamilia);
+      camadaObjetos.appendChild(el);
+      objetosMontados.set(chave, el);
+    }
+  }
+
+  async function tocarEventoMarco(evento) {
     legenda(`${T.dioramaFamilias[evento.familia]}: ${T.dioramaEstagios[evento.familia][evento.para]}`);
-    if (el) {
-      el.classList.add('diorama-camada-transformando');
-      await esperar(260);
+    const niveis = { ...niveisRenderizados, [evento.familia]: evento.para };
+    if (evento.familia === 'agua') {
+      svgMundo?.classList.add('mundo-pulso-agua');
+      aplicarNivelAgua(evento.para);
     }
-    atualizarCamada(evento.familia, evento.para);
-    if (el) {
-      await esperar(420);
-      el.classList.remove('diorama-camada-transformando');
+    if (evento.familia === 'vegetacao') {
+      svgMundo?.classList.add('mundo-pulso-vegetacao');
+      aplicarNivelVegetacao(evento.para);
     }
-    void estadoFinal;
+    if (evento.familia === 'civilizacao') aplicarCaminho(evento.para);
+    sincronizarObjetos(niveis, evento.familia);
+    niveisRenderizados = niveis;
+    await esperar(760); // cobre a maior animação de entrada (crescer/montar)
+    svgMundo?.classList.remove('mundo-pulso-agua', 'mundo-pulso-vegetacao');
   }
 
   async function tocarEventoEra(evento) {
@@ -208,31 +217,27 @@ export function montarDiorama({
   }
 
   function renderEstadoFinal(estado) {
-    for (const familia of FAMILIAS) atualizarCamada(familia, estado.niveis[familia]);
+    aplicarNivelAgua(estado.niveis.agua);
+    aplicarNivelVegetacao(estado.niveis.vegetacao);
+    aplicarCaminho(estado.niveis.civilizacao);
+    sincronizarObjetos(estado.niveis, null);
+    niveisRenderizados = { ...estado.niveis };
     const totalNiveis = FAMILIAS.reduce((soma, f) => soma + estado.niveis[f], 0);
     legenda(totalNiveis === 0 ? T.dioramaVazio : '');
     const portalIA = overlay?.querySelector('.diorama-ia-portal');
     if (portalIA) portalIA.hidden = !estado.temCriacoesIA;
   }
 
-  function construirCamada(familia) {
-    const el = document.createElement('button');
-    el.type = 'button';
-    el.className = `diorama-camada diorama-camada-${familia}`;
-    el.dataset.familia = familia;
-    const pos = POSICOES[familia];
-    if (pos) { el.style.left = pos.left; el.style.top = pos.top; }
-    el.innerHTML = '<span class="diorama-icone" aria-hidden="true"></span>';
-    el.setAttribute('aria-label', T.dioramaFamilias[familia]);
-    el.addEventListener('click', () => {
-      const nivel = Number(el.dataset.nivel || 0);
-      el.classList.add('diorama-camada-toque');
-      setTimeout(() => el.classList.remove('diorama-camada-toque'), 260);
-      const rotulo = T.dioramaEstagios[familia][nivel];
-      legenda(`${T.dioramaFamilias[familia]}: ${rotulo}`);
-      falar(rotulo);
-    });
-    return el;
+  function aoTocarObjeto(ev) {
+    const el = ev.target.closest('[data-familia]');
+    if (!el || !camadaObjetos?.contains(el)) return;
+    const familia = el.dataset.familia;
+    const nivel = estadoAtual().niveis[familia];
+    el.classList.add('diorama-objeto-toque');
+    setTimeout(() => el.classList.remove('diorama-objeto-toque'), 260);
+    const rotulo = T.dioramaEstagios[familia][nivel];
+    legenda(`${T.dioramaFamilias[familia]}: ${rotulo}`);
+    falar(rotulo);
   }
 
   function abrir() {
@@ -253,8 +258,8 @@ export function montarDiorama({
       </div>
       <div class="diorama-cena">
         <div class="diorama-ilha">
-          ${MUNDO_SVG}
-          <div class="diorama-camadas"></div>
+          ${GEOGRAFIA_SVG}
+          <div class="diorama-objetos"></div>
         </div>
         <button type="button" class="diorama-ia-portal" aria-label="${T.dioramaIaPortalRotulo}" hidden>
           <span aria-hidden="true">✨</span>
@@ -262,13 +267,9 @@ export function montarDiorama({
       </div>
       <p class="diorama-legenda" aria-live="polite"></p>`;
 
-    const elCamadas = overlay.querySelector('.diorama-camadas');
-    camadas = {};
-    for (const familia of FAMILIAS) {
-      const el = construirCamada(familia);
-      camadas[familia] = el;
-      elCamadas.appendChild(el);
-    }
+    svgMundo = overlay.querySelector('.diorama-mundo-svg');
+    camadaObjetos = overlay.querySelector('.diorama-objetos');
+    camadaObjetos.addEventListener('click', aoTocarObjeto);
 
     overlay.querySelector('.diorama-fechar').addEventListener('click', fechar);
     overlay.querySelector('.diorama-ia-portal').addEventListener('click', () => {
