@@ -137,7 +137,7 @@ export const T = {
   dioramaSubtitulo: 'O mundo que nasceu das suas descobertas.',
   dioramaFechar: 'Fechar',
   dioramaBotaoRotulo: 'Meu Mundo',
-  dioramaVazio: 'Ainda não há nada aqui. Descubra algo novo e volte!',
+  dioramaVazio: 'Um mundo pequenininho, esperando a vida chegar.',
   dioramaEraTitulo: (era) => `Uma nova era chegou ao seu mundo: ${era}!`,
   dioramaIaPortalRotulo: 'Suas criações de IA',
   dioramaIaPortalTexto: 'Este perfil já tem descobertas inventadas com IA — coisas que só existem no SEU mundo.',

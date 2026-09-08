@@ -57,25 +57,16 @@
 
 .diorama-ilha {
   position: relative;
-  width: min(92%, 460px);
-  aspect-ratio: 4 / 3;
-  border-radius: 46% 54% 52% 48% / 58% 52% 48% 42%;
-  background:
-    radial-gradient(120% 90% at 50% 12%, rgba(150, 200, 255, 0.14), transparent 60%),
-    linear-gradient(180deg, #16321f 0%, #0f2417 55%, #0a1a10 100%);
-  box-shadow:
-    0 0 0 1.5px rgba(150, 220, 180, 0.28),
-    0 0 40px -8px rgba(90, 200, 140, 0.25),
-    0 30px 60px -20px rgba(0, 0, 0, 0.7);
-  padding: 6% 8%;
-  transition: box-shadow 400ms ease;
+  width: min(94%, 480px);
+  aspect-ratio: 400 / 300;
+  filter: drop-shadow(0 30px 40px rgba(0, 0, 0, 0.55));
+  transition: filter 400ms ease;
 }
 .diorama-ilha-era-nova {
   animation: diorama-era-pulso 900ms ease;
-  box-shadow:
-    0 0 0 2px rgba(255, 226, 150, 0.6),
-    0 0 70px 6px rgba(255, 210, 110, 0.45),
-    0 30px 60px -20px rgba(0, 0, 0, 0.7);
+}
+.diorama-ilha-era-nova .diorama-mundo-svg {
+  filter: drop-shadow(0 0 18px rgba(255, 210, 110, 0.85));
 }
 @keyframes diorama-era-pulso {
   0% { transform: scale(1); }
@@ -83,55 +74,91 @@
   100% { transform: scale(1); }
 }
 
-.diorama-camadas {
-  position: relative;
+/* ---- a maquete propriamente dita: silhueta irregular, lateral de terra
+   visível (espessura), monte elevado e água encaixada na própria borda —
+   nunca uma elipse plana nem tabuleiro. ---- */
+.diorama-mundo-svg {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  grid-template-rows: repeat(2, 1fr);
-  gap: 4%;
-  align-items: center;
-  justify-items: center;
+  overflow: visible;
+}
+.diorama-mundo-lateral { opacity: 0.95; }
+.diorama-mundo-agua {
+  opacity: 0.92;
+  animation: diorama-agua-onda 6s ease-in-out infinite;
+  transform-origin: 50% 50%;
+}
+@keyframes diorama-agua-onda {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(1.5px); }
+}
+.diorama-mundo-topo { opacity: 1; }
+.diorama-mundo-monte { opacity: 1; }
+.diorama-mundo-rocha { opacity: 0.6; }
+
+.diorama-camadas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
 }
 
+/* elementos plantados diretamente sobre o terreno, em coordenadas
+   próprias — nunca num slot/célula de grade nem caixa de inventário. */
 .diorama-camada {
-  position: relative;
-  width: 100%;
-  height: 100%;
+  position: absolute;
+  transform: translate(-50%, -50%);
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 15%;
+  aspect-ratio: 1;
   border: 0;
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.04);
+  background: transparent;
   cursor: pointer;
+  pointer-events: auto;
   container-type: inline-size;
-  transition: transform 160ms ease, background 160ms ease, box-shadow 160ms ease;
+  transition: transform 160ms ease;
 }
-.diorama-camada-vazia { opacity: 0.35; }
-.diorama-camada:hover { background: rgba(255, 255, 255, 0.08); }
-.diorama-camada:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.diorama-camada-vazia { opacity: 0; pointer-events: none; }
+.diorama-camada:focus-visible .diorama-icone { outline: 2px solid #fff; outline-offset: 4px; border-radius: 50%; }
 .diorama-icone {
-  font-size: clamp(20px, 6cqw, 34px);
+  font-size: clamp(18px, 9cqw, 32px);
   line-height: 1;
-  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.5));
+  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.55));
   transition: transform 220ms ease;
 }
-.diorama-camada-toque .diorama-icone { transform: scale(1.25); }
+.diorama-camada:hover .diorama-icone { transform: scale(1.15); }
+.diorama-camada-toque .diorama-icone { transform: scale(1.3); }
+.diorama-camada-cosmico { width: 13%; }
 
-/* transformação em andamento: leve suspense antes do novo estado aparecer */
-.diorama-camada-transformando {
-  background: rgba(255, 236, 160, 0.12);
-  box-shadow: 0 0 0 2px rgba(255, 226, 150, 0.45), 0 0 18px -2px rgba(255, 210, 110, 0.4);
+/* transformação em andamento: um brilho nasce do próprio terreno antes do
+   novo estado aparecer — nunca uma caixa de slot acendendo. */
+.diorama-camada-transformando::before {
+  content: '';
+  position: absolute;
+  inset: -30%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 226, 150, 0.55), transparent 70%);
+  animation: diorama-brilho-pulso 680ms ease;
+}
+.diorama-camada-transformando .diorama-icone {
   animation: diorama-marco-pulso 680ms ease;
 }
 @keyframes diorama-marco-pulso {
   0%, 100% { transform: scale(1); }
-  40% { transform: scale(1.12); }
+  40% { transform: scale(1.25); }
+}
+@keyframes diorama-brilho-pulso {
+  0% { opacity: 0; transform: scale(0.6); }
+  40% { opacity: 1; transform: scale(1.1); }
+  100% { opacity: 0; transform: scale(1.3); }
 }
 
-/* famílias com tema de cor próprio — sutil, só o glow no toque/transformação */
+/* famílias com tema de cor próprio — sutil, só o brilho no toque/transformação */
 .diorama-camada-terreno { --cor-familia: #b9946a; }
 .diorama-camada-agua { --cor-familia: #4aa3ff; }
 .diorama-camada-vegetacao { --cor-familia: #45c26b; }
@@ -139,7 +166,6 @@
 .diorama-camada-civilizacao { --cor-familia: #ffd25c; }
 .diorama-camada-tecnologia { --cor-familia: #b57cff; }
 .diorama-camada-cosmico { --cor-familia: #9ff2ff; }
-.diorama-camada:hover { box-shadow: 0 0 12px -3px color-mix(in srgb, var(--cor-familia) 60%, transparent); }
 
 /* portal/orbe de criações da IA — sinal discreto, nunca thresholds canônicos */
 .diorama-ia-portal {
@@ -177,7 +203,10 @@
 
 @media (prefers-reduced-motion: reduce) {
   .diorama-ilha-era-nova,
-  .diorama-camada-transformando { animation: none; }
+  .diorama-camada-transformando,
+  .diorama-camada-transformando::before,
+  .diorama-camada-transformando .diorama-icone,
+  .diorama-mundo-agua { animation: none; }
   .diorama-camada, .diorama-icone, .diorama-ilha { transition: none; }
 }
 
