@@ -18,22 +18,11 @@
   gap: 8px;
   padding-left: max(10px, env(safe-area-inset-left));
   padding-right: max(10px, env(safe-area-inset-right));
-  /* HUD cósmico discreto: marinho translúcido + blur, no lugar do gradiente
-     opaco anterior — mesma altura/elementos, só a superfície muda pra
-     conversar com Perfis/Álbum. */
-  background:
-    radial-gradient(60% 160% at 12% 50%, rgba(120, 150, 255, 0.1), transparent 70%),
-    linear-gradient(180deg, rgba(13, 20, 38, 0.72), rgba(9, 14, 28, 0.68));
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-bottom: 1px solid color-mix(in srgb, var(--era-elementos) 28%, var(--cor-borda));
-  box-shadow: 0 1px 0 color-mix(in srgb, var(--era-elementos) 16%, transparent) inset;
+  /* HUD quase invisível: nada de superfície/friso contínuo — só um véu bem
+     leve pra garantir legibilidade sobre qualquer cena, o suficiente pra os
+     controles parecerem pousados no universo, não dentro de uma navbar. */
+  background: linear-gradient(180deg, rgba(6, 9, 18, 0.32), transparent);
 }
-body[data-era="natureza"]   .barra { border-bottom-color: color-mix(in srgb, var(--era-natureza) 28%, var(--cor-borda)); box-shadow: 0 1px 0 color-mix(in srgb, var(--era-natureza) 16%, transparent) inset; }
-body[data-era="vida"]       .barra { border-bottom-color: color-mix(in srgb, var(--era-vida) 28%, var(--cor-borda)); box-shadow: 0 1px 0 color-mix(in srgb, var(--era-vida) 16%, transparent) inset; }
-body[data-era="tecnologia"] .barra { border-bottom-color: color-mix(in srgb, var(--era-tecnologia) 28%, var(--cor-borda)); box-shadow: 0 1px 0 color-mix(in srgb, var(--era-tecnologia) 16%, transparent) inset; }
-body[data-era="cultura"]    .barra { border-bottom-color: color-mix(in srgb, var(--era-cultura) 28%, var(--cor-borda)); box-shadow: 0 1px 0 color-mix(in srgb, var(--era-cultura) 16%, transparent) inset; }
-body[data-era="ficcao"]     .barra { border-bottom-color: color-mix(in srgb, var(--era-ficcao) 28%, var(--cor-borda)); box-shadow: 0 1px 0 color-mix(in srgb, var(--era-ficcao) 16%, transparent) inset; }
 
 .barra-espaco { flex: 1; }
 
@@ -87,22 +76,26 @@ body[data-era="ficcao"]     .barra { border-bottom-color: color-mix(in srgb, var
   }
 }
 
+/* sem pill/caixa por trás: o avatar já é a própria "orbe" do HUD, o nome é
+   só texto pousado sobre a cena (legível pelo text-shadow, não por um fundo) */
 .barra-perfil {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  padding: 5px 12px 5px 5px;
+  padding: 4px;
   border-radius: 999px;
-  border: 1px solid rgba(150, 175, 255, 0.22);
-  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid transparent;
+  background: none;
   color: var(--cor-texto);
   font: inherit;
   font-size: 13px;
+  font-weight: 700;
   max-width: 40vw;
   cursor: pointer;
-  transition: border-color 120ms ease, background 120ms ease;
+  transition: transform 120ms ease;
 }
-.barra-perfil:hover { background: rgba(255, 255, 255, 0.08); }
+.barra-perfil:hover { transform: translateY(-1px); }
+.barra-perfil:focus-visible { outline: 2px solid #fff; outline-offset: 2px; border-radius: 999px; }
 .barra-avatar { position: relative; --orbe-tam: 22px; overflow: hidden; }
 .barra-avatar svg { display: block; width: 100%; height: 100%; }
 /* mesmo verniz de mini-orbe cósmica dos medalhões de Perfis — o avatar do
@@ -121,7 +114,12 @@ body[data-era="ficcao"]     .barra { border-bottom-color: color-mix(in srgb, var
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.75), 0 0 12px rgba(0, 0, 0, 0.4);
 }
+
+/* cluster de ações à direita: cada botão continua uma orbe individual —
+   só o espaçamento é compartilhado, sem virar uma segunda caixa/toolbar */
+.barra-acoes { display: inline-flex; align-items: center; gap: 8px; }
 
 /* botão vira círculo discreto — ícone já reconhecível, rótulo some visualmente
    (fica acessível pra leitor de tela, não precisa mais só esconder <520px) */
@@ -133,15 +131,23 @@ body[data-era="ficcao"]     .barra { border-bottom-color: color-mix(in srgb, var
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(150, 175, 255, 0.22);
+  border: 1px solid rgba(150, 175, 255, 0.28);
   background:
-    radial-gradient(120% 120% at 32% 26%, rgba(255, 255, 255, 0.08), transparent 55%),
-    rgba(255, 255, 255, 0.03);
+    radial-gradient(120% 120% at 32% 26%, rgba(255, 255, 255, 0.14), transparent 55%),
+    rgba(8, 13, 26, 0.5);
   color: var(--cor-texto);
   font-size: 15px;
   cursor: pointer;
+  /* glow de repouso: cada botão já lê como uma orbe pousada, não precisa de
+     hover pra parecer parte do universo */
+  box-shadow: 0 0 8px -2px color-mix(in srgb, var(--era-elementos) 45%, transparent);
   transition: border-color 120ms ease, background 120ms ease, box-shadow 120ms ease, transform 120ms ease;
 }
+body[data-era="natureza"]   .barra-botao { box-shadow: 0 0 8px -2px color-mix(in srgb, var(--era-natureza) 45%, transparent); }
+body[data-era="vida"]       .barra-botao { box-shadow: 0 0 8px -2px color-mix(in srgb, var(--era-vida) 45%, transparent); }
+body[data-era="tecnologia"] .barra-botao { box-shadow: 0 0 8px -2px color-mix(in srgb, var(--era-tecnologia) 45%, transparent); }
+body[data-era="cultura"]    .barra-botao { box-shadow: 0 0 8px -2px color-mix(in srgb, var(--era-cultura) 45%, transparent); }
+body[data-era="ficcao"]     .barra-botao { box-shadow: 0 0 8px -2px color-mix(in srgb, var(--era-ficcao) 45%, transparent); }
 .barra-botao:hover, .barra-botao:active {
   background:
     radial-gradient(120% 120% at 32% 26%, rgba(255, 255, 255, 0.14), transparent 55%),

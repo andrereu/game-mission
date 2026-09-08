@@ -74,23 +74,28 @@ export function montarDrawer({
   }
 
   raiz.setAttribute('aria-label', T.inventarioTitulo);
+  // "bandeja" cósmica única: handle + cabeçalho + busca + filtros + progresso
+  // percebidos como uma peça só (não header+input+chips soltos) — a grade
+  // começa imediatamente abaixo dela. Ver styles/drawer.css.
   raiz.innerHTML = `
-    <div class="drawer-puxador" aria-hidden="true"></div>
-    <div class="drawer-cabecalho">
-      <div class="drawer-cabecalho-texto">
-        <h2 class="drawer-titulo">${T.inventarioTitulo}</h2>
-        <div class="drawer-cabecalho-contagem">
-          <span class="drawer-contador"></span>
-          <span class="drawer-contador-ia"></span>
+    <div class="drawer-bandeja">
+      <div class="drawer-puxador" aria-hidden="true"></div>
+      <div class="drawer-cabecalho">
+        <div class="drawer-cabecalho-texto">
+          <h2 class="drawer-titulo">${T.inventarioTitulo}</h2>
+          <div class="drawer-cabecalho-contagem">
+            <span class="drawer-contador"></span>
+            <span class="drawer-contador-ia"></span>
+          </div>
         </div>
+        <button type="button" class="drawer-ver-todos">${T.verTodos}</button>
       </div>
-      <button type="button" class="drawer-ver-todos">${T.verTodos}</button>
-    </div>
-    <div class="drawer-controles">
-      <input class="drawer-busca" type="search" placeholder="${T.buscar}" />
-      <div class="drawer-chips-scroll"><div class="drawer-chips"></div></div>
-      <div class="drawer-progresso">
-        <div class="drawer-progresso-trilho"><div class="drawer-progresso-barra"></div></div>
+      <div class="drawer-controles">
+        <input class="drawer-busca" type="search" placeholder="${T.buscar}" />
+        <div class="drawer-chips-scroll"><div class="drawer-chips"></div></div>
+        <div class="drawer-progresso">
+          <div class="drawer-progresso-trilho"><div class="drawer-progresso-barra"></div></div>
+        </div>
       </div>
     </div>
     <div class="drawer-grade"></div>`;

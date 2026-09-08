@@ -18,16 +18,19 @@
   background-attachment: fixed;
 }
 
-/* ---- cabeçalho: pequeno observatório cósmico — gradiente das 6 eras,
-   estrelas discretas e logo, sem virar uma barra administrativa ou um card
-   retangular pousado sobre a tela ---- */
+/* ---- cabeçalho: painel flutuante arredondado — um observatório pousado
+   sobre o universo (nunca mais uma faixa full-width grudada na borda). O
+   palco (.arvore-palco, abaixo) já tem o próprio fundo cósmico atenuado; o
+   respiro ao redor deste cartão deixa esse universo aparecer por trás. ---- */
 .arvore-cabecalho {
   position: relative;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 10px 14px;
-  border-bottom: 1px solid rgba(150, 175, 255, 0.22);
+  margin: 10px 10px 0;
+  padding: 12px 14px;
+  border-radius: 20px;
+  border: 1px solid rgba(150, 175, 255, 0.24);
   background: linear-gradient(
     100deg,
     color-mix(in srgb, var(--era-elementos) 20%, transparent),
@@ -36,10 +39,13 @@
     color-mix(in srgb, var(--era-tecnologia) 15%, transparent) 62%,
     color-mix(in srgb, var(--era-cultura) 17%, transparent) 82%,
     color-mix(in srgb, var(--era-ficcao) 20%, transparent)
-  ), color-mix(in srgb, var(--cor-drawer) 72%, transparent);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  box-shadow: 0 1px 0 rgba(150, 175, 255, 0.12) inset, 0 8px 24px -16px rgba(0, 0, 0, 0.6);
+  ), color-mix(in srgb, var(--cor-drawer) 66%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow:
+    0 1px 0 rgba(150, 175, 255, 0.12) inset,
+    0 0 0 1px rgba(150, 175, 255, 0.08),
+    0 14px 30px -16px rgba(0, 0, 0, 0.65);
   overflow: hidden;
 }
 .arvore-cabecalho-estrelas {
@@ -195,9 +201,24 @@
   position: relative;
   flex: 1;
   overflow: hidden;
-  background: var(--cor-canvas);
+  background: var(--cor-canvas); /* base sólida antes da imagem decodificar */
   touch-action: none;
   cursor: grab;
+}
+/* mesma variante "cósmico atenuado" do Canvas principal (ver .canvas::before
+   em styles/canvas.css): escurecida, dessaturada, véu azul-marinho por
+   cima — a Árvore acontece dentro do mesmo universo, não numa tela azul
+   antiga. Pseudo-elemento só decorativo: nunca fica na frente dos nós reais
+   (pintado antes deles na ordem do documento). */
+.arvore-palco::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(9, 13, 26, 0.4), rgba(6, 9, 20, 0.62)),
+    var(--url-fundo-cosmico) center / cover no-repeat;
+  filter: saturate(0.5) brightness(0.4) contrast(0.94);
+  pointer-events: none;
 }
 .arvore-mundo { position: absolute; inset: 0; transform-origin: 0 0; }
 

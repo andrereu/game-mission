@@ -25,13 +25,29 @@ body[data-era="tecnologia"] .drawer { --drawer-acento: color-mix(in srgb, var(--
 body[data-era="cultura"]    .drawer { --drawer-acento: color-mix(in srgb, var(--era-cultura) 55%, #ffe27a); }
 body[data-era="ficcao"]     .drawer { --drawer-acento: color-mix(in srgb, var(--era-ficcao) 55%, #ff7aac); }
 
+/* ---- bandeja: handle + cabeçalho + busca + filtros + progresso são UMA
+   peça cósmica só (não "header + input + chips" separados) — cantos
+   superiores fortes (acompanham o próprio arredondamento do drawer),
+   moldura luminosa contínua ao redor, fundo translúcido com profundidade.
+   A grade começa logo abaixo, já fora da bandeja. ---- */
+.drawer-bandeja {
+  position: relative;
+  flex-shrink: 0;
+  border-radius: 0 0 20px 20px;
+  background:
+    radial-gradient(140% 60% at 50% 0%, color-mix(in srgb, var(--drawer-acento) 20%, transparent), transparent 70%),
+    linear-gradient(180deg, rgba(150, 175, 255, 0.07), rgba(6, 10, 22, 0.3) 92%);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--drawer-acento) 30%, transparent),
+    0 14px 26px -18px rgba(0, 0, 0, 0.65);
+}
+
 .drawer-puxador { display: none; }
 
 /* cabeçalho: entrada do catálogo pessoal do jogador — título, contagem
    canônica + inventadas, e acesso ao Álbum, tudo visível de cara, sem
-   precisar rolar os filtros. Leve painel translúcido próprio, separado do
-   corpo da grade por um fio de luz bem discreto, na mesma linguagem do
-   cabeçalho da Árvore e do cartão de Perfis. */
+   precisar rolar os filtros. Parte da bandeja única acima — não tem mais
+   fundo/borda própria, herda a moldura do container. */
 .drawer-cabecalho {
   position: relative;
   display: flex;
@@ -39,8 +55,6 @@ body[data-era="ficcao"]     .drawer { --drawer-acento: color-mix(in srgb, var(--
   justify-content: space-between;
   gap: 10px;
   padding: 12px 14px 10px;
-  background: linear-gradient(180deg, rgba(150, 175, 255, 0.06), transparent);
-  border-bottom: 1px solid rgba(150, 175, 255, 0.12);
 }
 .drawer-cabecalho-texto { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .drawer-titulo {
@@ -233,6 +247,7 @@ body[data-era="ficcao"]     .drawer { --drawer-acento: color-mix(in srgb, var(--
     max-height: 62dvh;
     border-left: 0;
     border-radius: 22px 22px 0 0;
+    overflow: hidden; /* a bandeja clipa certinho no arredondamento do drawer */
     background:
       radial-gradient(130% 55% at 50% -6%, color-mix(in srgb, var(--drawer-acento) 20%, transparent), transparent 65%),
       url("../assets/decor/estrelas.png") 97% 1% / 40px no-repeat,
@@ -242,6 +257,7 @@ body[data-era="ficcao"]     .drawer { --drawer-acento: color-mix(in srgb, var(--
       0 -6px 10px -4px color-mix(in srgb, var(--drawer-acento) 30%, transparent),
       0 -18px 44px -20px rgba(0, 0, 0, 0.7);
   }
+  .drawer-bandeja { border-radius: 0 0 18px 18px; }
   .drawer-puxador {
     display: block;
     width: 42px;
