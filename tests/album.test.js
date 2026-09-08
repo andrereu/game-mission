@@ -46,6 +46,16 @@ const TOTAL_ERA = Object.fromEntries(ERAS.map((era) => [
   era, criarCatalogo().allItems().filter((it) => it.era === era && !it.ia).length,
 ]));
 
+const ITEM_REVELADOR = {
+  natureza: 'pedra', vida: 'vida', tecnologia: 'ferramenta', cultura: 'cidade', ficcao: 'heroi',
+};
+
+function revelar(...eras) {
+  return Object.fromEntries(eras.map((era, i) => [
+    ITEM_REVELADOR[era], { em: i + 1, via: null, fonte: 'local' },
+  ]));
+}
+
 test('1. capa aparece antes do miolo, sem overlay temático carregado', () => {
   const { cat, store, raiz } = ambiente();
   const album = montarAlbum({ raiz, store, catalogo: cat, T });
@@ -63,8 +73,8 @@ test('2. tocar na capa abre o livro (miolo)', () => {
   assert.equal(raiz.querySelector('.album-capa-imagem'), null, 'capa some');
 });
 
-test('3. desktop usa o overlay V2 de dupla página da era; troca de era só troca o overlay/grade', () => {
-  const { cat, store, raiz } = ambiente();
+test('3. desktop usa o overlay V2 de dupla página da era; troca de era revelada só troca o overlay/grade', () => {
+  const { cat, store, raiz } = ambiente(revelar('natureza'));
   comViewport(true, () => {
     const album = montarAlbum({ raiz, store, catalogo: cat, T });
     abrirMiolo(album, raiz);
@@ -117,7 +127,7 @@ test('5. mobile: primeira tela é a abertura (sem grade e sem figurinhas); as se
 });
 
 test('6. total de telas segue a fórmula da spec (desktop ceil/9; mobile 1 + ceil/9)', () => {
-  const { cat, store, raiz } = ambiente();
+  const { cat, store, raiz } = ambiente(revelar('vida'));
   const gradesVida = Math.max(1, Math.ceil(TOTAL_ERA.vida / 9));
 
   comViewport(true, () => {
@@ -246,8 +256,8 @@ test('12. a carta grande (criarElementoCarta) não foi alterada — markup e con
   assert.ok(carta.querySelector('.carta-mascote'));
 });
 
-test('13. tabs físicas do livro: seis áreas clicáveis, uma por era, na ordem de ERAS; sem fileira de emojis', () => {
-  const { cat, store, raiz } = ambiente();
+test('13. tabs físicas do livro: só eras reveladas, nas posições canônicas; sem fileira de emojis', () => {
+  const { cat, store, raiz } = ambiente(revelar(...ERAS.slice(1)));
   comViewport(true, () => {
     const album = montarAlbum({ raiz, store, catalogo: cat, T });
     abrirMiolo(album, raiz);
@@ -260,6 +270,25 @@ test('13. tabs físicas do livro: seis áreas clicáveis, uma por era, na ordem 
     });
     assert.equal(raiz.querySelector('.album-tab[aria-current="true"]').dataset.era, 'elementos');
   });
+});
+
+test('13b. perfil novo mostra só Elementos; save existente revela apenas eras já descobertas', () => {
+  let ambienteAtual = ambiente();
+  let album = montarAlbum({ raiz: ambienteAtual.raiz, store: ambienteAtual.store, catalogo: ambienteAtual.cat, T });
+  abrirMiolo(album, ambienteAtual.raiz);
+  assert.deepEqual(
+    [...ambienteAtual.raiz.querySelectorAll('.album-tab')].map((tab) => tab.dataset.era),
+    ['elementos'],
+  );
+  album.fechar();
+
+  ambienteAtual = ambiente(revelar('natureza', 'tecnologia'));
+  album = montarAlbum({ raiz: ambienteAtual.raiz, store: ambienteAtual.store, catalogo: ambienteAtual.cat, T });
+  abrirMiolo(album, ambienteAtual.raiz);
+  assert.deepEqual(
+    [...ambienteAtual.raiz.querySelectorAll('.album-tab')].map((tab) => tab.dataset.era),
+    ['elementos', 'natureza', 'tecnologia'],
+  );
 });
 
 test('14. IA: sem tab física própria enquanto não há criação descoberta', () => {
@@ -298,7 +327,9 @@ test('16. IA fica fora do denominador canônico exibido', () => {
 });
 
 test('17. progresso canônico exibido não muda ao navegar pelo Álbum', () => {
-  const { cat, store, raiz } = ambiente({ agua: { em: 1, via: null, fonte: 'base' } });
+  const { cat, store, raiz } = ambiente({
+    agua: { em: 1, via: null, fonte: 'base' }, ...revelar('ficcao'),
+  });
   comViewport(true, () => {
     const album = montarAlbum({ raiz, store, catalogo: cat, T });
     abrirMiolo(album, raiz);
@@ -306,7 +337,7 @@ test('17. progresso canônico exibido não muda ao navegar pelo Álbum', () => {
     raiz.querySelector('.album-tab[data-era="ficcao"]').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
     raiz.querySelector('.album-pag-avancar').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
     assert.equal(raiz.querySelector('.album-cabecalho-contagem').textContent, antes);
-    assert.match(antes, /1 \/ 283 do mapa/);
+    assert.match(antes, /2 \/ 283 do mapa/);
   });
 });
 
@@ -357,6 +388,7 @@ test('20. navegar e ver cartas nunca grava no save', () => {
   const { cat, store, raiz } = ambiente({
     agua: { em: 1, via: null, fonte: 'base' },
     fogo: { em: 2, via: null, fonte: 'base' },
+    ...revelar('vida'),
   });
   const antes = JSON.parse(JSON.stringify(store.getSave()));
   comViewport(true, () => {
@@ -389,7 +421,7 @@ test('22. botão Fechar da capa e do miolo removem o overlay', () => {
 });
 
 test('23. reabrir o Álbum volta pela capa, sem persistir posição interna', () => {
-  const { cat, store, raiz } = ambiente();
+  const { cat, store, raiz } = ambiente(revelar('vida'));
   const album = montarAlbum({ raiz, store, catalogo: cat, T });
   abrirMiolo(album, raiz);
   raiz.querySelector('.album-tab[data-era="vida"]').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
@@ -444,7 +476,7 @@ test('25. paginador nas pontas: Voltar desabilitado na 1ª página, Avançar des
 });
 
 test('25b. trocar de era abre sempre a 1ª página daquela era e atualiza Página X de Y', () => {
-  const { cat, store, raiz } = ambiente();
+  const { cat, store, raiz } = ambiente(revelar('vida'));
   comViewport(true, () => {
     const album = montarAlbum({ raiz, store, catalogo: cat, T });
     abrirMiolo(album, raiz);
@@ -604,7 +636,7 @@ test('31. camadas não interativas com pointer-events:none; container de tabs n�
 });
 
 test('32. overlay: canvas completo sem crop, só escala global uniforme — mesma transformação para todas as eras', () => {
-  const { cat, store, raiz } = ambiente();
+  const { cat, store, raiz } = ambiente(revelar('natureza', 'ficcao'));
   comViewport(true, () => {
     const album = montarAlbum({ raiz, store, catalogo: cat, T });
     abrirMiolo(album, raiz);
@@ -626,7 +658,7 @@ test('32. overlay: canvas completo sem crop, só escala global uniforme — mesm
 test('32b. escala do overlay é única por variante (desktop ≠ mobile), nunca por era', () => {
   let desk;
   comViewport(true, () => {
-    const { cat, store, raiz } = ambiente();
+    const { cat, store, raiz } = ambiente(revelar('vida', 'tecnologia', 'cultura'));
     const album = montarAlbum({ raiz, store, catalogo: cat, T });
     abrirMiolo(album, raiz);
     desk = raiz.querySelector('.album-pagina-overlay').dataset.escalaOverlay;
@@ -734,7 +766,7 @@ test('28. abertura sem flash: conteúdo fica hidden até decode + rAF; nada da v
 });
 
 test('29. reabrir nunca mostra a era antes selecionada nem miolo meio montado', () => {
-  const { cat, store, raiz } = ambiente();
+  const { cat, store, raiz } = ambiente(revelar('ficcao'));
   const album = montarAlbum({ raiz, store, catalogo: cat, T });
   abrirMiolo(album, raiz);
   raiz.querySelector('.album-tab[data-era="ficcao"]').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
@@ -750,7 +782,7 @@ test('29. reabrir nunca mostra a era antes selecionada nem miolo meio montado', 
 });
 
 test('27. mobilidade entre variantes: mesmos percentuais de área de grade nas duas eras (sem AREA_SEGURA por era)', () => {
-  const { cat, store, raiz } = ambiente();
+  const { cat, store, raiz } = ambiente(revelar('ficcao'));
   comViewport(true, () => {
     const album = montarAlbum({ raiz, store, catalogo: cat, T });
     abrirMiolo(album, raiz);

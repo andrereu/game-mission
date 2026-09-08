@@ -12,6 +12,7 @@
 // Segurar manda a peça pro canvas, como sempre.
 import { ligarPanZoom } from './panzoom.js';
 import { ERAS } from '../engine/catalogo.js';
+import { erasReveladas } from '../engine/eras.js';
 import { slug } from '../engine/slug.js';
 import { ehAlemDoMapaVisivel, atributosOrbeAlemDoMapa } from './alemDoMapaUI.js';
 
@@ -56,6 +57,7 @@ function icone(item) {
 // ao fim da sua região (não reembaralha o resto).
 // ---------------------------------------------------------------------
 function calcularLayout(descobertos, catalogo) {
+  const reveladas = new Set(erasReveladas(descobertos, catalogo));
   const ids = Object.keys(descobertos).filter((id) => catalogo.getItem(id));
   const porOrdem = (a, b) => (descobertos[a].em ?? 0) - (descobertos[b].em ?? 0);
 
@@ -131,6 +133,7 @@ function calcularLayout(descobertos, catalogo) {
   regioes.push({ era: 'elementos', raioMax: raioAtual });
 
   for (const era of ERAS.slice(1)) {
+    if (!reveladas.has(era)) continue;
     const lista = porEra.get(era);
     if (lista.length === 0) continue; // região vazia: não reserva espaço
     const raioBase = raioAtual + GAP_ENTRE_ERAS;
@@ -138,7 +141,7 @@ function calcularLayout(descobertos, catalogo) {
     regioes.push({ era, raioMax: raioAtual });
   }
 
-  if (idsIA.length > 0) {
+  if (reveladas.has('ia') && idsIA.length > 0) {
     const raioBase = raioAtual + GAP_ENTRE_ERAS;
     raioAtual = distribuirAnel(idsIA, raioBase, 'ia');
     regioes.push({ era: 'ia', raioMax: raioAtual });

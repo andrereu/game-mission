@@ -34,6 +34,33 @@ export function erasAlcancadas(descobertos, catalogo) {
   return set;
 }
 
+// Coleções que já podem aparecer na navegação do jogo. A revelação é sempre
+// derivada das descobertas existentes — não cria estado novo no save, então
+// perfis antigos recebem o comportamento correto automaticamente.
+//
+// - Elementos é a porta de entrada e fica sempre disponível;
+// - cada outra era canônica aparece após o primeiro item canônico descoberto;
+// - IA aparece só depois da primeira criação da IA descoberta e nunca revela
+//   a era canônica que o item herdou.
+export function erasReveladas(descobertos, catalogo) {
+  const reveladas = new Set(['elementos']);
+  let temIA = false;
+
+  for (const id of Object.keys(descobertos || {})) {
+    const item = catalogo.getItem(id);
+    if (!item) continue;
+    if (item.ia) {
+      temIA = true;
+      continue;
+    }
+    if (ERAS.includes(item.era)) reveladas.add(item.era);
+  }
+
+  const lista = ERAS.filter((era) => reveladas.has(era));
+  if (temIA) lista.push('ia');
+  return lista;
+}
+
 export function eraMaisAvancada(alcancadas) {
   const tem = alcancadas instanceof Set ? alcancadas : new Set(alcancadas || []);
   let melhor = ERAS[0];

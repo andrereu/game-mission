@@ -169,7 +169,7 @@ async function iniciar() {
       // primeira descoberta de uma era ainda não vista: comemora e repinta
       // (só depois da carta+voo — as duas celebrações não se sobrepõem)
       const eraNova = resultado.item.era;
-      if (eraNova && !erasVistas.has(eraNova)) {
+      if (!resultado.item.ia && eraNova && !erasVistas.has(eraNova)) {
         erasVistas.add(eraNova);
         document.body.dataset.era = eraMaisAvancada(erasVistas);
         await mostrarEraNova({

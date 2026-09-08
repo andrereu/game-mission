@@ -13,6 +13,7 @@
 // Tocar numa figurinha descoberta abre a carta completa já existente (carta.js)
 // — o Álbum nunca duplica essa lógica nem amplia a miniatura.
 import { ERAS } from '../engine/catalogo.js';
+import { erasReveladas } from '../engine/eras.js';
 import { montarCartaOverlay, calcularDadosCarta, criarFigurinhaCompacta } from './carta.js';
 
 const ASSETS = 'assets/album/';
@@ -241,12 +242,11 @@ export function montarAlbum({
       .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
   }
 
-  // Ordem determinística das coleções: as 6 eras canônicas + IA por último,
-  // e a IA só quando já existe alguma criação descoberta.
+  // Ordem determinística das coleções já reveladas: Elementos sempre; cada
+  // outra era após a primeira descoberta canônica; IA por último após a
+  // primeira criação descoberta.
   function colecoesDisponiveis() {
-    const lista = [...ERAS];
-    if (itensIADescobertos().length > 0) lista.push('ia');
-    return lista;
+    return erasReveladas(store.getSave().descobertos, catalogo);
   }
 
   function itensDaColecao(colecao) {
@@ -360,7 +360,7 @@ export function montarAlbum({
       btn.style.top = `${topo}%`;
       btn.style.height = `${geo.alturaItem}%`;
     };
-    ERAS.forEach((era, i) => {
+    colecoes.filter((item) => item !== 'ia').forEach((era) => {
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'album-tab';
@@ -368,9 +368,12 @@ export function montarAlbum({
       const rotulo = T.eras[era] || era;
       btn.title = rotulo;
       btn.setAttribute('aria-label', rotulo);
-      posicionar(btn, geo.top + i * (geo.alturaItem + geo.gap));
+      // Mesmo com eras ocultas, cada hitbox continua sobre a posição física
+      // original da sua tab no livro.
+      const posicaoFisica = ERAS.indexOf(era);
+      posicionar(btn, geo.top + posicaoFisica * (geo.alturaItem + geo.gap));
       if (era === colecao) btn.setAttribute('aria-current', 'true');
-      btn.addEventListener('click', () => irParaColecao(i));
+      btn.addEventListener('click', () => irParaColecao(colecoes.indexOf(era)));
       cont.appendChild(btn);
     });
     if (colecoes.includes('ia')) {

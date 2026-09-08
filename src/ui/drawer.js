@@ -1,5 +1,6 @@
 import { T } from '../data/textos.js';
 import { ERAS } from '../engine/catalogo.js';
+import { erasReveladas } from '../engine/eras.js';
 import { slug } from '../engine/slug.js';
 import { ehAlemDoMapaVisivel, atributosOrbeAlemDoMapa, srOnlyAlemDoMapa } from './alemDoMapaUI.js';
 
@@ -123,8 +124,6 @@ export function montarDrawer({
     atualizarChipTodos();
     render();
   });
-  elChips.appendChild(chipTodos);
-
   function atualizarChipTodos() {
     chipTodos.setAttribute('aria-pressed', String(erasAtivas.size === 0 && !iaAtivo));
   }
@@ -149,7 +148,6 @@ export function montarDrawer({
       atualizarChipTodos();
       render();
     });
-    elChips.appendChild(chip);
     chipsPorEra.set(era, chip);
   }
 
@@ -171,7 +169,26 @@ export function montarDrawer({
     atualizarChipTodos();
     render();
   });
-  elChips.appendChild(chipIA);
+
+  function atualizarChipsDisponiveis() {
+    const reveladas = erasReveladas(store.getSave().descobertos, catalogo);
+    const set = new Set(reveladas);
+
+    // Descobertas só crescem no fluxo normal, mas manter os filtros coerentes
+    // também protege chamadas com stores substituídos em testes/sync.
+    for (const era of [...erasAtivas]) {
+      if (!set.has(era)) erasAtivas.delete(era);
+    }
+    if (!set.has('ia')) iaAtivo = false;
+
+    elChips.innerHTML = '';
+    elChips.appendChild(chipTodos);
+    for (const era of ERAS) {
+      if (set.has(era)) elChips.appendChild(chipsPorEra.get(era));
+    }
+    if (set.has('ia')) elChips.appendChild(chipIA);
+    atualizarChipTodos();
+  }
 
   elBusca.addEventListener('input', render);
 
@@ -192,6 +209,7 @@ export function montarDrawer({
   }
 
   function render() {
+    atualizarChipsDisponiveis();
     const termo = slug(elBusca.value || '');
     const lista = itensDescobertos().filter(({ item }) => {
       // "IA" mostra só criações da IA; os filtros de era nunca incluem

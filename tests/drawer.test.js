@@ -4,7 +4,7 @@ import { criarCatalogo } from '../src/engine/catalogo.js';
 import { criarStore } from '../src/engine/state.js';
 import { montarDrawer } from '../src/ui/drawer.js';
 
-function ambiente() {
+function ambiente(extras = {}) {
   document.body.innerHTML = '<aside id="drawer" class="drawer"></aside>';
   const cat = criarCatalogo();
   const store = criarStore({
@@ -13,6 +13,7 @@ function ambiente() {
       agua: { em: 1, via: null, fonte: 'base' },
       fogo: { em: 2, via: null, fonte: 'base' },
       vapor: { em: 3, via: ['agua', 'fogo'], fonte: 'local' },
+      ...extras,
     },
     canvas: [],
     ajustes: { som: false, iaLigada: false },
@@ -38,11 +39,11 @@ test('busca filtra sem acento e sem caixa', () => {
 });
 
 test('chip de era filtra', () => {
-  const { cat, store, raiz } = ambiente();
+  const { cat, store, raiz } = ambiente({ vida: { em: 4, via: null, fonte: 'local' } });
   montarDrawer({ raiz, store, catalogo: cat, aoEscolherItem() {} });
   const chipVida = raiz.querySelector('.drawer-chip[data-era="vida"]');
   chipVida.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
-  assert.equal(raiz.querySelectorAll('.drawer-card').length, 0);
+  assert.equal(raiz.querySelectorAll('.drawer-card').length, 1);
 });
 
 test('itens da IA aparecem sempre por último, mesmo descobertos antes e de era mais cedo', () => {
@@ -56,18 +57,18 @@ test('itens da IA aparecem sempre por último, mesmo descobertos antes e de era 
 });
 
 test('chip "Todos" limpa os filtros de era ativos', () => {
-  const { cat, store, raiz } = ambiente();
+  const { cat, store, raiz } = ambiente({ vida: { em: 4, via: null, fonte: 'local' } });
   montarDrawer({ raiz, store, catalogo: cat, aoEscolherItem() {} });
   const chipVida = raiz.querySelector('.drawer-chip[data-era="vida"]');
   chipVida.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
-  assert.equal(raiz.querySelectorAll('.drawer-card').length, 0);
+  assert.equal(raiz.querySelectorAll('.drawer-card').length, 1);
   assert.equal(chipVida.getAttribute('aria-pressed'), 'true');
 
   const chipTodos = [...raiz.querySelectorAll('.drawer-chip')]
     .find((c) => !c.dataset.era);
   assert.equal(chipTodos.getAttribute('aria-pressed'), 'false', 'Todos desativa quando há filtro de era');
   chipTodos.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
-  assert.equal(raiz.querySelectorAll('.drawer-card').length, 3, 'volta a mostrar tudo');
+  assert.equal(raiz.querySelectorAll('.drawer-card').length, 4, 'volta a mostrar tudo');
   assert.equal(chipVida.getAttribute('aria-pressed'), 'false');
   assert.equal(chipTodos.getAttribute('aria-pressed'), 'true');
 });
@@ -219,7 +220,7 @@ test('busca funciona junto com o filtro "IA"', () => {
 });
 
 test('clicar num chip de era desativa o filtro "IA" ativo', () => {
-  const { cat, store, raiz } = ambiente();
+  const { cat, store, raiz } = ambiente({ vida: { em: 4, via: null, fonte: 'local' } });
   const item = cat.registrarItemIA({ nome: 'Coisa da IA', emoji: '✨', era: 'elementos' });
   store.getSave().descobertos[item.id] = { em: 4, via: null, fonte: 'ia' };
   montarDrawer({ raiz, store, catalogo: cat, aoEscolherItem() {} });
@@ -227,6 +228,29 @@ test('clicar num chip de era desativa o filtro "IA" ativo', () => {
   chipIA.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
   raiz.querySelector('.drawer-chip[data-era="vida"]').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
   assert.equal(chipIA.getAttribute('aria-pressed'), 'false');
+});
+
+test('chips revelam eras progressivamente e IA só após a primeira criação descoberta', () => {
+  const { cat, store, raiz } = ambiente();
+  const api = montarDrawer({ raiz, store, catalogo: cat, aoEscolherItem() {} });
+  assert.deepEqual(
+    [...raiz.querySelectorAll('.drawer-chip[data-era]')].map((chip) => chip.dataset.era),
+    ['elementos'],
+  );
+  assert.equal(raiz.querySelector('.drawer-chip-ia'), null);
+
+  store.recordDiscovery('pedra', ['lava', 'ar'], 'local');
+  api.adicionarCard('pedra');
+  assert.deepEqual(
+    [...raiz.querySelectorAll('.drawer-chip[data-era]')].map((chip) => chip.dataset.era),
+    ['elementos', 'natureza'],
+  );
+
+  const item = cat.registrarItemIA({ nome: 'Brilho Lunar', emoji: '✨', era: 'ficcao' });
+  store.getSave().descobertos[item.id] = { em: 6, via: ['agua'], fonte: 'ia' };
+  api.adicionarCard(item.id);
+  assert.ok(raiz.querySelector('.drawer-chip-ia'));
+  assert.equal(raiz.querySelector('.drawer-chip[data-era="ficcao"]'), null, 'IA não revela era herdada');
 });
 
 test('adicionarCard insere um novo item', () => {

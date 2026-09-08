@@ -232,6 +232,21 @@ test('região "IA" não aparece quando não há criações da IA descobertas', (
   assert.equal(raiz.querySelector('.arvore-atalho[data-era="ia"]'), null);
 });
 
+test('atalhos mostram só eras reveladas pelas descobertas do perfil', () => {
+  const raiz = raizLimpa();
+  const save = saveCom({
+    agua: { em: 1, via: null, fonte: 'base' },
+    pedra: { em: 2, via: ['lava', 'ar'], fonte: 'local' },
+    ferramenta: { em: 3, via: ['humano', 'pedra'], fonte: 'local' },
+  });
+  const arv = montarArvore({ raiz, store: storeFake(save), catalogo: criarCatalogo(), T });
+  arv.abrir();
+  assert.deepEqual(
+    [...raiz.querySelectorAll('.arvore-atalho')].map((btn) => btn.dataset.era),
+    ['elementos', 'natureza', 'tecnologia'],
+  );
+});
+
 // 8. "Além do mapa" preserva identidade platina
 test('item "além do mapa" preserva a identidade platina no universo', () => {
   const raiz = raizLimpa();

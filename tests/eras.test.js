@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { criarCatalogo, ERAS } from '../src/engine/catalogo.js';
 import {
-  progressoPorEra, erasAlcancadas, eraMaisAvancada, eraHerdada,
+  progressoPorEra, erasAlcancadas, erasReveladas, eraMaisAvancada, eraHerdada,
 } from '../src/engine/eras.js';
 
 test('progressoPorEra conta descobertos e total por era, na ordem das eras', () => {
@@ -50,4 +50,25 @@ test('eraMaisAvancada devolve a última alcançada na ordem', () => {
   assert.equal(eraMaisAvancada(new Set(['ficcao', 'elementos'])), 'ficcao');
   assert.equal(eraMaisAvancada(new Set()), 'elementos');
   assert.equal(eraMaisAvancada(['tecnologia', 'elementos']), 'tecnologia'); // aceita array
+});
+
+test('erasReveladas: Elementos sempre; demais só após a primeira descoberta canônica', () => {
+  const cat = criarCatalogo();
+  assert.deepEqual(erasReveladas({}, cat), ['elementos']);
+  assert.deepEqual(
+    erasReveladas({ agua: {}, bicho: {}, ferramenta: {} }, cat),
+    ['elementos', 'vida', 'tecnologia'],
+  );
+});
+
+test('erasReveladas deriva saves antigos sem gravar estado extra e mantém IA isolada', () => {
+  const cat = criarCatalogo();
+  const itemIA = cat.registrarItemIA({ nome: 'Floresta Lunar', emoji: '✨', era: 'natureza' });
+  const descobertos = {
+    agua: { em: 1, fonte: 'base' },
+    [itemIA.id]: { em: 2, fonte: 'ia' },
+  };
+  const antes = JSON.stringify(descobertos);
+  assert.deepEqual(erasReveladas(descobertos, cat), ['elementos', 'ia']);
+  assert.equal(JSON.stringify(descobertos), antes, 'regra é derivada e não migra/muta o save');
 });
