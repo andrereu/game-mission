@@ -3,7 +3,7 @@
 // fetch: cache-first para estático mesmo-origem; rede direta para /api/.
 // activate: apaga versões antigas do cache.
 
-const VERSAO = 'mistura-v40';
+const VERSAO = 'mistura-v41';
 
 const PRECACHE = [
   './',
