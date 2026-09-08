@@ -29,12 +29,17 @@ const GRID_GAP_PCT = 2;
 // relativos ao canvas inteiro do asset (3344x1882 no desktop, 2048x3072 no
 // mobile). Se a validação física exigir ajuste, ajustar este bloco inteiro —
 // jamais criar áreas seguras diferentes por coleção.
+// Mobile: a folha temática tem título/decoração no topo (chega a ~23% do
+// canvas do PNG, ~31% já renderizado com o overlay em escala 0.70) e mato na
+// base. Este bloco desloca a grade toda para baixo do título e reduz o 3x3
+// proporcionalmente para a 3ª linha ficar acima da decoração inferior —
+// nenhuma mini-figurinha sob título, folhas ou mato, em nenhuma era.
 const AREA_GRADE = {
   desktop: {
     left: 60, right: 13, top: 18, bottom: 18,
   },
   mobile: {
-    left: 20, right: 20, top: 22, bottom: 25,
+    left: 27, right: 27, top: 31, bottom: 29,
   },
 };
 

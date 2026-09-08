@@ -364,6 +364,18 @@
 .orbe-figurinha-mini {
   --orbe-tam: min(46cqw, 52cqh);
   align-self: center;
+  overflow: hidden; /* o ícone nunca escapa do medalhão (nem cobre o nome) */
+}
+/* o ícone acompanha o tamanho do medalhão — o emoji tinha font-size fixo
+   (60px, da carta grande) e transbordava sobre o nome nas células menores. */
+.orbe-figurinha-mini .carta-orbe-icone {
+  font-size: calc(var(--orbe-tam) * 0.62);
+  line-height: 1;
+}
+.orbe-figurinha-mini img.carta-orbe-icone {
+  width: 64%;
+  height: 64%;
+  font-size: 0;
 }
 .figurinha-mini-nome {
   font-size: clamp(8px, 3cqw, 13px);
