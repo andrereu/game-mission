@@ -88,6 +88,12 @@ export const T = {
   conviteIAExplicacao: 'Uma descoberta extra criada com IA. Ela fica fora do cânone oficial — não conta pra completar eras ou o Álbum, mas pode aparecer nas suas experiências.',
   iaInventando: 'Inventando uma mistura…',
   iaOffline: 'Sem internet agora: só dá pra inventar com IA quando estiver online.',
+  iaFalhouTentar: 'A IA cochilou 😴 Junte as peças de novo pra tentar.',
+  // indicador de disponibilidade da IA (src/ui/rede.js) — texto além da cor
+  iaEstadoRotulo: 'Inventar com IA',
+  iaEstadoVerificando: 'IA: verificando…',
+  iaEstadoOnline: 'IA: pronta',
+  iaEstadoOffline: 'IA: indisponível',
   ajusteTelaCheia: 'Tela cheia',
   ajusteTelaCheiaDesc: 'Jogue usando toda a tela.',
   alemDoMapaTitulo: 'Além do mapa',

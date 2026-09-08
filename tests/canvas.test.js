@@ -354,3 +354,81 @@ test('IA ligada mas offline: aviso específico em vez do genérico "nada acontec
   await api._fundirParaTeste(a.uid, b.uid, { x: 10, y: 10 });
   assert.equal(document.querySelector('.canvas-aviso').textContent, T.iaOffline);
 });
+
+test('falha de geração (IA online, tentou, veio vazio): toast visível e lúdico, save intacto, peças preservadas', async () => {
+  document.body.innerHTML = '<section id="canvas" class="canvas"></section>';
+  const cat = criarCatalogo();
+  const store = criarStore({
+    versao: 1, descobertos: { robo: {}, musica: {} }, canvas: [], ajustes: { som: false },
+  });
+  const antes = JSON.parse(JSON.stringify(store.getSave().descobertos));
+  const api = montarCanvas({
+    raiz: document.getElementById('canvas'),
+    store,
+    catalogo: cat,
+    combinar: async () => ({ tipo: 'nada' }),
+    aoResultado: () => {},
+    iaElegivel: () => true,
+    iaLigadaMasOffline: () => false,
+  });
+  const a = api.soltarItem('robo', 10, 10);
+  const b = api.soltarItem('musica', 12, 12);
+  const p = api._fundirParaTeste(a.uid, b.uid, { x: 10, y: 10 });
+  // aceita o convite lúdico da IA
+  await esperar(0);
+  document.querySelector('.convite-ia-aceitar').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+  await p;
+
+  const toast = document.querySelector('.canvas-toast');
+  assert.ok(toast && !toast.hidden, 'toast visível');
+  assert.equal(toast.textContent, T.iaFalhouTentar);
+  assert.deepEqual(store.getSave().descobertos, antes, 'save não mudou (nenhum item parcial, nenhuma descoberta)');
+  assert.equal(store.listInstances().length, 2, 'as duas peças continuam no tabuleiro');
+  toast.dispatchEvent(new window.Event('pointerdown', { bubbles: true }));
+  assert.equal(toast.hidden, true, 'um toque no toast o dispensa');
+});
+
+test('recusar o convite da IA não mostra toast de falha (não é indisponibilidade)', async () => {
+  document.body.innerHTML = '<section id="canvas" class="canvas"></section>';
+  const cat = criarCatalogo();
+  const store = criarStore({
+    versao: 1, descobertos: { robo: {}, musica: {} }, canvas: [], ajustes: { som: false },
+  });
+  const api = montarCanvas({
+    raiz: document.getElementById('canvas'),
+    store, catalogo: cat,
+    combinar: async () => ({ tipo: 'nada' }),
+    aoResultado: () => {},
+    iaElegivel: () => true,
+    iaLigadaMasOffline: () => false,
+  });
+  const a = api.soltarItem('robo', 10, 10);
+  const b = api.soltarItem('musica', 12, 12);
+  const p = api._fundirParaTeste(a.uid, b.uid, { x: 10, y: 10 });
+  await esperar(0);
+  document.querySelector('.convite-ia-recusar').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+  await p;
+  const toast = document.querySelector('.canvas-toast');
+  assert.ok(!toast || toast.hidden, 'sem toast quando a criança só recusou');
+});
+
+test('trava contra envio duplicado: nova fusão ignorada enquanto uma está em andamento', async () => {
+  document.body.innerHTML = '<section id="canvas" class="canvas"></section>';
+  const cat = criarCatalogo();
+  const store = criarStore({
+    versao: 1, descobertos: { agua: {}, fogo: {} }, canvas: [], ajustes: { som: false },
+  });
+  let chamadas = 0;
+  const api = montarCanvas({
+    raiz: document.getElementById('canvas'),
+    store, catalogo: cat,
+    combinar: async () => { chamadas += 1; await esperar(120); return { tipo: 'nada' }; },
+    aoResultado: () => {},
+  });
+  const a = api.soltarItem('agua', 10, 10);
+  const b = api.soltarItem('fogo', 12, 12);
+  const p1 = api._fundirParaTeste(a.uid, b.uid, { x: 10, y: 10 });
+  const p2 = api._fundirParaTeste(a.uid, b.uid, { x: 10, y: 10 });
+  await Promise.all([p1, p2]);
+  assert.equal(chamadas, 1, 'combinar só rodou uma vez');
+});

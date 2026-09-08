@@ -105,9 +105,14 @@ async function iniciar() {
   // atender, ver montarCanvas abaixo).
   const iaElegivel = () => store.getSave().ajustes.iaLigada === true && navigator.onLine;
   const iaLigadaMasOffline = () => store.getSave().ajustes.iaLigada === true && !navigator.onLine;
+  // indicador de disponibilidade da IA (barra) — criado mais abaixo; o
+  // provider avisa aqui quando a IA fica realmente inacessível.
+  let statusIA = null;
   const combinar = criarCombinador({
     catalogo,
-    aiProvider: criarProviderEndpoint('/api/combinar'),
+    aiProvider: criarProviderEndpoint('/api/combinar', {
+      aoFalhar: () => statusIA?.marcarGeracaoFalhou(),
+    }),
     estaOnline: iaElegivel,
     aoRegistrarIA: (item, combo) => {
       store.registrarItemIA(item, comboKey(combo.a, combo.b), combo);
@@ -143,6 +148,9 @@ async function iniciar() {
     iaLigadaMasOffline,
     margemFusao: configDoModo(modo).margemFusao,
     aoResultado: async (resultado, ctx) => {
+      // uma geração de IA bem-sucedida prova que a IA está de pé — atualiza o
+      // indicador na hora (mesmo quando o item não é "novo").
+      if (resultado.tipo === 'ok' && resultado.fonte === 'ia') statusIA?.marcarGeracaoOk();
       if (resultado.tipo !== 'ok' || !ctx.novo) return;
       const comSom = store.getSave().ajustes.som;
 
@@ -277,7 +285,7 @@ async function iniciar() {
     seletor.abrir(await carregarPerfis());
   });
 
-  montarStatusRede({ el: document.getElementById('rede'), T });
+  statusIA = montarStatusRede({ el: document.getElementById('rede'), T });
   esconderSplash();
 }
 

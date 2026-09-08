@@ -42,6 +42,31 @@ export function montarCanvas({
   aviso.setAttribute('aria-live', 'polite');
   raiz.appendChild(aviso);
 
+  // toast visível e lúdico para falhas de geração — não empurra layout
+  // (absoluto dentro do canvas), some sozinho, um toque nele o dispensa.
+  const toast = document.createElement('div');
+  toast.className = 'canvas-toast';
+  toast.hidden = true;
+  toast.addEventListener('pointerdown', () => esconderToast());
+  raiz.appendChild(toast);
+  let toastTimer = null;
+  function esconderToast() {
+    clearTimeout(toastTimer);
+    toastTimer = null;
+    toast.hidden = true;
+  }
+  function mostrarToast(texto, ms = 3600) {
+    toast.textContent = texto;
+    toast.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(esconderToast, ms);
+  }
+
+  // trava contra envios duplicados: enquanto uma fusão (possivelmente com IA)
+  // está em andamento, novas fusões são ignoradas — nada de item parcial nem
+  // chamada dobrada.
+  let combinando = false;
+
   const vista = { x: 0, y: 0, escala: 1 };
   const pecas = new Map(); // uid -> elemento
 
@@ -154,55 +179,72 @@ export function montarCanvas({
   }
 
   async function fundir(uidArrastada, uidAlvo, inicio = null) {
+    if (combinando) return; // trava contra envio duplicado
     const a = store.getInstance(uidArrastada);
     const b = store.getInstance(uidAlvo);
     if (!a || !b) return;
     const px = (a.x + b.x) / 2;
     const py = (a.y + b.y) / 2;
 
-    let resultado;
-    const semComboOficial = !catalogo.findCombo(a.id, b.id);
-    // sem combinação oficial, mas dava pra tentar IA: pergunta antes de
-    // gastar rede ou inventar qualquer coisa — nunca automático.
-    if (semComboOficial && iaElegivel()) {
-      const quer = await mostrarConviteIA({
-        itemA: catalogo.getItem(a.id), itemB: catalogo.getItem(b.id), T,
-      });
-      resultado = quer
-        ? await combinarComPensando(a.id, b.id, px, py)
-        : { tipo: 'nada' };
-    } else {
-      resultado = await combinarComPensando(a.id, b.id, px, py);
-    }
-
-    if (resultado.tipo === 'ok') {
-      const novo = !store.isDiscovered(resultado.item.id);
-      store.removeInstance(uidArrastada);
-      store.removeInstance(uidAlvo);
-      pecas.get(uidArrastada)?.remove();
-      pecas.get(uidAlvo)?.remove();
-      pecas.delete(uidArrastada);
-      pecas.delete(uidAlvo);
-      const inst = store.addInstance(resultado.item.id, px, py);
-      const el = elementoPeca(inst);
-      if (el) {
-        el.classList.add('surgindo');
-        mundo.appendChild(el);
-        pecas.set(inst.uid, el);
+    combinando = true;
+    try {
+      let resultado;
+      const semComboOficial = !catalogo.findCombo(a.id, b.id);
+      const iaEmJogo = semComboOficial && (iaElegivel() || iaLigadaMasOffline());
+      // sem combinação oficial, mas dava pra tentar IA: pergunta antes de
+      // gastar rede ou inventar qualquer coisa — nunca automático.
+      if (semComboOficial && iaElegivel()) {
+        const quer = await mostrarConviteIA({
+          itemA: catalogo.getItem(a.id), itemB: catalogo.getItem(b.id), T,
+        });
+        resultado = quer
+          ? await combinarComPensando(a.id, b.id, px, py)
+          : { tipo: 'nada', recusouIA: true };
+      } else {
+        resultado = await combinarComPensando(a.id, b.id, px, py);
       }
-      store.recordDiscovery(resultado.item.id, [a.id, b.id], resultado.fonte);
-      aoResultado(resultado, { x: px, y: py, novo });
-    } else {
-      // nada: a peça arrastada volta ao ponto de partida, com quique e som fraco
-      const origem = inicio ? { x: inicio.x, y: inicio.y } : { x: a.x, y: a.y };
-      voltarPara(uidArrastada, origem);
-      const elAlvo = pecas.get(uidAlvo);
-      if (elAlvo) animarUmaVez(elAlvo, 'quique');
-      // avisa especificamente quando o motivo é "sem internet" (IA ligada mas
-      // offline) em vez do genérico "nada aconteceu" — não parece quebrado.
-      aviso.textContent = semComboOficial && iaLigadaMasOffline() ? T.iaOffline : T.nadaAconteceu;
-      if (store.getSave().ajustes?.som) tocarNada();
-      aoResultado(resultado, { x: origem.x, y: origem.y, novo: false });
+
+      if (resultado.tipo === 'ok') {
+        esconderToast();
+        const novo = !store.isDiscovered(resultado.item.id);
+        store.removeInstance(uidArrastada);
+        store.removeInstance(uidAlvo);
+        pecas.get(uidArrastada)?.remove();
+        pecas.get(uidAlvo)?.remove();
+        pecas.delete(uidArrastada);
+        pecas.delete(uidAlvo);
+        const inst = store.addInstance(resultado.item.id, px, py);
+        const el = elementoPeca(inst);
+        if (el) {
+          el.classList.add('surgindo');
+          mundo.appendChild(el);
+          pecas.set(inst.uid, el);
+        }
+        store.recordDiscovery(resultado.item.id, [a.id, b.id], resultado.fonte);
+        aoResultado(resultado, { x: px, y: py, novo });
+      } else {
+        // nada: nenhum item parcial, nenhum registro. A peça arrastada volta ao
+        // ponto de partida (elementos preservados), com quique e som fraco.
+        const origem = inicio ? { x: inicio.x, y: inicio.y } : { x: a.x, y: a.y };
+        voltarPara(uidArrastada, origem);
+        const elAlvo = pecas.get(uidAlvo);
+        if (elAlvo) animarUmaVez(elAlvo, 'quique');
+        // Falha de geração (IA em jogo, mas sem resultado) nunca falha em
+        // silêncio: mensagem curta e lúdica, visível, que convida a tentar de
+        // novo (as peças continuam no tabuleiro). Recusa explícita do convite
+        // não é falha — não mostra toast.
+        if (iaEmJogo && !resultado.recusouIA) {
+          mostrarToast(iaLigadaMasOffline() ? T.iaOffline : T.iaFalhouTentar);
+          aviso.textContent = iaLigadaMasOffline() ? T.iaOffline : T.iaFalhouTentar;
+        } else {
+          esconderToast();
+          aviso.textContent = T.nadaAconteceu;
+        }
+        if (store.getSave().ajustes?.som) tocarNada();
+        aoResultado(resultado, { x: origem.x, y: origem.y, novo: false });
+      }
+    } finally {
+      combinando = false;
     }
   }
 

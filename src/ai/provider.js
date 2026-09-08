@@ -10,7 +10,11 @@ export const stubDesligado = {
   },
 };
 
-export function criarProviderEndpoint(url) {
+// `aoFalhar` é chamado só quando a IA fica REALMENTE inacessível: erro de
+// rede/timeout ou resposta HTTP não-ok do endpoint. Um 200 com corpo vazio
+// NÃO chama `aoFalhar` — pode ser o guard-rail recusando a sugestão, o que
+// não significa "IA caiu".
+export function criarProviderEndpoint(url, { aoFalhar } = {}) {
   return {
     async sugerirCombo(itemA, itemB) {
       try {
@@ -20,7 +24,7 @@ export function criarProviderEndpoint(url) {
           body: JSON.stringify({ a: itemA.nome, b: itemB.nome }),
           signal: AbortSignal.timeout(8000),
         });
-        if (!resp.ok) return null;
+        if (!resp.ok) { aoFalhar?.(); return null; }
         const dados = await resp.json();
         if (!dados || !dados.resultadoNome) return null;
         return {
@@ -30,6 +34,7 @@ export function criarProviderEndpoint(url) {
           ...(dados.era ? { era: String(dados.era) } : {}),
         };
       } catch {
+        aoFalhar?.();
         return null;
       }
     },
