@@ -603,19 +603,68 @@ test('31. camadas não interativas com pointer-events:none; container de tabs n�
   });
 });
 
-test('32. AREA_PAPEL: máscara global única recorta todos os overlays igual, independente da era', () => {
+test('32. overlay: canvas completo sem crop, só escala global uniforme — mesma transformação para todas as eras', () => {
   const { cat, store, raiz } = ambiente();
   comViewport(true, () => {
     const album = montarAlbum({ raiz, store, catalogo: cat, T });
     abrirMiolo(album, raiz);
-    const m1 = raiz.querySelector('.album-pagina-overlay').dataset.mascaraPapel;
-    assert.match(m1, /^inset\([\d.]+% [\d.]+% [\d.]+% [\d.]+% round [\d.]+%\)$/);
-    assert.ok(raiz.querySelector('.album-pagina-overlay').style.getPropertyValue('clip-path'));
+    const ov = () => raiz.querySelector('.album-pagina-overlay');
+    // sem recorte
+    assert.equal(ov().style.getPropertyValue('clip-path'), '', 'nenhum clip-path no overlay');
+    assert.equal(ov().dataset.mascaraPapel, undefined, 'sem máscara de crop');
+    // escala global < 1, aplicada por transform, igual entre eras
+    const e1 = ov().dataset.escalaOverlay;
+    assert.ok(Number(e1) > 0 && Number(e1) < 1, 'escala global reduz o overlay');
+    assert.match(ov().style.transform, /^scale\(/);
     raiz.querySelector('.album-tab[data-era="ficcao"]').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
-    const m2 = raiz.querySelector('.album-pagina-overlay').dataset.mascaraPapel;
-    assert.equal(m1, m2, 'mesma máscara para Elementos e Ficção');
+    assert.equal(ov().dataset.escalaOverlay, e1, 'mesma escala em Ficção');
     raiz.querySelector('.album-tab[data-era="natureza"]').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
-    assert.equal(raiz.querySelector('.album-pagina-overlay').dataset.mascaraPapel, m1, 'mesma máscara para Natureza');
+    assert.equal(ov().dataset.escalaOverlay, e1, 'mesma escala em Natureza');
+  });
+});
+
+test('32b. escala do overlay é única por variante (desktop ≠ mobile), nunca por era', () => {
+  let desk;
+  comViewport(true, () => {
+    const { cat, store, raiz } = ambiente();
+    const album = montarAlbum({ raiz, store, catalogo: cat, T });
+    abrirMiolo(album, raiz);
+    desk = raiz.querySelector('.album-pagina-overlay').dataset.escalaOverlay;
+    for (const era of ['vida', 'tecnologia', 'cultura']) {
+      raiz.querySelector(`.album-tab[data-era="${era}"]`).dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+      assert.equal(raiz.querySelector('.album-pagina-overlay').dataset.escalaOverlay, desk);
+    }
+  });
+  comViewport(false, () => {
+    const { cat, store, raiz } = ambiente({ agua: { em: 1, via: null, fonte: 'base' } });
+    const album = montarAlbum({ raiz, store, catalogo: cat, T });
+    abrirMiolo(album, raiz);
+    raiz.querySelector('.album-pag-avancar').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+    const mob = raiz.querySelector('.album-pagina-overlay').dataset.escalaOverlay;
+    assert.ok(Number(mob) > 0 && Number(mob) < 1);
+    assert.notEqual(mob, desk, 'desktop e mobile têm escalas próprias');
+  });
+});
+
+test('32c. abas: aria-current preservado para acessibilidade, sem nenhum destaque retangular inline', () => {
+  const { cat, store, raiz } = ambiente();
+  comViewport(true, () => {
+    const album = montarAlbum({ raiz, store, catalogo: cat, T });
+    abrirMiolo(album, raiz);
+    const tab = raiz.querySelector('.album-tab[aria-current="true"]');
+    assert.ok(tab, 'aba atual mantém aria-current (leitor de tela)');
+    // o JS não pode injetar estilo retangular de estado; borda/sombra/fundo do
+    // "quadrado" só poderiam vir do CSS, e lá foram removidos (ver album.css +
+    // validação visual). Aqui garantimos que nada disso é inline.
+    for (const t of raiz.querySelectorAll('.album-tab')) {
+      assert.equal(t.style.boxShadow, '');
+      assert.equal(t.style.border, '');
+      assert.equal(t.style.outline, '');
+      assert.ok(!t.style.backgroundColor, 'sem fundo inline no botão da aba');
+    }
+    // clique de mouse não deixa aria-pressed / classe persistente de "ativa"
+    tab.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+    assert.equal(raiz.querySelector('.album-tab.ativa'), null, 'sem classe .ativa persistente');
   });
 });
 

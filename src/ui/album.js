@@ -40,24 +40,18 @@ const AREA_GRADE = {
 
 const PROPORCAO = { desktop: 3344 / 1882, mobile: 2048 / 3072 };
 
-// MÁSCARA GLOBAL DO PAPEL — recorta TODOS os overlays temáticos exatamente
-// dentro da superfície física das páginas (base-*.png). Nenhuma era pode vazar
-// sobre o fundo cósmico, a moldura azul/dourada, a lombada, as cantoneiras ou
-// as abas. Um único valor por variante responsiva — jamais por era; os PNGs
-// não são tocados. top/right/bottom/left em % do canvas; raio arredonda os
-// cantos do papel. Ajustar este bloco inteiro se a base mudar.
-// Calibrado varrendo a cor do papel nas próprias base-*.png (marcha do centro
-// de cada folha até o fim da superfície clara contígua) + ~0,5% de margem.
-// Desktop: papel a left 8,7% / right 10,4% / top 4,9% / bottom 9,9% do canvas.
-// Mobile: left 13,8% / right 13,2% / top 9,3% / bottom 13,2%.
-const AREA_PAPEL = {
-  desktop: {
-    top: 6, right: 11, bottom: 10.5, left: 9.5, raio: 3,
-  },
-  mobile: {
-    top: 10, right: 15.5, bottom: 13.5, left: 14.5, raio: 3.5,
-  },
-};
+// ESCALA GLOBAL DO OVERLAY — o overlay temático nunca é recortado: renderizamos
+// o canvas transparente inteiro (3344×1882 / 2048×3072, proporção original) e
+// só o reduzimos uniformemente, centralizado, até TODOS os pixels visíveis
+// caberem dentro da superfície interna do livro (sem tocar moldura, lombada,
+// cantoneiras ou abas). Um único valor para desktop e outro para mobile —
+// jamais por era; todos os assets usam exatamente a mesma transformação e os
+// PNGs não são alterados.
+// A arte dos PNGs vai de borda a borda do canvas (bbox opaco ~0–100%); com o
+// papel a ~8,7/10,4/4,9/9,9% (desktop) e ~13,8/13,2/9,3/12,9% (mobile) do
+// canvas, a maior escala que ainda deixa a arte inteira dentro do papel
+// (escala centrada) é ~0,79 no desktop e ~0,72 no mobile. Margem: 0,78 / 0,70.
+const ESCALA_OVERLAY = { desktop: 0.78, mobile: 0.70 };
 
 // Tabs físicas do livro, já desenhadas na base-*.png: seis retângulos na borda
 // direita, um por era na ordem de ERAS (de cima para baixo). Aqui só definimos
@@ -459,11 +453,12 @@ export function montarAlbum({
     base.src = `${ASSETS}base-${desktop ? 'desktop' : 'mobile'}.png`;
     overlayArt.src = overlaySrc;
     overlayArt.style.pointerEvents = 'none'; // camada decorativa: nunca captura clique
-    // recorta o overlay pela máscara global do papel (mesma para todas as eras)
-    const papel = AREA_PAPEL[desktop ? 'desktop' : 'mobile'];
-    const mascara = `inset(${papel.top}% ${papel.right}% ${papel.bottom}% ${papel.left}% round ${papel.raio}%)`;
-    overlayArt.style.setProperty('clip-path', mascara);
-    overlayArt.dataset.mascaraPapel = mascara;
+    // canvas transparente completo, sem crop: só reduz uniformemente (contain +
+    // scale global, mesma transformação para todas as eras) até a arte caber
+    // dentro do papel. object-fit/position vêm do CSS.
+    const escala = ESCALA_OVERLAY[desktop ? 'desktop' : 'mobile'];
+    overlayArt.style.transform = `scale(${escala})`;
+    overlayArt.dataset.escalaOverlay = String(escala);
 
     renderizarTabs(colecoes, colecao);
 
