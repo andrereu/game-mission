@@ -15,7 +15,7 @@ import {
   FAMILIAS, resolverEstadoDiorama, calcularAcontecimentosPendentes, proximoProgressoVisto,
 } from '../engine/diorama.js';
 import {
-  ELEMENTOS, GEOGRAFIA_SVG, NIVEL_CAMINHO_CIVILIZACAO, elementosDaFamilia, posicaoDoObjeto,
+  ELEMENTOS, GEOGRAFIA_HTML, NIVEL_CAMINHO_CIVILIZACAO, elementosDaFamilia, posicaoDoObjeto,
 } from './diorama-mundo.js';
 
 function reduzMovimento() {
@@ -33,7 +33,7 @@ export function montarDiorama({
 }) {
   const falar = audio?.falarSelecao ? (nome) => audio.falarSelecao(nome) : () => {};
   let overlay = null;
-  let svgMundo = null;
+  let mundoEl = null;
   let camadaObjetos = null;
   let objetosMontados = new Map(); // chave "familia:anchor:elemento" -> nó DOM
   let niveisRenderizados = null; // último niveis realmente desenhado na tela
@@ -70,7 +70,7 @@ export function montarDiorama({
     document.removeEventListener('keydown', aoTeclar);
     overlay.remove();
     overlay = null;
-    svgMundo = null;
+    mundoEl = null;
     camadaObjetos = null;
     objetosMontados = new Map();
     niveisRenderizados = null;
@@ -88,13 +88,13 @@ export function montarDiorama({
   // ---- ponte estado -> geografia (a mesma geografia fixa muda de "roupa",
   // nunca de forma — §1/§7 do briefing) --------------------------------
   function aplicarNivelAgua(nivel) {
-    if (svgMundo) svgMundo.dataset.nivelAgua = String(nivel);
+    if (mundoEl) mundoEl.dataset.nivelAgua = String(nivel);
   }
   function aplicarNivelVegetacao(nivel) {
-    if (svgMundo) svgMundo.dataset.nivelVegetacao = String(nivel);
+    if (mundoEl) mundoEl.dataset.nivelVegetacao = String(nivel);
   }
   function aplicarCaminho(nivelCivilizacao) {
-    svgMundo?.classList.toggle('mundo-tem-caminho', nivelCivilizacao >= NIVEL_CAMINHO_CIVILIZACAO);
+    mundoEl?.classList.toggle('mundo-tem-caminho', nivelCivilizacao >= NIVEL_CAMINHO_CIVILIZACAO);
   }
 
   function chaveObjeto(familia, item) {
@@ -105,12 +105,21 @@ export function montarDiorama({
     const def = ELEMENTOS[item.elemento];
     const el = document.createElement('button');
     el.type = 'button';
-    el.className = 'diorama-objeto';
+    // ponto de contato com o solo (§9): objetos "de chão" ficam presos
+    // pela base no anchor; objetos "flutuantes" ficam centrados nele.
+    // Isso vem só do registro ELEMENTOS — nunca um offset por asset.
+    const contato = def?.contato === 'centro' ? 'diorama-objeto-centro' : 'diorama-objeto-base';
+    el.className = `diorama-objeto ${contato}`;
     if (animarEntrada && def?.anim) el.classList.add(`diorama-objeto-anim-${def.anim}`);
     el.dataset.familia = familia;
     el.dataset.elemento = item.elemento;
-    el.innerHTML = '<span class="diorama-objeto-icone" aria-hidden="true"></span>';
-    el.querySelector('.diorama-objeto-icone').textContent = def?.conteudo || '';
+    if (def?.img) {
+      el.innerHTML = '<img class="diorama-objeto-img" alt="" aria-hidden="true" />';
+      el.querySelector('.diorama-objeto-img').src = def.img;
+    } else {
+      el.innerHTML = '<span class="diorama-objeto-icone" aria-hidden="true"></span>';
+      el.querySelector('.diorama-objeto-icone').textContent = def?.conteudo || '';
+    }
     el.setAttribute('aria-label', T.dioramaFamilias[familia]);
     const estilo = posicaoDoObjeto(familia, item.anchor);
     if (estilo) {
@@ -148,20 +157,24 @@ export function montarDiorama({
 
   async function tocarEventoMarco(evento) {
     legenda(`${T.dioramaFamilias[evento.familia]}: ${T.dioramaEstagios[evento.familia][evento.para]}`);
+    // efeito discreto por transformação — reaproveita o som já existente de
+    // seleção (sem trilha nova, sem voz a cada microtransformação; a Era
+    // continua sendo o único evento com celebração própria via tocarNovaEra).
+    audio?.tocarSelecao?.();
     const niveis = { ...niveisRenderizados, [evento.familia]: evento.para };
     if (evento.familia === 'agua') {
-      svgMundo?.classList.add('mundo-pulso-agua');
+      mundoEl?.classList.add('mundo-pulso-agua');
       aplicarNivelAgua(evento.para);
     }
     if (evento.familia === 'vegetacao') {
-      svgMundo?.classList.add('mundo-pulso-vegetacao');
+      mundoEl?.classList.add('mundo-pulso-vegetacao');
       aplicarNivelVegetacao(evento.para);
     }
     if (evento.familia === 'civilizacao') aplicarCaminho(evento.para);
     sincronizarObjetos(niveis, evento.familia);
     niveisRenderizados = niveis;
     await esperar(760); // cobre a maior animação de entrada (crescer/montar)
-    svgMundo?.classList.remove('mundo-pulso-agua', 'mundo-pulso-vegetacao');
+    mundoEl?.classList.remove('mundo-pulso-agua', 'mundo-pulso-vegetacao');
   }
 
   async function tocarEventoEra(evento) {
@@ -258,7 +271,7 @@ export function montarDiorama({
       </div>
       <div class="diorama-cena">
         <div class="diorama-ilha">
-          ${GEOGRAFIA_SVG}
+          <div class="diorama-mundo">${GEOGRAFIA_HTML}</div>
           <div class="diorama-objetos"></div>
         </div>
         <button type="button" class="diorama-ia-portal" aria-label="${T.dioramaIaPortalRotulo}" hidden>
@@ -267,7 +280,7 @@ export function montarDiorama({
       </div>
       <p class="diorama-legenda" aria-live="polite"></p>`;
 
-    svgMundo = overlay.querySelector('.diorama-mundo-svg');
+    mundoEl = overlay.querySelector('.diorama-mundo');
     camadaObjetos = overlay.querySelector('.diorama-objetos');
     camadaObjetos.addEventListener('click', aoTocarObjeto);
 
