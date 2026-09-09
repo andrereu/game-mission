@@ -11,6 +11,7 @@ import { criarStore } from '../src/engine/state.js';
 import { saveInicial } from '../src/engine/storage.js';
 import { familiaDoItem, thresholdsPorFamilia } from '../src/engine/diorama.js';
 import { montarDiorama } from '../src/ui/diorama.js';
+import { elementosDaFamilia } from '../src/ui/diorama-mundo.js';
 import { T } from '../src/data/textos.js';
 
 const cat = criarCatalogo();
@@ -115,4 +116,73 @@ test('perfis independentes: pendências de um perfil nunca vazam pro estado inic
   const { diorama: diaB } = montar(saveB);
   diaB.garantirBootstrap();
   assert.equal(diaB.temPendentes(), false, 'um perfil novo não pode herdar pendências de outro perfil');
+});
+
+
+// ---- V2 A2: Tecnologia cumulativa + ponte na fila ----
+
+test('COMPOSICAO tecnologia é cumulativa/evolutiva: N1 oficina, N2 engenho (substitui), N3 engenho+observatório, N4 engenho+observatório+foguete', () => {
+  const n1 = elementosDaFamilia('tecnologia', 1).map((e) => e.elemento);
+  const n2 = elementosDaFamilia('tecnologia', 2).map((e) => e.elemento);
+  const n3 = elementosDaFamilia('tecnologia', 3).map((e) => e.elemento).sort();
+  const n4 = elementosDaFamilia('tecnologia', 4).map((e) => e.elemento).sort();
+  assert.deepEqual(n1, ['ferramenta']);
+  assert.deepEqual(n2, ['engrenagem']); // substitui a oficina no mesmo ponto
+  assert.deepEqual(n3, ['engrenagem', 'observatorio']);
+  assert.deepEqual(n4, ['engrenagem', 'foguete', 'observatorio']);
+  // âncoras aprovadas
+  const porElem = Object.fromEntries(elementosDaFamilia('tecnologia', 4).map((e) => [e.elemento, e]));
+  assert.equal(porElem.engrenagem.anchor, 'clareira_esquerda');
+  assert.equal(porElem.observatorio.anchor, 'alto_observatorio');
+  assert.equal(porElem.foguete.anchor, 'arco_rochoso');
+});
+
+test('ponte: fechar o Diorama antes do beat da ponte NÃO marca a ponte como vista e ela continua pendente', async () => {
+  const save = saveInicial(cat);
+  const { diorama, store } = montar(save);
+  diorama.garantirBootstrap();
+
+  // fila longa de marcos de tecnologia + a descoberta canônica da ponte,
+  // pra a fila ter vários beats ANTES do beat de construção da ponte.
+  const thresholds = thresholdsPorFamilia(cat);
+  const idsTec = cat.allItems().filter((it) => !it.ia && familiaDoItem(it) === 'tecnologia').map((it) => it.id);
+  for (const id of idsTec.slice(0, thresholds.tecnologia[3])) store.recordDiscovery(id, null, 'combo');
+  store.recordDiscovery('ponte', null, 'combo');
+
+  const pend = diorama._paraTeste.pendentes();
+  assert.equal(pend.filter((e) => e.tipo === 'construcao').length, 1, 'construção da ponte precisa estar pendente');
+
+  diorama.abrir();
+  // 700ms: pausa de orientação (500) + 1º marco (~760) ainda rolando -> o
+  // beat da ponte (depois dos marcos) com certeza ainda não aconteceu.
+  await new Promise((r) => { setTimeout(r, 700); });
+  diorama.fechar();
+  await new Promise((r) => { setTimeout(r, 100); });
+
+  const visto = diorama._paraTeste.progressoVisto();
+  assert.equal(visto?.ponte, false, 'a ponte não pode ser marcada como vista antes do seu beat');
+  const restante = diorama._paraTeste.pendentes();
+  assert.equal(restante.filter((e) => e.tipo === 'construcao').length, 1, 'a construção da ponte continua pendente pra próxima visita');
+});
+
+test('ponte: uma vez reproduzido o beat, reabrir não repete (idempotente na camada de UI)', async () => {
+  const restaurar = forcarReducedMotion();
+  try {
+    const save = saveInicial(cat);
+    const { diorama, store } = montar(save);
+    diorama.garantirBootstrap();
+    store.recordDiscovery('ponte', null, 'combo');
+    assert.equal(diorama._paraTeste.pendentes().some((e) => e.tipo === 'construcao'), true);
+
+    diorama.abrir();
+    await new Promise((r) => { setTimeout(r, 50); });
+    assert.equal(diorama._paraTeste.progressoVisto().ponte, true, 'depois do beat, a ponte fica registrada como vista');
+    diorama.fechar();
+
+    diorama.abrir();
+    await new Promise((r) => { setTimeout(r, 50); });
+    assert.equal(diorama._paraTeste.pendentes().some((e) => e.tipo === 'construcao'), false, 'reabrir não repete o beat da ponte');
+  } finally {
+    restaurar();
+  }
 });

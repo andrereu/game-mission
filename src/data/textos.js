@@ -139,6 +139,7 @@ export const T = {
   dioramaBotaoRotulo: 'Meu Mundo',
   dioramaVazio: 'Um mundo pequenininho, esperando a vida chegar.',
   dioramaMundoMudou: 'Seu mundo mudou!',
+  dioramaPonteConstruida: 'Uma ponte atravessa a água.',
   dioramaEraTitulo: (era) => `Uma nova era chegou ao seu mundo: ${era}!`,
   dioramaIaPortalRotulo: 'Suas criações de IA',
   dioramaIaPortalTexto: 'Este perfil já tem descobertas inventadas com IA — coisas que só existem no SEU mundo.',

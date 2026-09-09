@@ -102,12 +102,19 @@ export const ELEMENTOS = {
   borboleta: { img: `${ASSETS}vida-borboleta.png`, anim: 'entra-voando', contato: 'centro' },
   passaro: { img: `${ASSETS}vida-passaro.png`, anim: 'entra-voando', contato: 'centro' },
   bicho: { img: `${ASSETS}vida-bicho.png`, anim: 'entra-andando', contato: 'base' },
-  ferramenta: { conteudo: '🔨', anim: 'aparece', contato: 'base' },
-  engrenagem: { conteudo: '⚙️', anim: 'aparece', contato: 'base' },
-  observatorio: { conteudo: '🔭', anim: 'monta', contato: 'base' },
-  foguete: { conteudo: '🚀', anim: 'monta', contato: 'base' },
+  // Tecnologia (Round A2): instalações integradas ao terreno, nunca ícones
+  // literais. N1 oficina rudimentar -> N2 oficina mecanizada (substitui) ->
+  // N3 engenho + observatório -> N4 engenho + observatório + foguete.
+  ferramenta: { img: `${ASSETS}tecnologia-ferramenta.png`, anim: 'monta', contato: 'base' },
+  engrenagem: { img: `${ASSETS}tecnologia-engrenagem.png`, anim: 'monta', contato: 'base' },
+  observatorio: { img: `${ASSETS}tecnologia-observatorio.png`, anim: 'monta', contato: 'base' },
+  foguete: { img: `${ASSETS}tecnologia-foguete.png`, anim: 'monta', contato: 'base' },
   estrela: { img: 'assets/decor/estrela.png', anim: 'acende', contato: 'centro' },
   fenomeno: { img: `${ASSETS}cosmico-fenomeno.png`, anim: 'acende', contato: 'centro' },
+  // Ponte (Round A2): bridge-only, pertence visualmente a Civilização mas é
+  // renderizada pelo gatilho semântico `temPonte` (descoberta do item
+  // canônico `ponte`), não pelo nível de Civilização. Ver ENTRADA_PONTE.
+  ponte: { img: `${ASSETS}civilizacao-ponte.png`, anim: 'monta', contato: 'centro' },
 };
 
 // ---- Composição: estado (família + nível) -> lista de {âncora,
@@ -155,11 +162,27 @@ export const COMPOSICAO = {
       { anchor: 'clareira_direita', elemento: 'casa', escala: 0.75 },
     ],
   },
+  // Tecnologia cumulativa/evolutiva (Round A2): N1 e N2 são a MESMA oficina
+  // evoluindo no mesmo ponto (N2 substitui N1); N3 mantém o engenho e ADICIONA
+  // o observatório no pico; N4 mantém os dois e ADICIONA o foguete no arco.
   tecnologia: {
-    1: [{ anchor: 'clareira_esquerda', elemento: 'ferramenta', escala: 0.45 }],
-    2: [{ anchor: 'clareira_esquerda', elemento: 'engrenagem', escala: 0.5 }],
-    3: [{ anchor: 'alto_observatorio', elemento: 'observatorio', escala: 0.55 }],
-    4: [{ anchor: 'alto_observatorio', elemento: 'foguete', escala: 0.6 }],
+    1: [{ anchor: 'clareira_esquerda', elemento: 'ferramenta', escala: 0.95 }],
+    2: [{ anchor: 'clareira_esquerda', elemento: 'engrenagem', escala: 1.05 }],
+    3: [
+      { anchor: 'clareira_esquerda', elemento: 'engrenagem', escala: 1.05 },
+      {
+        anchor: 'alto_observatorio', elemento: 'observatorio', escala: 0.9, dx: -4, dy: 15,
+      },
+    ],
+    4: [
+      { anchor: 'clareira_esquerda', elemento: 'engrenagem', escala: 1.05 },
+      {
+        anchor: 'alto_observatorio', elemento: 'observatorio', escala: 0.9, dx: -4, dy: 15,
+      },
+      {
+        anchor: 'arco_rochoso', elemento: 'foguete', escala: 0.8, dx: -8, dy: 4,
+      },
+    ],
   },
   cosmico: {
     1: [{ anchor: 'ceu_esquerda', elemento: 'estrela', escala: 0.6 }],
@@ -178,11 +201,23 @@ export const COMPOSICAO = {
 };
 
 // nível de civilização a partir do qual a trilha entre clareiras aparece
-// — geometria de estado, não asset avulso. A PONTE do kit aprovado tem
-// rio/margem "colados" na composição e não pode ser recortada com
-// transparência nesta rodada — fica de fora até existir uma versão
-// bridge-only isolada (ver relatório de entrega).
+// — geometria de estado, não asset avulso. Continua gated SÓ pela contagem
+// de civilização; a ponte física (ENTRADA_PONTE, abaixo) é independente
+// disto e vem do gatilho semântico `temPonte`.
 export const NIVEL_CAMINHO_CIVILIZACAO = 2;
+
+// Ponte física (Round A2): entrada de composição fixa, renderizada quando
+// o estado derivado tem `temPonte` (descoberta do item canônico `ponte`) —
+// NUNCA pelo nível de Civilização. Pertence visualmente a `civilizacao`
+// (recebe o deslocamento dessa família); o ajuste de instância centra o
+// vão sobre o leito d'água entre clareira_central e clareira_direita. Ver
+// wiring em src/ui/diorama.js (sincronizarObjetos / tocarEventoConstrucao).
+export const ENTRADA_PONTE = {
+  familia: 'civilizacao',
+  item: {
+    anchor: 'ponte', elemento: 'ponte', escala: 0.95, dx: -3, dy: 0,
+  },
+};
 
 function elementosCumulativos(tabela, nivel) {
   if (!tabela || nivel <= 0) return [];

@@ -3,7 +3,7 @@
 // fetch: cache-first para estático mesmo-origem; rede direta para /api/.
 // activate: apaga versões antigas do cache.
 
-const VERSAO = 'mistura-v44';
+const VERSAO = 'mistura-v45';
 
 const PRECACHE = [
   './',
@@ -105,6 +105,11 @@ const PRECACHE = [
   'assets/diorama/vida-bicho.png',
   'assets/diorama/vida-passaro.png',
   'assets/diorama/cosmico-fenomeno.png',
+  'assets/diorama/tecnologia-ferramenta.png',
+  'assets/diorama/tecnologia-engrenagem.png',
+  'assets/diorama/tecnologia-observatorio.png',
+  'assets/diorama/tecnologia-foguete.png',
+  'assets/diorama/civilizacao-ponte.png',
   'assets/decor/elementos-decorativos.png',
   'assets/decor/orbe-dourada.png',
   'assets/decor/orbe-galaxia.png',

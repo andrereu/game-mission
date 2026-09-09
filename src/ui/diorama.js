@@ -15,7 +15,8 @@ import {
   FAMILIAS, resolverEstadoDiorama, calcularAcontecimentosPendentes, proximoProgressoVisto,
 } from '../engine/diorama.js';
 import {
-  ELEMENTOS, GEOGRAFIA_HTML, NIVEL_CAMINHO_CIVILIZACAO, elementosDaFamilia, posicaoDoObjeto,
+  ELEMENTOS, GEOGRAFIA_HTML, NIVEL_CAMINHO_CIVILIZACAO, ENTRADA_PONTE,
+  elementosDaFamilia, posicaoDoObjeto,
 } from './diorama-mundo.js';
 
 function reduzMovimento() {
@@ -37,6 +38,7 @@ export function montarDiorama({
   let camadaObjetos = null;
   let objetosMontados = new Map(); // chave "familia:anchor:elemento" -> nó DOM
   let niveisRenderizados = null; // último niveis realmente desenhado na tela
+  let pontePresente = null; // última presença da ponte realmente desenhada
   let reproduzindo = false;
 
   function estadoAtual() {
@@ -74,6 +76,7 @@ export function montarDiorama({
     camadaObjetos = null;
     objetosMontados = new Map();
     niveisRenderizados = null;
+    pontePresente = null;
   }
 
   function aoTeclar(ev) {
@@ -154,13 +157,20 @@ export function montarDiorama({
   // COMPOSICAO (diorama-mundo.js) sabe. `destacarFamilia` anima só os
   // objetos novos daquela família (usado durante a fila de marcos); fora
   // da fila (montagem inicial / resync final) tudo entra sem animação.
-  function sincronizarObjetos(niveis, destacarFamilia) {
+  function sincronizarObjetos(niveis, destacarFamilia, temPonte = pontePresente) {
     if (!camadaObjetos) return;
     const desejado = new Map();
     for (const familia of FAMILIAS) {
       for (const item of elementosDaFamilia(familia, niveis[familia])) {
         desejado.set(chaveObjeto(familia, item), { familia, item });
       }
+    }
+    // ponte: entrada fixa, gated pelo booleano derivado (nunca por nível)
+    if (temPonte) {
+      desejado.set(
+        chaveObjeto(ENTRADA_PONTE.familia, ENTRADA_PONTE.item),
+        { familia: ENTRADA_PONTE.familia, item: ENTRADA_PONTE.item },
+      );
     }
     for (const [chave, el] of objetosMontados) {
       if (!desejado.has(chave)) { el.remove(); objetosMontados.delete(chave); }
@@ -197,6 +207,18 @@ export function montarDiorama({
     niveisRenderizados = niveis;
     await esperar(760); // cobre a maior animação de entrada (crescer/montar)
     mundoEl?.classList.remove('mundo-pulso-agua', 'mundo-pulso-vegetacao', 'mundo-pulso-terreno');
+  }
+
+  // construção da ponte (V2 A2): beat próprio da fila, mesmo formato do
+  // marco — legenda + som discreto + a ponte entra com sua animação de
+  // "monta". Idempotente: `progressoVisto().ponte` só avança depois deste
+  // beat terminar (ver reproduzirPendentes).
+  async function tocarEventoConstrucao() {
+    legenda(`${T.dioramaFamilias.civilizacao}: ${T.dioramaPonteConstruida}`);
+    audio?.tocarSelecao?.();
+    pontePresente = true;
+    sincronizarObjetos(niveisRenderizados || estadoAtual().niveis, ENTRADA_PONTE.familia, true);
+    await esperar(760);
   }
 
   // ciclo de "sabores" da vitalidade (V1.2.1 §"não repetir sempre o mesmo
@@ -258,6 +280,7 @@ export function montarDiorama({
       niveis: { ...(vistoAntes?.niveis || {}) },
       era: vistoAntes?.era ?? null,
       vitalidade: vistoAntes?.vitalidade || 0,
+      ponte: Boolean(vistoAntes?.ponte),
     };
     try {
       // pequena pausa de orientação (V1.3 §2): a criança já viu o estado
@@ -273,6 +296,10 @@ export function montarDiorama({
           // eslint-disable-next-line no-await-in-loop
           await tocarEventoVitalidade(evento);
           progresso.vitalidade = evento.para;
+        } else if (evento.tipo === 'construcao') {
+          // eslint-disable-next-line no-await-in-loop
+          await tocarEventoConstrucao();
+          progresso.ponte = true;
         } else {
           // eslint-disable-next-line no-await-in-loop
           await tocarEventoMarco(evento);
@@ -292,7 +319,8 @@ export function montarDiorama({
     aplicarCaminho(estado.niveis.civilizacao);
     aplicarElementosPrimarios(estado.elementosPrimarios);
     aplicarVitalidade(estado.vitalidade);
-    sincronizarObjetos(estado.niveis, null);
+    pontePresente = Boolean(estado.temPonte);
+    sincronizarObjetos(estado.niveis, null, pontePresente);
     niveisRenderizados = { ...estado.niveis };
     // desde a recalibração V1.2, terreno já nasce em nível 1 só com os 3
     // itens-base do fallback (fogo+terra+ar) — então "totalNiveis === 0"
@@ -366,6 +394,9 @@ export function montarDiorama({
       ? {
         niveis: visto.niveis,
         vitalidade: visto.vitalidade || 0,
+        // ponte já vista aparece no render "antes"; ponte pendente só entra
+        // no seu próprio beat (visto.ponte === false enquanto pendente).
+        temPonte: Boolean(visto.ponte),
         temCriacoesIA: atual.temCriacoesIA,
         elementosPrimarios: atual.elementosPrimarios,
       }

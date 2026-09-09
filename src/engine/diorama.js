@@ -212,6 +212,12 @@ export function resolverEstadoDiorama({ descobertos = {}, catalogo, itensIA = {}
   const elementosPrimarios = calcularElementosPrimarios(descobertos);
   const vitalidade = calcularVitalidade(descobertos, catalogo);
 
+  // Ponte: marco semântico por descoberta REAL do item canônico `ponte`
+  // (mesmo princípio do marcador de água), desacoplado do nível de
+  // Civilização. `descobertos` só guarda descobertas canônicas — criações
+  // da IA vivem em `itensIA` e nunca podem chegar aqui.
+  const temPonte = Boolean(descobertos.ponte);
+
   return {
     niveis,
     contagens,
@@ -221,6 +227,7 @@ export function resolverEstadoDiorama({ descobertos = {}, catalogo, itensIA = {}
     nivelMaximo: NIVEIS_POR_FAMILIA,
     elementosPrimarios,
     vitalidade,
+    temPonte,
   };
 }
 
@@ -255,6 +262,13 @@ export function calcularAcontecimentosPendentes(estadoAtual, progressoVisto) {
     }
   }
 
+  // construção da ponte: acontecimento próprio (um beat), disparado só
+  // quando o item canônico `ponte` foi descoberto e ainda não foi visto —
+  // idempotente pelo booleano `visto.ponte` (mesmo padrão de nível/água).
+  if (estadoAtual.temPonte && !visto.ponte) {
+    eventos.push({ tipo: 'construcao', o: 'ponte' });
+  }
+
   // vitalidade: um único evento por visita (nunca um por sub-nível) — só
   // intensifica o que já existe na cena, nunca compete com marcos
   // semânticos por atenção. Ver §5 da auditoria V1.2.
@@ -280,5 +294,6 @@ export function proximoProgressoVisto(estadoAtual) {
     niveis: { ...estadoAtual.niveis },
     era: estadoAtual.era,
     vitalidade: estadoAtual.vitalidade || 0,
+    ponte: Boolean(estadoAtual.temPonte),
   };
 }

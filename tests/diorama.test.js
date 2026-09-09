@@ -283,3 +283,65 @@ test('vitalidade (V1.2.1): cadência começa em ~2-3 descobertas e desacelera gr
   const mediaFinal = gaps.slice(-3).reduce((a, b) => a + b, 0) / Math.min(3, gaps.length);
   assert.ok(mediaFinal >= mediaInicial, 'cadência deveria desacelerar (gap final >= gap inicial), nunca acelerar');
 });
+
+// ---- V2 A2: gatilho semântico da ponte (mesmo padrão do marcador de água) ----
+
+test('ponte: ausente nas descobertas -> temPonte=false, nenhum evento de construção', () => {
+  const estado = resolverEstadoDiorama({ descobertos: { agua: {}, metal: {}, rio: {} }, catalogo: cat });
+  assert.equal(estado.temPonte, false);
+  const eventos = calcularAcontecimentosPendentes(estado, { niveis: {}, era: 'natureza' });
+  assert.equal(eventos.some((e) => e.tipo === 'construcao'), false);
+});
+
+test('ponte: descoberta canônica real do item `ponte` -> temPonte=true e 1 evento de construção pendente', () => {
+  const antes = resolverEstadoDiorama({ descobertos: { agua: {} }, catalogo: cat });
+  const visto = proximoProgressoVisto(antes); // visto.ponte === false
+  const depois = resolverEstadoDiorama({ descobertos: { agua: {}, ponte: {} }, catalogo: cat });
+  assert.equal(depois.temPonte, true);
+  const construcoes = calcularAcontecimentosPendentes(depois, visto).filter((e) => e.tipo === 'construcao');
+  assert.deepEqual(construcoes, [{ tipo: 'construcao', o: 'ponte' }]);
+});
+
+test('ponte: item da IA com nome/conceito parecido NUNCA aciona a ponte canônica', () => {
+  const itemIA = {
+    id: 'ponte-magica', nome: 'Ponte Mágica', era: 'ficcao', ia: true,
+  };
+  const catComIA = {
+    ...cat,
+    getItem: (id) => (id === 'ponte-magica' ? itemIA : cat.getItem(id)),
+    allItems: () => [...cat.allItems(), itemIA],
+  };
+  // descoberta da IA vive em itensIA, nunca em descobertos: temPonte continua false
+  const estado = resolverEstadoDiorama({
+    descobertos: { agua: {} }, catalogo: catComIA, itensIA: { 'ponte-magica': itemIA },
+  });
+  assert.equal(estado.temPonte, false);
+  assert.equal(estado.temCriacoesIA, true); // a criação IA acende só o portal, não a ponte
+});
+
+test('ponte: o acontecimento é gerado uma única vez e o reload é idempotente', () => {
+  const estado = resolverEstadoDiorama({ descobertos: { ponte: {} }, catalogo: cat });
+  const visto1 = proximoProgressoVisto(estado); // grava ponte: true depois do beat
+  assert.equal(visto1.ponte, true);
+  // reload: mesmo estado + visto que já registrou a ponte -> nada pendente
+  assert.deepEqual(calcularAcontecimentosPendentes(estado, visto1).filter((e) => e.tipo === 'construcao'), []);
+  // e de novo (idempotência real)
+  assert.deepEqual(calcularAcontecimentosPendentes(estado, proximoProgressoVisto(estado)).filter((e) => e.tipo === 'construcao'), []);
+});
+
+test('ponte: save veterano com `ponte` já descoberta -> bootstrap semeia sem replay indevido', () => {
+  // veterano: catálogo inteiro descoberto (inclui `ponte`), mas nunca abriu o Diorama
+  const descobertosVeterano = Object.fromEntries(cat.allItems().filter((it) => !it.ia).map((it) => [it.id, {}]));
+  const estado = resolverEstadoDiorama({ descobertos: descobertosVeterano, catalogo: cat });
+  assert.equal(estado.temPonte, true);
+  const visto = proximoProgressoVisto(estado); // é o que o boot grava, sem reproduzir nada
+  assert.equal(visto.ponte, true);
+  assert.deepEqual(calcularAcontecimentosPendentes(estado, visto), []);
+  assert.equal(haAcontecimentosPendentes(estado, null), false); // antes do bootstrap: nunca pendente
+});
+
+test('ponte: NÃO acopla ao nível de Civilização — descobrir `ponte` cedo não sobe civilização', () => {
+  const soPonte = resolverEstadoDiorama({ descobertos: { ponte: {} }, catalogo: cat });
+  assert.equal(soPonte.temPonte, true);
+  assert.equal(soPonte.niveis.civilizacao, 0); // 1 descoberta de tecnologia não move civilização
+});
