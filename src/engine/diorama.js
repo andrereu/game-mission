@@ -152,22 +152,39 @@ function calcularElementosPrimarios(descobertos) {
   return out;
 }
 
-// ---- vitalidade global (auditoria V1.2 §5) -----------------------------
+// ---- vitalidade global (auditoria V1.2 §5, cadência V1.2.1) ------------
 // Derivada só do TOTAL de descobertas canônicas (nunca cria objeto novo,
 // nunca substitui os marcos semânticos por família) — existe só pra
-// garantir que nenhuma janela de 10-15 descobertas passe em silêncio
-// absoluto: a cada ~4 descobertas o mundo "respira" um pouco mais (água
-// brilha, poeira/vento aumentam, solo ganha detalhe). Intensifica o que
-// já existe; nunca decide sozinha o que aparece.
-const DESCOBERTAS_POR_VITALIDADE = 4;
-const VITALIDADE_MAXIMA = 20;
+// garantir que nenhuma janela de descobertas passe em silêncio absoluto.
+// V1.2.1: o "passo" (quantas descobertas pro próximo nível) começa
+// pequeno (2) e cresce devagar a cada 4 níveis, até um teto (8) — no
+// começo do jogo o mundo "respira" quase a cada 2-3 descobertas; mais
+// pra frente, o intervalo desacelera gradualmente (nunca uma cadência
+// fixa "a cada N"). Intensifica o que já existe; nunca decide sozinha o
+// que aparece.
+const VITALIDADE_MAXIMA = 30;
+const PASSO_VITALIDADE_INICIAL = 2;
+const PASSO_VITALIDADE_MAXIMO = 8;
+const NIVEIS_POR_DESACELERACAO = 4;
+
+function passoVitalidade(nivelAlcancado) {
+  const passo = PASSO_VITALIDADE_INICIAL + Math.floor(nivelAlcancado / NIVEIS_POR_DESACELERACAO);
+  return Math.min(passo, PASSO_VITALIDADE_MAXIMO);
+}
 
 function calcularVitalidade(descobertos, catalogo) {
   let total = 0;
   for (const id of Object.keys(descobertos || {})) {
     if (familiaDoItem(catalogo.getItem(id))) total += 1;
   }
-  return Math.min(VITALIDADE_MAXIMA, Math.floor(total / DESCOBERTAS_POR_VITALIDADE));
+  let nivel = 0;
+  let acumulado = 0;
+  while (nivel < VITALIDADE_MAXIMA) {
+    acumulado += passoVitalidade(nivel);
+    if (total < acumulado) break;
+    nivel += 1;
+  }
+  return nivel;
 }
 
 // ---- estado puro e determinístico ----

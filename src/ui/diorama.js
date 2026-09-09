@@ -199,15 +199,28 @@ export function montarDiorama({
     mundoEl?.classList.remove('mundo-pulso-agua', 'mundo-pulso-vegetacao', 'mundo-pulso-terreno');
   }
 
+  // ciclo de "sabores" da vitalidade (V1.2.1 §"não repetir sempre o mesmo
+  // efeito"): cada tick alterna entre pequenas reações já existentes no
+  // mundo — nunca cria nada novo, só decide QUAL coisa já visível pulsa
+  // desta vez. Cobertura verde não entra no ciclo de flashes: ela ganha um
+  // microavanço contínuo (via --vitalidade no CSS), e só quando vegetação
+  // já estiver semanticamente permitida (nivel > 0) — nunca antes disso.
+  const CICLO_VITALIDADE = ['agua', 'ar', 'terra', 'fogo', 'cosmico'];
+  function tipoVitalidade(nivelVitalidade) {
+    return CICLO_VITALIDADE[nivelVitalidade % CICLO_VITALIDADE.length];
+  }
+
   // vitalidade nunca compete com um marco semântico por atenção: sem
-  // legenda, sem som — só um respiro visual bem discreto no mundo inteiro
-  // (V1.2 §5/§12). Garante que nenhuma janela de várias descobertas passe
-  // 100% em silêncio mesmo quando nenhuma família cruzou um marco ainda.
+  // legenda, sem som — só um respiro visual bem discreto (V1.2 §5/§12).
+  // Garante que nenhuma janela de várias descobertas passe 100% em
+  // silêncio mesmo quando nenhuma família cruzou um marco ainda.
   async function tocarEventoVitalidade(evento) {
     aplicarVitalidade(evento.para);
-    mundoEl?.classList.add('mundo-pulso-vitalidade');
+    const tipo = tipoVitalidade(evento.para);
+    const classe = `mundo-pulso-vitalidade-${tipo}`;
+    mundoEl?.classList.add(classe);
     await esperar(420);
-    mundoEl?.classList.remove('mundo-pulso-vitalidade');
+    mundoEl?.classList.remove(classe);
   }
 
   async function tocarEventoEra(evento) {

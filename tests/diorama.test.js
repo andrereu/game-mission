@@ -258,3 +258,28 @@ test('vitalidade: gera no máximo 1 evento por visita (nunca um evento por sub-n
   assert.equal(vistoDepois.vitalidade, estado.vitalidade);
   assert.deepEqual(calcularAcontecimentosPendentes(estado, vistoDepois).filter((e) => e.tipo === 'vitalidade'), []);
 });
+
+test('vitalidade (V1.2.1): cadência começa em ~2-3 descobertas e desacelera gradualmente depois — nunca reage em TODA descoberta', () => {
+  const idsReais = cat.allItems().filter((it) => !it.ia).map((it) => it.id);
+  const descobertos = {};
+  const gaps = [];
+  let ultimaMudancaEm = 0;
+  let anterior = 0;
+  for (let i = 0; i < idsReais.length && i < 60; i += 1) {
+    descobertos[idsReais[i]] = {};
+    const estado = resolverEstadoDiorama({ descobertos, catalogo: cat });
+    if (estado.vitalidade !== anterior) {
+      gaps.push(i + 1 - ultimaMudancaEm);
+      ultimaMudancaEm = i + 1;
+      anterior = estado.vitalidade;
+    }
+  }
+  // nunca reage em toda descoberta: pelo menos algum gap > 1
+  assert.ok(gaps.some((g) => g > 1), 'vitalidade não pode mudar a cada descoberta única');
+  // início rápido: os primeiros gaps ficam na faixa 2-3 pedida
+  assert.ok(gaps.slice(0, 3).every((g) => g >= 2 && g <= 3), `gaps iniciais deveriam ser 2-3, veio ${JSON.stringify(gaps.slice(0, 3))}`);
+  // desaceleração gradual: os últimos gaps observados não são menores que os primeiros
+  const mediaInicial = gaps.slice(0, 3).reduce((a, b) => a + b, 0) / 3;
+  const mediaFinal = gaps.slice(-3).reduce((a, b) => a + b, 0) / Math.min(3, gaps.length);
+  assert.ok(mediaFinal >= mediaInicial, 'cadência deveria desacelerar (gap final >= gap inicial), nunca acelerar');
+});

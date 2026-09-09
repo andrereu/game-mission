@@ -137,8 +137,13 @@
    de grama extraídos da referência aprovada. */
 .diorama-mundo-vegetacao {
   --raio-grama: 0%;
-  mask-image: radial-gradient(circle at 48% 52%, #000 var(--raio-grama), transparent calc(var(--raio-grama) + 18%));
-  -webkit-mask-image: radial-gradient(circle at 48% 52%, #000 var(--raio-grama), transparent calc(var(--raio-grama) + 18%));
+  /* microavanço de vitalidade (V1.2.1): um empurrãozinho contínuo e
+     pequeno (teto 6%) no raio já semanticamente liberado — nunca cria
+     cobertura antes do nível 0 (opacity fica 0 até então, então o bônus
+     não tem efeito visível antes da vegetação ser permitida). */
+  --raio-grama-efetivo: calc(var(--raio-grama) + min(var(--vitalidade, 0) * 0.3%, 6%));
+  mask-image: radial-gradient(circle at 48% 52%, #000 var(--raio-grama-efetivo), transparent calc(var(--raio-grama-efetivo) + 18%));
+  -webkit-mask-image: radial-gradient(circle at 48% 52%, #000 var(--raio-grama-efetivo), transparent calc(var(--raio-grama-efetivo) + 18%));
   transition: opacity 1100ms ease, -webkit-mask-image 1100ms ease, mask-image 1100ms ease;
 }
 .diorama-mundo[data-nivel-vegetacao='1'] .diorama-mundo-vegetacao { opacity: 0.75; --raio-grama: 22%; }
@@ -308,13 +313,43 @@
   100% { transform: translateX(85vw); opacity: 0; }
 }
 
-/* vitalidade (auditoria V1.2 §5): respiro visual bem discreto no mundo
-   inteiro quando a fila reproduz o evento de vitalidade — nunca compete
-   com um marco semântico (sem legenda, sem som, só isto). */
-.mundo-pulso-vitalidade { animation: diorama-vitalidade-pulso 420ms ease; }
-@keyframes diorama-vitalidade-pulso {
+/* vitalidade (V1.2.1): cada tick alterna QUAL coisa já existente pulsa —
+   nunca sempre a mesma, nunca cria nada novo. Reações bem discretas
+   (nunca competem com um marco semântico: sem legenda, sem som). */
+.mundo-pulso-vitalidade-agua .diorama-mundo-agua { animation: diorama-vitalidade-agua 420ms ease; }
+@keyframes diorama-vitalidade-agua {
+  /* sem 0%/100%: o navegador usa o filtro "de base" (já tiered pelo
+     nível semântico da água) como ponto de partida/chegada — só o meio
+     do pulso sobe o brilho, nunca reseta o tier atual. */
+  50% { filter: brightness(1.18) saturate(1.15); }
+}
+.mundo-pulso-vitalidade-ar .diorama-mundo-ar { animation: diorama-vitalidade-ar 420ms ease; }
+@keyframes diorama-vitalidade-ar {
+  0%, 100% { opacity: calc(0.5 + var(--vitalidade, 0) * 0.02); }
+  50% { opacity: calc(0.85 + var(--vitalidade, 0) * 0.02); }
+}
+.mundo-pulso-vitalidade-terra .diorama-mundo-terreno-poeira { animation: diorama-vitalidade-terra 420ms ease; }
+/* brilho mineral já respira continuamente (diorama-cristal-respiro) —
+   soma a animação em vez de substituir, senão o pulso corta o respiro. */
+.mundo-pulso-vitalidade-terra[data-nivel-terreno='2'] .diorama-mundo-terreno-brilho,
+.mundo-pulso-vitalidade-terra[data-nivel-terreno='3'] .diorama-mundo-terreno-brilho,
+.mundo-pulso-vitalidade-terra[data-nivel-terreno='4'] .diorama-mundo-terreno-brilho {
+  animation: diorama-cristal-respiro 5s ease-in-out infinite, diorama-vitalidade-terra 420ms ease;
+}
+@keyframes diorama-vitalidade-terra {
+  50% { filter: brightness(1.4); }
+}
+/* ember já respira continuamente (diorama-fogo-brasa) — mesma lógica. */
+.mundo-tem-fogo.mundo-pulso-vitalidade-fogo .diorama-mundo-fogo {
+  animation: diorama-fogo-brasa 2.6s ease-in-out infinite, diorama-vitalidade-fogo 420ms ease;
+}
+@keyframes diorama-vitalidade-fogo {
+  50% { transform: scale(1.35); filter: brightness(1.5); }
+}
+.mundo-pulso-vitalidade-cosmico { animation: diorama-vitalidade-cosmico 420ms ease; }
+@keyframes diorama-vitalidade-cosmico {
   0%, 100% { filter: brightness(1); }
-  50% { filter: brightness(1.06); }
+  50% { filter: brightness(1.05); }
 }
 
 /* ---- objetos: cada marco planta um elemento numa âncora fixa (x/y/z
@@ -478,7 +513,12 @@
   .diorama-mundo-terreno-poeira span,
   .mundo-tem-fogo .diorama-mundo-fogo,
   .diorama-mundo-ar span,
-  .mundo-pulso-vitalidade { animation: none; }
+  .mundo-pulso-vitalidade-agua .diorama-mundo-agua,
+  .mundo-pulso-vitalidade-ar .diorama-mundo-ar,
+  .mundo-pulso-vitalidade-terra .diorama-mundo-terreno-poeira,
+  .mundo-pulso-vitalidade-terra .diorama-mundo-terreno-brilho,
+  .mundo-pulso-vitalidade-fogo .diorama-mundo-fogo,
+  .mundo-pulso-vitalidade-cosmico { animation: none; }
   .diorama-objeto-img, .diorama-objeto-icone, .diorama-ilha, .diorama-mundo-agua,
   .diorama-mundo-vegetacao, .diorama-mundo-terreno, .geo-caminho,
   .diorama-mundo-terreno-brilho, .diorama-mundo-terreno-poeira,
