@@ -79,8 +79,10 @@ export const GEOGRAFIA_HTML = `
 // (árvore/fogueira/casa) usam ponto de contato na base (pé do asset
 // encostado no anchor); objetos "flutuantes" (estrela, borboleta) usam
 // centro. Assets com `img` são os do kit aprovado; sem `img` seguem como
-// placeholder emoji (famílias sem asset final nesta rodada: vida,
-// tecnologia, cósmico).
+// placeholder emoji. Round A1 (Assets V2) trocou vida + cósmico por arte
+// real; a família tecnologia é a única que ainda segue em emoji (Round A2).
+// `estrela` reaproveita o asset de marca `assets/decor/estrela.png` (não
+// vive em assets/diorama/).
 export const ELEMENTOS = {
   broto: {
     img: `${ASSETS}vegetacao-broto.png`, anim: 'nasce-do-solo', contato: 'base',
@@ -97,15 +99,15 @@ export const ELEMENTOS = {
   casa: {
     img: `${ASSETS}civilizacao-casa.png`, anim: 'monta', contato: 'base',
   },
-  borboleta: { conteudo: '🦋', anim: 'entra-voando', contato: 'centro' },
-  passaro: { conteudo: '🐦', anim: 'entra-voando', contato: 'centro' },
-  bicho: { conteudo: '🐇', anim: 'entra-andando', contato: 'base' },
+  borboleta: { img: `${ASSETS}vida-borboleta.png`, anim: 'entra-voando', contato: 'centro' },
+  passaro: { img: `${ASSETS}vida-passaro.png`, anim: 'entra-voando', contato: 'centro' },
+  bicho: { img: `${ASSETS}vida-bicho.png`, anim: 'entra-andando', contato: 'base' },
   ferramenta: { conteudo: '🔨', anim: 'aparece', contato: 'base' },
   engrenagem: { conteudo: '⚙️', anim: 'aparece', contato: 'base' },
   observatorio: { conteudo: '🔭', anim: 'monta', contato: 'base' },
   foguete: { conteudo: '🚀', anim: 'monta', contato: 'base' },
-  estrela: { conteudo: '⭐', anim: 'acende', contato: 'centro' },
-  fenomeno: { conteudo: '🌌', anim: 'acende', contato: 'centro' },
+  estrela: { img: 'assets/decor/estrela.png', anim: 'acende', contato: 'centro' },
+  fenomeno: { img: `${ASSETS}cosmico-fenomeno.png`, anim: 'acende', contato: 'centro' },
 };
 
 // ---- Composição: estado (família + nível) -> lista de {âncora,
@@ -122,15 +124,17 @@ export const COMPOSICAO = {
     3: [{ anchor: 'clareira_central', elemento: 'arvore', escala: 0.85 }],
   },
   vida: {
-    1: [{ anchor: 'margem_lago', elemento: 'borboleta', escala: 0.5 }],
+    1: [{ anchor: 'margem_lago', elemento: 'borboleta', escala: 0.58 }],
     2: [
-      { anchor: 'margem_lago', elemento: 'borboleta', escala: 0.5 },
-      { anchor: 'clareira_direita', elemento: 'bicho', escala: 0.55 },
+      { anchor: 'margem_lago', elemento: 'borboleta', escala: 0.58 },
+      { anchor: 'clareira_direita', elemento: 'bicho', escala: 0.66 },
     ],
     3: [
-      { anchor: 'margem_lago', elemento: 'passaro', escala: 0.55 },
-      { anchor: 'clareira_direita', elemento: 'bicho', escala: 0.6 },
-      { anchor: 'ceu_esquerda', elemento: 'passaro', escala: 0.4 },
+      { anchor: 'margem_lago', elemento: 'passaro', escala: 0.6 },
+      { anchor: 'clareira_direita', elemento: 'bicho', escala: 0.7 },
+      // pássaro do céu vai pro canto direito: o canto esquerdo é a âncora
+      // da 1ª estrela (cósmico N1) — com arte real os dois colidiam.
+      { anchor: 'ceu_direita', elemento: 'passaro', escala: 0.46 },
     ],
   },
   civilizacao: {
@@ -151,14 +155,14 @@ export const COMPOSICAO = {
     4: [{ anchor: 'alto_observatorio', elemento: 'foguete', escala: 0.6 }],
   },
   cosmico: {
-    1: [{ anchor: 'ceu_esquerda', elemento: 'estrela', escala: 0.5 }],
+    1: [{ anchor: 'ceu_esquerda', elemento: 'estrela', escala: 0.6 }],
     2: [
-      { anchor: 'ceu_esquerda', elemento: 'estrela', escala: 0.5 },
-      { anchor: 'ceu_direita', elemento: 'estrela', escala: 0.45 },
+      { anchor: 'ceu_esquerda', elemento: 'estrela', escala: 0.6 },
+      { anchor: 'ceu_direita', elemento: 'estrela', escala: 0.52 },
     ],
     3: [
-      { anchor: 'ceu_esquerda', elemento: 'estrela', escala: 0.5 },
-      { anchor: 'ceu_direita', elemento: 'fenomeno', escala: 0.55 },
+      { anchor: 'ceu_esquerda', elemento: 'estrela', escala: 0.6 },
+      { anchor: 'ceu_direita', elemento: 'fenomeno', escala: 1.35 },
     ],
   },
   // terreno e água não colocam objetos soltos — mudam a própria geografia
@@ -193,7 +197,12 @@ const DESLOCAMENTO_POR_FAMILIA = {
   vegetacao: { dx: 0, dy: 0 },
   civilizacao: { dx: 0, dy: 0 },
   tecnologia: { dx: 7, dy: -3 },
-  vida: { dx: 0, dy: -6 },
+  // vida tem tanto objetos flutuantes (borboleta/pássaro, contato:centro)
+  // quanto de chão (bicho/capivara, contato:base). Round A1: o lift foi
+  // reduzido de -6 pra -2 pra a capivara com arte real assentar no terreno
+  // sem flutuar; borboleta/pássaro seguem lendo como voo pela própria
+  // âncora (margem_lago / ceu_direita) e pelo contato:centro.
+  vida: { dx: 0, dy: -2 },
   cosmico: { dx: 0, dy: 0 },
   agua: { dx: 0, dy: 0 },
   terreno: { dx: 0, dy: 0 },
