@@ -139,7 +139,7 @@ export function montarDiorama({
       el.querySelector('.diorama-objeto-icone').textContent = def?.conteudo || '';
     }
     el.setAttribute('aria-label', T.dioramaFamilias[familia]);
-    const estilo = posicaoDoObjeto(familia, item.anchor);
+    const estilo = posicaoDoObjeto(familia, item.anchor, { dx: item.dx, dy: item.dy });
     if (estilo) {
       el.style.left = estilo.left;
       el.style.top = estilo.top;

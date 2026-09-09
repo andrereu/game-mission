@@ -127,14 +127,21 @@ export const COMPOSICAO = {
     1: [{ anchor: 'margem_lago', elemento: 'borboleta', escala: 0.58 }],
     2: [
       { anchor: 'margem_lago', elemento: 'borboleta', escala: 0.58 },
-      { anchor: 'clareira_direita', elemento: 'bicho', escala: 0.66 },
+      // dx/dy: ajuste fino da instância (% do palco) pra a capivara ficar
+      // sobre o planalto e não "empoleirada" na borda direita da ilha —
+      // não mexe na âncora nem no deslocamento da família.
+      {
+        anchor: 'clareira_direita', elemento: 'bicho', escala: 0.66, dx: -9, dy: -4,
+      },
     ],
     3: [
       { anchor: 'margem_lago', elemento: 'passaro', escala: 0.6 },
-      { anchor: 'clareira_direita', elemento: 'bicho', escala: 0.7 },
+      {
+        anchor: 'clareira_direita', elemento: 'bicho', escala: 0.7, dx: -9, dy: -4,
+      },
       // pássaro do céu vai pro canto direito: o canto esquerdo é a âncora
       // da 1ª estrela (cósmico N1) — com arte real os dois colidiam.
-      { anchor: 'ceu_direita', elemento: 'passaro', escala: 0.46 },
+      { anchor: 'ceu_direita', elemento: 'passaro', escala: 0.52 },
     ],
   },
   civilizacao: {
@@ -209,14 +216,17 @@ const DESLOCAMENTO_POR_FAMILIA = {
 };
 
 // única função de mapeamento anchor lógico -> posição de tela (§9 do
-// briefing): tudo (deslocamento por família incluso) passa por aqui —
-// nunca um offset manual espalhado dentro de um asset ou de um seletor
-// CSS específico de objeto.
-export function posicaoDoObjeto(familia, nomeAnchor) {
+// briefing): tudo (deslocamento por família + ajuste fino por instância na
+// COMPOSICAO) passa por aqui — nunca um offset manual espalhado dentro de um
+// asset ou de um seletor CSS específico de objeto. `ajuste` é o `{dx,dy}`
+// opcional de uma entrada da COMPOSICAO (em % do palco), pra assentar uma
+// instância específica sem mexer na âncora nem no deslocamento da família.
+export function posicaoDoObjeto(familia, nomeAnchor, ajuste = null) {
   const a = ANCHORS[nomeAnchor];
   if (!a) return null;
   const d = DESLOCAMENTO_POR_FAMILIA[familia] || { dx: 0, dy: 0 };
+  const j = ajuste || { dx: 0, dy: 0 };
   return {
-    left: `${a.x + d.dx}%`, top: `${a.y + d.dy}%`, zIndex: a.z,
+    left: `${a.x + d.dx + (j.dx || 0)}%`, top: `${a.y + d.dy + (j.dy || 0)}%`, zIndex: a.z,
   };
 }
