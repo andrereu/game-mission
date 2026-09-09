@@ -10,39 +10,47 @@
   overflow: hidden;
 }
 
+/* V1.3 §4: menos "caixa de interface pousada sobre o Diorama", mais céu
+   ao redor — mesma linguagem já usada em .barra-perfil-nome (texto
+   pousado direto sobre a cena, legível pelo text-shadow, sem fundo
+   sólido por trás). Título/descrição/Fechar continuam todos ali, só que
+   mais leves. */
 .diorama-cabecalho {
   position: relative;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 10px;
-  margin: 10px 10px 0;
-  padding: 12px 14px;
-  border-radius: 20px;
-  border: 1px solid rgba(150, 175, 255, 0.24);
-  background:
-    radial-gradient(120% 80% at 50% 0%, rgba(120, 150, 255, 0.14), transparent 65%),
-    color-mix(in srgb, var(--cor-drawer) 66%, transparent);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  box-shadow:
-    0 0 0 1px rgba(150, 175, 255, 0.08),
-    0 14px 30px -16px rgba(0, 0, 0, 0.65);
+  margin: 10px 12px 0;
+  padding: 4px 2px;
 }
-.diorama-titulo { margin: 0; font-size: 18px; font-weight: 800; letter-spacing: 0.2px; }
-.diorama-subtitulo { margin: 4px 0 0; font-size: 12px; opacity: 0.85; }
+.diorama-titulo {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.85), 0 0 18px rgba(120, 150, 255, 0.35);
+}
+.diorama-subtitulo {
+  margin: 3px 0 0;
+  font-size: 12px;
+  opacity: 0.85;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.85);
+}
 .diorama-fechar {
   flex-shrink: 0;
-  padding: 8px 14px;
+  padding: 7px 13px;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  background: radial-gradient(120% 140% at 50% 0%, rgba(255, 255, 255, 0.1), transparent 70%), rgba(10, 14, 26, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(10, 14, 26, 0.32);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   color: var(--cor-texto);
   font-size: 12.5px;
   cursor: pointer;
-  transition: transform 120ms ease, box-shadow 120ms ease;
+  transition: transform 120ms ease, background 120ms ease;
 }
-.diorama-fechar:hover { transform: translateY(-1px); box-shadow: 0 6px 14px -8px rgba(0, 0, 0, 0.6); }
+.diorama-fechar:hover { transform: translateY(-1px); background: rgba(10, 14, 26, 0.5); }
 
 /* ---- cena: céu cósmico (fundo-cosmico já cobre) + ilha flutuando ---- */
 .diorama-cena {
@@ -531,17 +539,19 @@
 }
 
 @media (min-width: 640px) {
-  .diorama-cabecalho { padding: 16px 20px; }
-  .diorama-titulo { font-size: 21px; }
-  /* tablet: escala intermediária, proporcional entre o teto do mobile e
-     os 40-50% do desktop — ~60-65% da largura útil do palco. */
-  .diorama-ilha { width: min(64%, 620px, 80vh); }
+  .diorama-cabecalho { margin: 14px 18px 0; }
+  .diorama-titulo { font-size: 19px; }
+  /* tablet (V1.3: "aumentar claramente"): protagonista de verdade — bem
+     mais que a metade da largura útil, ainda com boa margem cósmica. */
+  .diorama-ilha { width: min(72%, 700px, 80vh); }
 }
 
 @media (min-width: 1024px) {
-  /* desktop: ~40-50% da largura útil do palco (nunca um ícone central) —
-     mesmo centro visual, mesma geografia, só maior. O teto em px evita
-     que a ilha vire enorme em telas ultra-largas; o teto em vh evita
-     estourar a altura em janelas baixas/paisagem. */
-  .diorama-ilha { width: min(clamp(520px, 45vw, 760px), 80vh); }
+  /* desktop/tablet horizontal: ~40-50% da largura útil do palco (nunca
+     um ícone central) — mesmo centro visual, mesma geografia, só maior.
+     Piso alto (580px) garante que tablets em paisagem (~1024-1200px de
+     largura, onde 45vw sozinho ainda ficaria pequeno) também recebam uma
+     ilha claramente grande; o teto (820px) evita exagero em telas
+     ultra-largas; o teto em vh evita estourar a altura em janelas baixas. */
+  .diorama-ilha { width: min(clamp(580px, 45vw, 820px), 80vh); }
 }

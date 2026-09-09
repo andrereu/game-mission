@@ -233,47 +233,55 @@ export function montarDiorama({
     }
   }
 
-  // colapsa uma sequência longa (save que ficou muito tempo sem visitar o
-  // Diorama) num único "beat" por família — a criança ainda vê a vegetação
-  // virar bosque, só que numa transformação só, não N delas em fila. Mantém
-  // a "sequência curta" do briefing §6 mesmo com dezenas de marcos pendentes.
-  function agruparMarcosPorFamilia(fila) {
-    const agrupados = [];
-    const ultimoIndicePorFamilia = new Map();
-    for (const evento of fila) {
-      if (evento.tipo !== 'marco') { agrupados.push(evento); continue; }
-      const idx = ultimoIndicePorFamilia.get(evento.familia);
-      if (idx != null && agrupados[idx].tipo === 'marco') {
-        agrupados[idx] = { ...agrupados[idx], para: evento.para };
-      } else {
-        ultimoIndicePorFamilia.set(evento.familia, agrupados.length);
-        agrupados.push({ ...evento });
-      }
-    }
-    return agrupados;
-  }
-
-  // reproduz a fila em sequência curta (briefing §6) — idempotente: só
-  // avança `visto` depois de mostrar tudo, e cada chamada nova recalcula a
-  // fila a partir do que está persistido (nunca reabre o que já foi visto).
+  // reproduz a fila em sequência (idempotente: só avança `visto` depois de
+  // mostrar tudo, e cada chamada nova recalcula a partir do que está
+  // persistido — nunca reabre o que já foi visto). V1.3: nunca colapsa
+  // vários marcos da MESMA família num "beat" só, mesmo quando uma única
+  // descoberta legitimamente cruza mais de um estágio de uma vez (ex.:
+  // "rio" satisfaz o limiar barato de N1 e o marcador semântico de N2 no
+  // mesmo resolve) — cada nível é reproduzido como sua própria transição
+  // distinta e compreensível (auditoria V1.3 §0). NIVEIS_POR_FAMILIA=4 é
+  // um teto baixo, então o pior caso por família continua curto; o motor
+  // já garante no máximo 1 evento de vitalidade por visita.
   async function reproduzirPendentes() {
     if (reproduzindo) return;
-    const fila = agruparMarcosPorFamilia(pendentes());
+    const fila = pendentes();
     if (!fila.length) return;
     reproduzindo = true;
+    // progresso PARCIAL: começa no que já era visto e só avança evento a
+    // evento, à medida que cada um realmente termina de tocar — nunca o
+    // estado atual inteiro de uma vez. Se a criança fechar o Diorama no
+    // meio da sequência, o que ainda não tocou continua pendente pra
+    // próxima visita (V1.3 §1: "preservar o estado pendente corretamente").
+    const vistoAntes = progressoVisto();
+    const progresso = {
+      niveis: { ...(vistoAntes?.niveis || {}) },
+      era: vistoAntes?.era ?? null,
+      vitalidade: vistoAntes?.vitalidade || 0,
+    };
     try {
+      // pequena pausa de orientação (V1.3 §2): a criança já viu o estado
+      // anterior renderizado (ver abrir()) antes de qualquer coisa mudar.
+      await esperar(500);
       for (const evento of fila) {
         if (!overlay) break; // fechou no meio da sequência
-        // eslint-disable-next-line no-await-in-loop
-        if (evento.tipo === 'era') await tocarEventoEra(evento);
-        // eslint-disable-next-line no-await-in-loop
-        else if (evento.tipo === 'vitalidade') await tocarEventoVitalidade(evento);
-        // eslint-disable-next-line no-await-in-loop
-        else await tocarEventoMarco(evento);
+        if (evento.tipo === 'era') {
+          // eslint-disable-next-line no-await-in-loop
+          await tocarEventoEra(evento);
+          progresso.era = evento.era;
+        } else if (evento.tipo === 'vitalidade') {
+          // eslint-disable-next-line no-await-in-loop
+          await tocarEventoVitalidade(evento);
+          progresso.vitalidade = evento.para;
+        } else {
+          // eslint-disable-next-line no-await-in-loop
+          await tocarEventoMarco(evento);
+          progresso.niveis[evento.familia] = evento.para;
+        }
       }
     } finally {
       reproduzindo = false;
-      store.setDiorama(proximoProgressoVisto(estadoAtual()));
+      store.setDiorama(progresso);
     }
   }
 

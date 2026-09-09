@@ -119,7 +119,7 @@
 
 /* cluster de ações à direita: cada botão continua uma orbe individual —
    só o espaçamento é compartilhado, sem virar uma segunda caixa/toolbar */
-.barra-acoes { display: inline-flex; align-items: center; gap: 8px; }
+.barra-acoes { position: relative; display: inline-flex; align-items: center; gap: 8px; }
 
 /* botão vira círculo discreto — ícone já reconhecível, rótulo some visualmente
    (fica acessível pra leitor de tela, não precisa mais só esconder <520px) */
@@ -169,20 +169,68 @@ body[data-era="ficcao"]     .barra-botao:hover, body[data-era="ficcao"]     .bar
   clip-path: inset(50%);
   white-space: nowrap;
 }
-/* indicador discreto de "algo aconteceu no mundo" (Diorama) — marco
-   pendente ainda não visto. Nunca abre nada sozinho, só sinaliza. */
+/* "Seu mundo mudou" (V1.3 §1): convite lúdico, nunca uma notificação de
+   app — uma estrelinha pulsando no canto do botão, nunca um badge
+   numérico. Nunca abre nada sozinho, só sinaliza que algo aconteceu. */
 .barra-botao-ponto {
   position: absolute;
-  top: -1px;
-  right: -1px;
-  width: 10px;
-  height: 10px;
+  top: -4px;
+  right: -4px;
+  width: 14px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  line-height: 1;
   border-radius: 50%;
-  background: var(--era-cultura);
-  box-shadow: 0 0 6px 1px color-mix(in srgb, var(--era-cultura) 70%, transparent), 0 0 0 2px var(--cor-fundo);
+  color: #ffe9a8;
+  text-shadow: 0 0 6px rgba(255, 220, 140, 0.9);
+  filter: drop-shadow(0 0 4px rgba(255, 210, 110, 0.75));
+  animation: diorama-convite-estrela 2.2s ease-in-out infinite;
   /* sobrescreve o clip-path sr-only herdado da regra "span" acima */
   clip-path: none !important;
   overflow: visible !important;
+}
+@keyframes diorama-convite-estrela {
+  0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.85; }
+  50% { transform: scale(1.22) rotate(8deg); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .barra-botao-ponto { animation: none; }
+}
+
+/* balão passageiro com o texto curto — só existe onde há espaço de
+   verdade (flutuando sobre a cena, não espremido nos 36px do botão) e
+   nunca fica preso: aparece uma vez quando a pendência nasce e some
+   sozinho, ou no instante em que o indicador é resolvido. */
+.diorama-convite {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 18px;
+  transform: translate(-50%, -4px);
+  z-index: 5;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 224, 170, 0.4);
+  background:
+    radial-gradient(120% 140% at 50% 0%, rgba(255, 224, 170, 0.16), transparent 70%),
+    rgba(10, 14, 26, 0.82);
+  color: var(--cor-texto);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 8px 18px -10px rgba(0, 0, 0, 0.7);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 320ms ease, transform 320ms ease;
+}
+.diorama-convite-visivel {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+@media (prefers-reduced-motion: reduce) {
+  .diorama-convite { transition: opacity 120ms linear; }
 }
 
 /* indicador de rede: dot + texto, agora inline na barra */

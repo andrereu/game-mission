@@ -268,15 +268,52 @@ async function iniciar() {
   });
   diorama.garantirBootstrap();
   const elDioramaPonto = elDiorama.querySelector('.barra-botao-ponto');
+  const elDioramaConvite = document.getElementById('diorama-convite');
+  if (elDioramaConvite) elDioramaConvite.textContent = T.dioramaMundoMudou;
+  let conviteJaMostradoParaEstaPendencia = false;
+  let timerConvite = null;
+  // "Seu mundo mudou" (V1.3 §1): nunca um badge numérico, nunca abre
+  // sozinho — só um sinal lúdico e discreto (estrela/glow no botão) que
+  // some quando a visita reproduz os eventos pendentes de verdade (ver
+  // store.setDiorama incremental em ui/diorama.js, que só marca como
+  // visto o que realmente foi mostrado). O texto curto só aparece como um
+  // balão flutuante passageiro — uma vez por pendência nova, seja ela
+  // criada nesta sessão (descoberta ao vivo) ou já existente ao abrir o
+  // jogo (perfil voltando com pendência de uma sessão anterior) — e nunca
+  // fica preso permanentemente no HUD apertado da barra.
   function atualizarIndicadorDiorama() {
-    if (elDioramaPonto) elDioramaPonto.hidden = !diorama.temPendentes();
+    const pendente = diorama.temPendentes();
+    if (elDioramaPonto) elDioramaPonto.hidden = !pendente;
+    if (pendente && !conviteJaMostradoParaEstaPendencia) {
+      conviteJaMostradoParaEstaPendencia = true;
+      if (elDioramaConvite) {
+        elDioramaConvite.hidden = false;
+        elDioramaConvite.classList.add('diorama-convite-visivel');
+        clearTimeout(timerConvite);
+        timerConvite = setTimeout(() => {
+          elDioramaConvite.classList.remove('diorama-convite-visivel');
+        }, 4200);
+      }
+      // Modo Pequenos: sinal visual já basta, mas uma voz curta ajuda quem
+      // ainda não lê (nunca depende da leitura pra entender que algo mudou).
+      if (modoPequenos) audio?.falarSelecao?.(T.dioramaMundoMudou);
+    }
+    if (!pendente) {
+      conviteJaMostradoParaEstaPendencia = false;
+      if (elDioramaConvite) {
+        elDioramaConvite.hidden = true;
+        elDioramaConvite.classList.remove('diorama-convite-visivel');
+        clearTimeout(timerConvite);
+      }
+    }
   }
   atualizarIndicadorDiorama();
   store.on('descoberta:nova', atualizarIndicadorDiorama);
-  // 'diorama:mudou' dispara quando a visita termina de reproduzir a fila e
-  // persiste o progresso visto (ver store.setDiorama em ui/diorama.js) —
-  // é o sinal certo pra apagar o indicador, não o clique em si (a
-  // reprodução ainda está rodando quando o clique acontece).
+  // 'diorama:mudou' dispara toda vez que a visita persiste progresso — seja
+  // ao terminar a fila inteira, seja ao ser interrompida no meio (ver
+  // reproduzirPendentes em ui/diorama.js, que só marca como visto até onde
+  // realmente reproduziu) — em ambos os casos é o sinal certo pra
+  // recalcular o indicador, nunca o clique em si.
   store.on('diorama:mudou', atualizarIndicadorDiorama);
   elDiorama.addEventListener('click', () => diorama.abrir());
 
