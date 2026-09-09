@@ -102,6 +102,7 @@
 .diorama-mundo-terreno,
 .diorama-mundo-agua,
 .diorama-mundo-agua-nascente,
+.diorama-mundo-cachoeira,
 .diorama-mundo-vegetacao,
 .diorama-mundo-vegetacao-rala {
   position: absolute;
@@ -193,6 +194,69 @@
 .diorama-mundo[data-nivel-agua='3'] .diorama-mundo-agua-fluxo { opacity: 0.72; --raio-fluxo: 62%; animation-duration: 4.4s; }
 .diorama-mundo[data-nivel-agua='4'] .diorama-mundo-agua-fluxo { opacity: 0.9; --raio-fluxo: 100%; animation-duration: 2.8s; }
 @media (prefers-reduced-motion: reduce) { .diorama-mundo-agua-fluxo { animation: none; } }
+
+/* cachoeira forte (Round B, passo 4) — layer isolada derivada da MESMA
+   agua-layer.png canônica (só a queda: lip -> base, corpo alargado,
+   espuma reforçada). Registrada pixel a pixel; ponto de saída na borda
+   frontal idêntico ao canônico. Aparece só quando o rio já é cheio:
+   N3 = cascata começando (fraca), N4 = queda caudalosa (cheia). É o que
+   dá o salto perceptível N3 -> N4. z-index 2 = acima do terreno, abaixo
+   do caminho (z8) e de todos os objetos (z6+). */
+.diorama-mundo-cachoeira {
+  z-index: 2;
+  opacity: 0;
+  /* origem = centro/base da própria queda (borda_cachoeira ≈ 63%, 84%) —
+     escalar a layer encolhe o filete NO LUGAR, sem mexer no ponto de
+     saída da borda frontal. */
+  transform-origin: 63% 84%;
+  transform: scaleX(0.62) scaleY(0.8);
+  transition: opacity 1000ms ease, filter 900ms ease, transform 900ms ease;
+}
+.diorama-mundo[data-nivel-agua='3'] .diorama-mundo-cachoeira {
+  opacity: 0.5;
+  transform: scaleX(0.66) scaleY(0.82);
+  filter: brightness(0.9) saturate(0.82);
+}
+.diorama-mundo[data-nivel-agua='4'] .diorama-mundo-cachoeira {
+  opacity: 1;
+  transform: scaleX(1) scaleY(1);
+  filter: brightness(calc(1.06 + var(--vitalidade, 0) * 0.005)) saturate(1.12);
+}
+.mundo-pulso-agua .diorama-mundo-cachoeira { animation: diorama-agua-pulso 700ms ease; }
+
+/* névoa/spray na base da queda — só CSS (radial-gradient), respiro leve.
+   Elipse contida bem dentro da ponta frontal da ilha: não vaza para o
+   fundo cósmico (stops transparentes muito antes das bordas do palco).
+   Some com prefers-reduced-motion. */
+.diorama-mundo-cachoeira-mist {
+  position: absolute;
+  left: 47%;
+  top: 78%;
+  width: 32%;
+  height: 16%;
+  z-index: 3;
+  pointer-events: none;
+  opacity: 0;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 45%,
+    rgba(240, 250, 255, 0.6) 0%,
+    rgba(232, 247, 255, 0.28) 34%,
+    rgba(224, 244, 255, 0.08) 60%,
+    transparent 78%);
+  filter: blur(3px);
+  transition: opacity 1000ms ease;
+  animation: diorama-mist-respiro 5.5s ease-in-out infinite;
+}
+@keyframes diorama-mist-respiro {
+  0%, 100% { transform: translateY(2%) scale(0.96); opacity: var(--mist-op, 0); }
+  50% { transform: translateY(-4%) scale(1.06); opacity: calc(var(--mist-op, 0) * 1.25); }
+}
+.diorama-mundo[data-nivel-agua='3'] .diorama-mundo-cachoeira-mist { --mist-op: 0.2; opacity: 0.2; }
+.diorama-mundo[data-nivel-agua='4'] .diorama-mundo-cachoeira-mist { --mist-op: 0.52; opacity: 0.52; }
+@media (prefers-reduced-motion: reduce) {
+  .diorama-mundo-cachoeira { animation: none; }
+  .diorama-mundo-cachoeira-mist { animation: none; }
+}
 
 /* cobertura verde: progressão FÍSICA de densidade (Round B) —
    N0 sem cobertura -> N1 tufos/rala -> N2 cobertura baixa -> N3 cheia ->

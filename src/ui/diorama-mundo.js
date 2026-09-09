@@ -64,6 +64,8 @@ export const GEOGRAFIA_HTML = `
 <img class="diorama-mundo-agua-nascente" src="${ASSETS}agua-nascente.png" alt="" aria-hidden="true" />
 <img class="diorama-mundo-agua" src="${ASSETS}agua-layer.png" alt="" aria-hidden="true" />
 <div class="diorama-mundo-agua-fluxo" aria-hidden="true"></div>
+<img class="diorama-mundo-cachoeira" src="${ASSETS}agua-cachoeira-forte.png" alt="" aria-hidden="true" />
+<div class="diorama-mundo-cachoeira-mist" aria-hidden="true"></div>
 <img class="diorama-mundo-vegetacao-rala" src="${ASSETS}vegetacao-rala.png" alt="" aria-hidden="true" />
 <img class="diorama-mundo-vegetacao" src="${ASSETS}vegetacao-layer.png" alt="" aria-hidden="true" />
 <svg class="diorama-mundo-caminho" viewBox="0 0 ${TERRENO_LARGURA} ${TERRENO_ALTURA}" preserveAspectRatio="none" aria-hidden="true">

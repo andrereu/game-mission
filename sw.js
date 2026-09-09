@@ -3,7 +3,7 @@
 // fetch: cache-first para estático mesmo-origem; rede direta para /api/.
 // activate: apaga versões antigas do cache.
 
-const VERSAO = 'mistura-v46';
+const VERSAO = 'mistura-v47';
 
 const PRECACHE = [
   './',
@@ -101,6 +101,7 @@ const PRECACHE = [
   'assets/diorama/vegetacao-arvore.png',
   'assets/diorama/vegetacao-rala.png',
   'assets/diorama/agua-nascente.png',
+  'assets/diorama/agua-cachoeira-forte.png',
   'assets/diorama/civilizacao-fogueira.png',
   'assets/diorama/civilizacao-casa.png',
   'assets/diorama/vida-borboleta.png',
