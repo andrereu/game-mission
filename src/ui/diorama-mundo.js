@@ -165,17 +165,29 @@ export const COMPOSICAO = {
   // Tecnologia cumulativa/evolutiva (Round A2): N1 e N2 são a MESMA oficina
   // evoluindo no mesmo ponto (N2 substitui N1); N3 mantém o engenho e ADICIONA
   // o observatório no pico; N4 mantém os dois e ADICIONA o foguete no arco.
+  // dx:8 dy:-4 (ajuste de instância, % do palco): afasta a oficina/engenho da
+  // fogueira de Civilização (mesma âncora clareira_esquerda) — não mexe na
+  // âncora nem no deslocamento da família. Aplicado igual em N1 e N2+ pra o
+  // ponto da oficina não "pular" ao evoluir.
   tecnologia: {
-    1: [{ anchor: 'clareira_esquerda', elemento: 'ferramenta', escala: 0.95 }],
-    2: [{ anchor: 'clareira_esquerda', elemento: 'engrenagem', escala: 1.05 }],
+    1: [{
+      anchor: 'clareira_esquerda', elemento: 'ferramenta', escala: 0.95, dx: 8, dy: -4,
+    }],
+    2: [{
+      anchor: 'clareira_esquerda', elemento: 'engrenagem', escala: 1.05, dx: 8, dy: -4,
+    }],
     3: [
-      { anchor: 'clareira_esquerda', elemento: 'engrenagem', escala: 1.05 },
+      {
+        anchor: 'clareira_esquerda', elemento: 'engrenagem', escala: 1.05, dx: 8, dy: -4,
+      },
       {
         anchor: 'alto_observatorio', elemento: 'observatorio', escala: 0.9, dx: -4, dy: 15,
       },
     ],
     4: [
-      { anchor: 'clareira_esquerda', elemento: 'engrenagem', escala: 1.05 },
+      {
+        anchor: 'clareira_esquerda', elemento: 'engrenagem', escala: 1.05, dx: 8, dy: -4,
+      },
       {
         anchor: 'alto_observatorio', elemento: 'observatorio', escala: 0.9, dx: -4, dy: 15,
       },
@@ -215,7 +227,7 @@ export const NIVEL_CAMINHO_CIVILIZACAO = 2;
 export const ENTRADA_PONTE = {
   familia: 'civilizacao',
   item: {
-    anchor: 'ponte', elemento: 'ponte', escala: 0.95, dx: -3, dy: 0,
+    anchor: 'ponte', elemento: 'ponte', escala: 1.08, dx: -3, dy: 0,
   },
 };
 
