@@ -61,7 +61,10 @@ export const GEOGRAFIA_HTML = `
 <div class="diorama-mundo-terreno-poeira" aria-hidden="true">
   <span></span><span></span><span></span>
 </div>
+<img class="diorama-mundo-agua-nascente" src="${ASSETS}agua-nascente.png" alt="" aria-hidden="true" />
 <img class="diorama-mundo-agua" src="${ASSETS}agua-layer.png" alt="" aria-hidden="true" />
+<div class="diorama-mundo-agua-fluxo" aria-hidden="true"></div>
+<img class="diorama-mundo-vegetacao-rala" src="${ASSETS}vegetacao-rala.png" alt="" aria-hidden="true" />
 <img class="diorama-mundo-vegetacao" src="${ASSETS}vegetacao-layer.png" alt="" aria-hidden="true" />
 <svg class="diorama-mundo-caminho" viewBox="0 0 ${TERRENO_LARGURA} ${TERRENO_ALTURA}" preserveAspectRatio="none" aria-hidden="true">
   <path class="geo-caminho" d="M280,425 C340,395 400,375 432,350 C500,375 600,395 684,417" fill="none" stroke="#caa06a" stroke-width="7" stroke-linecap="round" stroke-dasharray="620" stroke-dashoffset="620" />

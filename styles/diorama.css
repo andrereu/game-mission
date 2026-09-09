@@ -101,7 +101,9 @@
 }
 .diorama-mundo-terreno,
 .diorama-mundo-agua,
-.diorama-mundo-vegetacao {
+.diorama-mundo-agua-nascente,
+.diorama-mundo-vegetacao,
+.diorama-mundo-vegetacao-rala {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -111,57 +113,131 @@
   user-select: none;
 }
 .diorama-mundo-terreno { z-index: 1; transition: filter 900ms ease; }
-.diorama-mundo-agua { z-index: 2; transition: filter 700ms ease, -webkit-mask-image 900ms ease, mask-image 900ms ease; }
-.diorama-mundo-vegetacao { z-index: 3; opacity: 0; transition: opacity 1100ms ease; }
+.diorama-mundo-agua-nascente { z-index: 2; opacity: 0; transition: opacity 900ms ease, filter 700ms ease, -webkit-mask-image 900ms ease, mask-image 900ms ease; }
+.diorama-mundo-agua { z-index: 2; opacity: 0; transition: opacity 900ms ease, filter 700ms ease, -webkit-mask-image 900ms ease, mask-image 900ms ease; }
+.diorama-mundo-vegetacao-rala { z-index: 3; opacity: 0; transition: opacity 1100ms ease, -webkit-mask-image 1100ms ease, mask-image 1100ms ease; }
+.diorama-mundo-vegetacao { z-index: 3; opacity: 0; transition: opacity 1100ms ease, filter 1100ms ease; }
 
-/* água: progressão semântica real (auditoria V1.2 §1/§3) — nascente/poça
-   primordial (N0) -> primeiro curso (N1) -> rio/lago desenvolvido (N2) ->
-   curso completo (N3) -> cachoeira (N4). A imagem é sempre a MESMA (o
-   sistema hídrico inteiro), só a máscara circular ancorada na nascente
-   cresce — nível 0 revela só a poça, nunca o rio/lago/cachoeira prontos
-   (corrige o bug relatado no playtest: perfil novo não nasce mais com
-   rio completo). Centro da máscara = ANCHORS.nascente em
-   src/ui/diorama-mundo.js (40%, 28%) — mantidos em sincronia manualmente. */
+/* água: progressão FÍSICA (Round B) — não é só "quanto revela", é volume,
+   largura, brilho e sensação de fluxo. Duas layers derivadas da MESMA
+   arte canônica (agua-layer.png), registradas pixel a pixel:
+   - agua-nascente.png = poça primordial + fio fino (N0/N1);
+   - agua-layer.png    = sistema hídrico com largura/lago (N2..N4).
+   O crossfade nascente->layer em N1->N2 é o único ponto onde a LARGURA
+   muda de verdade. Brilho/saturação escalam por nível; a sensação de
+   fluxo vem de .diorama-mundo-agua-fluxo (shimmer CSS, sem asset).
+   Centro das máscaras = ANCHORS.nascente (40%, 28%). */
+.diorama-mundo-agua-nascente {
+  --raio-nasc: 6%;
+  mask-image: radial-gradient(circle at 40% 28%, #000 var(--raio-nasc), transparent calc(var(--raio-nasc) + 8%));
+  -webkit-mask-image: radial-gradient(circle at 40% 28%, #000 var(--raio-nasc), transparent calc(var(--raio-nasc) + 8%));
+}
+.diorama-mundo[data-nivel-agua='0'] .diorama-mundo-agua-nascente { opacity: 0.92; --raio-nasc: 5%; filter: saturate(0.7) brightness(0.94); }
+.diorama-mundo[data-nivel-agua='1'] .diorama-mundo-agua-nascente { opacity: 1; --raio-nasc: 17%; filter: saturate(0.95) brightness(1); }
+.diorama-mundo[data-nivel-agua='2'] .diorama-mundo-agua-nascente { opacity: 0.22; --raio-nasc: 22%; }
+
 .diorama-mundo-agua {
-  --raio-agua: 5%;
+  --raio-agua: 30%;
   mask-image: radial-gradient(circle at 40% 28%, #000 var(--raio-agua), transparent calc(var(--raio-agua) + 10%));
   -webkit-mask-image: radial-gradient(circle at 40% 28%, #000 var(--raio-agua), transparent calc(var(--raio-agua) + 10%));
-  filter: brightness(calc(0.95 + var(--vitalidade, 0) * 0.006)) saturate(0.9);
+  filter: brightness(calc(1.05 + var(--vitalidade, 0) * 0.006)) saturate(1.05);
 }
-.diorama-mundo[data-nivel-agua='0'] .diorama-mundo-agua { --raio-agua: 5%; }
-.diorama-mundo[data-nivel-agua='1'] .diorama-mundo-agua { --raio-agua: 15%; filter: brightness(calc(1.02 + var(--vitalidade, 0) * 0.006)) saturate(1.02); }
-.diorama-mundo[data-nivel-agua='2'] .diorama-mundo-agua { --raio-agua: 30%; filter: brightness(calc(1.08 + var(--vitalidade, 0) * 0.006)) saturate(1.14); }
-.diorama-mundo[data-nivel-agua='3'] .diorama-mundo-agua { --raio-agua: 55%; filter: brightness(calc(1.14 + var(--vitalidade, 0) * 0.006)) saturate(1.24); }
-.diorama-mundo[data-nivel-agua='4'] .diorama-mundo-agua { --raio-agua: 100%; filter: brightness(calc(1.18 + var(--vitalidade, 0) * 0.006)) saturate(1.32); }
-.mundo-pulso-agua .diorama-mundo-agua { animation: diorama-agua-pulso 700ms ease; }
+.diorama-mundo[data-nivel-agua='2'] .diorama-mundo-agua { opacity: 1; --raio-agua: 30%; filter: brightness(calc(1.06 + var(--vitalidade, 0) * 0.006)) saturate(1.07); }
+.diorama-mundo[data-nivel-agua='3'] .diorama-mundo-agua { opacity: 1; --raio-agua: 46%; filter: brightness(calc(1.14 + var(--vitalidade, 0) * 0.006)) saturate(1.24); }
+.diorama-mundo[data-nivel-agua='4'] .diorama-mundo-agua { opacity: 1; --raio-agua: 100%; filter: brightness(calc(1.2 + var(--vitalidade, 0) * 0.006)) saturate(1.34); }
+.mundo-pulso-agua .diorama-mundo-agua,
+.mundo-pulso-agua .diorama-mundo-agua-nascente { animation: diorama-agua-pulso 700ms ease; }
 @keyframes diorama-agua-pulso {
   0%, 100% { filter: brightness(1.1) saturate(1.1); }
   45% { filter: brightness(1.55) saturate(1.6); }
 }
 
-/* cobertura verde: revela a PARTIR da clareira central (onde a árvore
-   nasce), crescendo por raio conforme o nível sobe — nunca cobre as
-   rochas/monte/arco porque a própria camada já só existe nos dois campos
-   de grama extraídos da referência aprovada. */
+/* sensação de fluxo: brilho translúcido correndo na diagonal do curso,
+   mascarado pelo mesmo raio da água. Quanto mais alto o nível, mais
+   rápido corre (rio caudaloso). Sem asset — só CSS. Some com
+   prefers-reduced-motion. */
+.diorama-mundo-agua-fluxo {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0;
+  --raio-fluxo: 30%;
+  background: repeating-linear-gradient(118deg,
+    transparent 0 22px,
+    rgba(233, 249, 255, 0.16) 22px 30px,
+    transparent 30px 52px);
+  mix-blend-mode: soft-light;
+  /* dois masks compostos: a SILHUETA da água (agua-layer.png) ∩ o raio
+     revelado por nível — o shimmer só aparece EM CIMA da água revelada,
+     nunca sobre terra, rocha ou o fundo cósmico. */
+  mask-image:
+    url("../assets/diorama/agua-layer.png"),
+    radial-gradient(circle at 40% 28%, #000 var(--raio-fluxo), transparent calc(var(--raio-fluxo) + 12%));
+  mask-composite: intersect;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-image:
+    url("../assets/diorama/agua-layer.png"),
+    radial-gradient(circle at 40% 28%, #000 var(--raio-fluxo), transparent calc(var(--raio-fluxo) + 12%));
+  -webkit-mask-composite: source-in;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+  animation: diorama-agua-fluxo 6s linear infinite;
+  transition: opacity 900ms ease, -webkit-mask-image 900ms ease, mask-image 900ms ease;
+}
+@keyframes diorama-agua-fluxo { to { background-position: 140px 46px; } }
+.diorama-mundo[data-nivel-agua='2'] .diorama-mundo-agua-fluxo { opacity: 0.5; --raio-fluxo: 30%; animation-duration: 7s; }
+.diorama-mundo[data-nivel-agua='3'] .diorama-mundo-agua-fluxo { opacity: 0.72; --raio-fluxo: 62%; animation-duration: 4.4s; }
+.diorama-mundo[data-nivel-agua='4'] .diorama-mundo-agua-fluxo { opacity: 0.9; --raio-fluxo: 100%; animation-duration: 2.8s; }
+@media (prefers-reduced-motion: reduce) { .diorama-mundo-agua-fluxo { animation: none; } }
+
+/* cobertura verde: progressão FÍSICA de densidade (Round B) —
+   N0 sem cobertura -> N1 tufos/rala -> N2 cobertura baixa -> N3 cheia ->
+   N4 mais volumosa/viva. Duas layers derivadas da MESMA arte canônica
+   (vegetacao-layer.png), footprint alfa IDÊNTICO (dois campos, furos das
+   rochas/leito — nunca cobre monte/arco/água):
+   - vegetacao-rala.png = tufos esparsos com solo aparente (N1, some em N2);
+   - vegetacao-layer.png = grama cheia (N2..N4).
+   z-index 3: SEMPRE abaixo do caminho (z8), da ponte (z12) e de todos os
+   objetos (z6+) — a grama nunca "engole" oficina/casa/ponte/etc, no pior
+   caso vira gramado atrás deles. "Viva" no N4 é só filtro/respiro CSS
+   (sem asset). */
+.diorama-mundo-vegetacao-rala,
 .diorama-mundo-vegetacao {
   --raio-grama: 0%;
-  /* microavanço de vitalidade (V1.2.1): um empurrãozinho contínuo e
-     pequeno (teto 6%) no raio já semanticamente liberado — nunca cria
-     cobertura antes do nível 0 (opacity fica 0 até então, então o bônus
-     não tem efeito visível antes da vegetação ser permitida). */
+  /* microavanço de vitalidade (V1.2.1): teto 6% no raio já liberado. */
   --raio-grama-efetivo: calc(var(--raio-grama) + min(var(--vitalidade, 0) * 0.3%, 6%));
   mask-image: radial-gradient(circle at 48% 52%, #000 var(--raio-grama-efetivo), transparent calc(var(--raio-grama-efetivo) + 18%));
   -webkit-mask-image: radial-gradient(circle at 48% 52%, #000 var(--raio-grama-efetivo), transparent calc(var(--raio-grama-efetivo) + 18%));
-  transition: opacity 1100ms ease, -webkit-mask-image 1100ms ease, mask-image 1100ms ease;
 }
-.diorama-mundo[data-nivel-vegetacao='1'] .diorama-mundo-vegetacao { opacity: 0.75; --raio-grama: 22%; }
-.diorama-mundo[data-nivel-vegetacao='2'] .diorama-mundo-vegetacao { opacity: 0.9; --raio-grama: 42%; }
-.diorama-mundo[data-nivel-vegetacao='3'] .diorama-mundo-vegetacao,
-.diorama-mundo[data-nivel-vegetacao='4'] .diorama-mundo-vegetacao { opacity: 1; --raio-grama: 85%; }
-.mundo-pulso-vegetacao .diorama-mundo-vegetacao { animation: diorama-grama-pulso 900ms ease; }
+
+/* N1: só a rala. N2: crossfade rala->cheia. N3+: só a cheia. */
+.diorama-mundo[data-nivel-vegetacao='1'] .diorama-mundo-vegetacao-rala { opacity: 1; --raio-grama: 24%; }
+.diorama-mundo[data-nivel-vegetacao='2'] .diorama-mundo-vegetacao-rala { opacity: 0.35; --raio-grama: 42%; }
+
+.diorama-mundo[data-nivel-vegetacao='2'] .diorama-mundo-vegetacao { opacity: 0.7; --raio-grama: 42%; filter: brightness(0.97); }
+.diorama-mundo[data-nivel-vegetacao='3'] .diorama-mundo-vegetacao { opacity: 1; --raio-grama: 80%; filter: saturate(1.05); }
+.diorama-mundo[data-nivel-vegetacao='4'] .diorama-mundo-vegetacao {
+  opacity: 1;
+  --raio-grama: 88%;
+  filter: saturate(1.12) brightness(1.03) drop-shadow(0 1px 1px rgba(0, 0, 0, 0.22));
+  animation: diorama-grama-viva 7.5s ease-in-out infinite;
+}
+@keyframes diorama-grama-viva {
+  0%, 100% { filter: saturate(1.12) brightness(1.03) drop-shadow(0 1px 1px rgba(0, 0, 0, 0.22)); }
+  50% { filter: saturate(1.2) brightness(1.06) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.26)); }
+}
+.mundo-pulso-vegetacao .diorama-mundo-vegetacao,
+.mundo-pulso-vegetacao .diorama-mundo-vegetacao-rala { animation: diorama-grama-pulso 900ms ease; }
 @keyframes diorama-grama-pulso {
   0%, 100% { filter: brightness(1); }
   45% { filter: brightness(1.35) saturate(1.3); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .diorama-mundo[data-nivel-vegetacao='4'] .diorama-mundo-vegetacao { animation: none; }
 }
 
 /* caminho: só existe visualmente a partir do nível de civilização que o
