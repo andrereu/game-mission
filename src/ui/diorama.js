@@ -93,8 +93,26 @@ export function montarDiorama({
   function aplicarNivelVegetacao(nivel) {
     if (mundoEl) mundoEl.dataset.nivelVegetacao = String(nivel);
   }
+  function aplicarNivelTerreno(nivel) {
+    if (mundoEl) mundoEl.dataset.nivelTerreno = String(nivel);
+  }
   function aplicarCaminho(nivelCivilizacao) {
     mundoEl?.classList.toggle('mundo-tem-caminho', nivelCivilizacao >= NIVEL_CAMINHO_CIVILIZACAO);
+  }
+  // elementos primários (V1.2 §1/§2): fogo/ar têm manifestação própria,
+  // nunca dependente da família genérica "terreno" — liga/desliga a
+  // decoração ambiente conforme os itens-base realmente existirem no save
+  // (hoje sempre true depois do bootstrap, mas nunca assumido aqui).
+  function aplicarElementosPrimarios(elementosPrimarios) {
+    if (!mundoEl) return;
+    mundoEl.classList.toggle('mundo-tem-fogo', Boolean(elementosPrimarios?.fogo));
+    mundoEl.classList.toggle('mundo-tem-ar', Boolean(elementosPrimarios?.ar));
+  }
+  // vitalidade (V1.2 §5): só intensifica o que já existe — nunca cria
+  // objeto novo. Uma custom property contínua, não um data-attribute
+  // discreto, porque é um "quanto", não um estágio com asset próprio.
+  function aplicarVitalidade(vitalidade) {
+    mundoEl?.style.setProperty('--vitalidade', String(vitalidade || 0));
   }
 
   function chaveObjeto(familia, item) {
@@ -170,11 +188,26 @@ export function montarDiorama({
       mundoEl?.classList.add('mundo-pulso-vegetacao');
       aplicarNivelVegetacao(evento.para);
     }
+    if (evento.familia === 'terreno') {
+      mundoEl?.classList.add('mundo-pulso-terreno');
+      aplicarNivelTerreno(evento.para);
+    }
     if (evento.familia === 'civilizacao') aplicarCaminho(evento.para);
     sincronizarObjetos(niveis, evento.familia);
     niveisRenderizados = niveis;
     await esperar(760); // cobre a maior animação de entrada (crescer/montar)
-    mundoEl?.classList.remove('mundo-pulso-agua', 'mundo-pulso-vegetacao');
+    mundoEl?.classList.remove('mundo-pulso-agua', 'mundo-pulso-vegetacao', 'mundo-pulso-terreno');
+  }
+
+  // vitalidade nunca compete com um marco semântico por atenção: sem
+  // legenda, sem som — só um respiro visual bem discreto no mundo inteiro
+  // (V1.2 §5/§12). Garante que nenhuma janela de várias descobertas passe
+  // 100% em silêncio mesmo quando nenhuma família cruzou um marco ainda.
+  async function tocarEventoVitalidade(evento) {
+    aplicarVitalidade(evento.para);
+    mundoEl?.classList.add('mundo-pulso-vitalidade');
+    await esperar(420);
+    mundoEl?.classList.remove('mundo-pulso-vitalidade');
   }
 
   async function tocarEventoEra(evento) {
@@ -221,6 +254,8 @@ export function montarDiorama({
         // eslint-disable-next-line no-await-in-loop
         if (evento.tipo === 'era') await tocarEventoEra(evento);
         // eslint-disable-next-line no-await-in-loop
+        else if (evento.tipo === 'vitalidade') await tocarEventoVitalidade(evento);
+        // eslint-disable-next-line no-await-in-loop
         else await tocarEventoMarco(evento);
       }
     } finally {
@@ -232,11 +267,18 @@ export function montarDiorama({
   function renderEstadoFinal(estado) {
     aplicarNivelAgua(estado.niveis.agua);
     aplicarNivelVegetacao(estado.niveis.vegetacao);
+    aplicarNivelTerreno(estado.niveis.terreno);
     aplicarCaminho(estado.niveis.civilizacao);
+    aplicarElementosPrimarios(estado.elementosPrimarios);
+    aplicarVitalidade(estado.vitalidade);
     sincronizarObjetos(estado.niveis, null);
     niveisRenderizados = { ...estado.niveis };
+    // desde a recalibração V1.2, terreno já nasce em nível 1 só com os 3
+    // itens-base do fallback (fogo+terra+ar) — então "totalNiveis === 0"
+    // nunca mais acontece de verdade depois do bootstrap. <=1 mantém a
+    // legenda de Mundo Primordial enquanto só esse sinal mínimo existe.
     const totalNiveis = FAMILIAS.reduce((soma, f) => soma + estado.niveis[f], 0);
-    legenda(totalNiveis === 0 ? T.dioramaVazio : '');
+    legenda(totalNiveis <= 1 ? T.dioramaVazio : '');
     const portalIA = overlay?.querySelector('.diorama-ia-portal');
     if (portalIA) portalIA.hidden = !estado.temCriacoesIA;
   }
@@ -296,9 +338,17 @@ export function montarDiorama({
     // mostra o estado JÁ visto primeiro (nunca um flash do estado final
     // antes da animação), depois reproduz o que faltar.
     const visto = progressoVisto();
+    const atual = estadoAtual();
+    // elementosPrimarios nunca é "visto/pendente" — é decoração ambiente
+    // sempre derivada do estado atual, não um marco que anima na fila.
     const estadoBase = visto
-      ? { niveis: visto.niveis, temCriacoesIA: estadoAtual().temCriacoesIA }
-      : estadoAtual();
+      ? {
+        niveis: visto.niveis,
+        vitalidade: visto.vitalidade || 0,
+        temCriacoesIA: atual.temCriacoesIA,
+        elementosPrimarios: atual.elementosPrimarios,
+      }
+      : atual;
     renderEstadoFinal(estadoBase);
     reproduzirPendentes().then(() => renderEstadoFinal(estadoAtual()));
   }

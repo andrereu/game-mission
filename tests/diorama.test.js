@@ -108,20 +108,22 @@ test('calcularAcontecimentosPendentes: mesmo estado do "visto" -> fila vazia (id
 });
 
 test('calcularAcontecimentosPendentes: um novo marco de família gera exatamente 1 evento "marco" com de/para corretos', () => {
+  // usa 'cosmico' (nivelPelosLimites genérico) — água tem regra semântica
+  // própria a partir da V1.2 (ver teste dedicado logo abaixo).
   const thresholds = thresholdsPorFamilia(cat);
-  const aguaIds = cat.allItems().filter((it) => !it.ia && familiaDoItem(it) === 'agua').map((it) => it.id);
+  const ids = cat.allItems().filter((it) => !it.ia && familiaDoItem(it) === 'cosmico').map((it) => it.id);
   const descobertosAntes = {};
-  for (const id of aguaIds.slice(0, thresholds.agua[0])) descobertosAntes[id] = {};
+  for (const id of ids.slice(0, thresholds.cosmico[0])) descobertosAntes[id] = {};
   const antes = resolverEstadoDiorama({ descobertos: descobertosAntes, catalogo: cat });
   const visto = proximoProgressoVisto(antes);
 
   const descobertosDepois = { ...descobertosAntes };
-  for (const id of aguaIds.slice(thresholds.agua[0], thresholds.agua[1])) descobertosDepois[id] = {};
+  for (const id of ids.slice(thresholds.cosmico[0], thresholds.cosmico[1])) descobertosDepois[id] = {};
   const depois = resolverEstadoDiorama({ descobertos: descobertosDepois, catalogo: cat });
 
   const marcos = calcularAcontecimentosPendentes(depois, visto).filter((e) => e.tipo === 'marco');
   assert.deepEqual(marcos, [{
-    tipo: 'marco', familia: 'agua', de: 1, para: 2,
+    tipo: 'marco', familia: 'cosmico', de: 1, para: 2,
   }]);
 });
 
@@ -174,4 +176,85 @@ test('save "antigo" (sem diorama nunca gravado) continua funcionando: bootstrap 
     const visto = proximoProgressoVisto(estado); // é isto que o boot grava, sem reproduzir nada
     assert.deepEqual(calcularAcontecimentosPendentes(estado, visto), []);
   });
+});
+
+// ---- V1.2: perfil zero, elementos primários, água semântica, vitalidade ----
+
+test('perfil zero (só os 4 itens-base): água fica no nível 0 (nascente primordial) — nunca nasce com rio/lago/cachoeira', () => {
+  const descobertos = {};
+  for (const it of cat.baseItems()) descobertos[it.id] = {};
+  const estado = resolverEstadoDiorama({ descobertos, catalogo: cat });
+  assert.equal(estado.niveis.agua, 0);
+  assert.equal(estado.contagens.agua, 1); // só o item-base 'agua'
+});
+
+test('elementos primários: terra/água/fogo/ar ficam marcados assim que os 4 itens-base existem no save, independente da família visual genérica', () => {
+  const descobertos = {};
+  for (const it of cat.baseItems()) descobertos[it.id] = {};
+  const estado = resolverEstadoDiorama({ descobertos, catalogo: cat });
+  assert.deepEqual(estado.elementosPrimarios, {
+    terra: true, agua: true, fogo: true, ar: true,
+  });
+});
+
+test('elementos primários: fogo e ar não dependem da família "terreno" pra existir (mesmo perfil vazio, sem nenhum item-base)', () => {
+  const estado = resolverEstadoDiorama({ descobertos: {}, catalogo: cat });
+  assert.deepEqual(estado.elementosPrimarios, {
+    terra: false, agua: false, fogo: false, ar: false,
+  });
+  // a classificação de família (fallback) continua existindo — é uma
+  // dimensão diferente, não removida, só não é mais a única identidade
+  // visual de fogo/ar (ver src/ui/diorama-mundo.js pra manifestação própria).
+  assert.equal(familiaDoItem(cat.getItem('fogo')), 'terreno');
+  assert.equal(familiaDoItem(cat.getItem('ar')), 'terreno');
+});
+
+test('água: progressão semântica sequencial — descobrir "cachoeira" sem rio/lago antes não pula direto pro nível máximo', () => {
+  const descobertos = { agua: {}, cachoeira: {} }; // pulou N1/N2/N3
+  const estado = resolverEstadoDiorama({ descobertos, catalogo: cat });
+  assert.equal(estado.niveis.agua, 0, 'sequencial: sem poça/chuva (N1) e sem rio/lago (N2), não avança mesmo com cachoeira descoberta');
+});
+
+test('água: "rio" ou "lago" reais avançam o nível semântico assim que "poça"/"chuva" (N1) também existir', () => {
+  const descobertos = {
+    agua: {}, poca: {}, rio: {},
+  };
+  const estado = resolverEstadoDiorama({ descobertos, catalogo: cat });
+  assert.equal(estado.niveis.agua, 2);
+});
+
+test('thresholdsPorFamilia: o primeiro nível agora é barato e fixo (PRIMEIRO_SINAL), nunca 25% de famílias grandes como vida/tecnologia', () => {
+  const thresholds = thresholdsPorFamilia(cat);
+  for (const familia of FAMILIAS) {
+    assert.ok(thresholds[familia][0] <= 3, `${familia}: primeiro nível deveria ser barato (<=3), veio ${thresholds[familia][0]}`);
+  }
+});
+
+test('vitalidade: cresce a cada poucas descobertas reais, é monotônica e nunca decresce com mais descobertas', () => {
+  const idsReais = cat.allItems().filter((it) => !it.ia).map((it) => it.id);
+  let anterior = -1;
+  const descobertos = {};
+  for (let i = 0; i < 40; i += 1) {
+    descobertos[idsReais[i]] = {};
+    const estado = resolverEstadoDiorama({ descobertos, catalogo: cat });
+    assert.ok(estado.vitalidade >= anterior, `vitalidade não pode cair (i=${i})`);
+    anterior = estado.vitalidade;
+  }
+  assert.ok(anterior > 0, 'depois de 40 descobertas reais, vitalidade deveria ter subido do zero');
+});
+
+test('vitalidade: gera no máximo 1 evento por visita (nunca um evento por sub-nível), e nunca some no visto idempotente', () => {
+  const idsReais = cat.allItems().filter((it) => !it.ia).map((it) => it.id);
+  const descobertos = {};
+  const estadoZero = resolverEstadoDiorama({ descobertos, catalogo: cat });
+  const visto = proximoProgressoVisto(estadoZero);
+  for (let i = 0; i < 20; i += 1) descobertos[idsReais[i]] = {};
+  const estado = resolverEstadoDiorama({ descobertos, catalogo: cat });
+  const eventosVitalidade = calcularAcontecimentosPendentes(estado, visto).filter((e) => e.tipo === 'vitalidade');
+  assert.equal(eventosVitalidade.length, 1);
+  assert.deepEqual(eventosVitalidade[0], { tipo: 'vitalidade', de: 0, para: estado.vitalidade });
+
+  const vistoDepois = proximoProgressoVisto(estado);
+  assert.equal(vistoDepois.vitalidade, estado.vitalidade);
+  assert.deepEqual(calcularAcontecimentosPendentes(estado, vistoDepois).filter((e) => e.tipo === 'vitalidade'), []);
 });

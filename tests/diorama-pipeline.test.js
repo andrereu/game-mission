@@ -87,22 +87,28 @@ test('pipeline real: descoberta via store.recordDiscovery gera delta, entra na f
   assert.equal(haAcontecimentosPendentes(estadoDoStore(storeRecarregado), storeRecarregado.getSave().diorama), false);
 });
 
-test('pipeline real: família "terreno" cruza o próprio limiar mas não tem nenhuma manifestação visual registrada (COMPOSICAO vazia) — achado da auditoria, não uma correção', () => {
-  // Este teste documenta o estado ATUAL (não o desejado): o motor emite
-  // um evento de marco real pra terreno, mas src/ui/diorama-mundo.js não
-  // tem entrada de COMPOSICAO pra essa família — só água e vegetação
-  // mudam a geografia, terreno não muda nada visível hoje.
+test('pipeline real (V1.2): terreno já nasce no nível 1 no bootstrap (fogo+terra+ar) e sobe de novo com mais descobertas reais', () => {
+  // Antes da recalibração V1.2, o primeiro sinal de terreno exigia 8 itens
+  // e não tinha manifestação visual (ver auditoria). Agora o limiar 1 é
+  // baixo (PRIMEIRO_SINAL=3) e os 3 itens-base que caem no fallback
+  // terreno (fogo/terra/ar) já bastam sozinhos — terreno começa no nível 1
+  // desde o instante zero, não no 0.
   const store = criarStore(saveInicial(cat));
-  store.setDiorama(proximoProgressoVisto(estadoDoStore(store)));
+  const estadoZero = estadoDoStore(store);
+  assert.equal(estadoZero.niveis.terreno, 1, 'fogo+terra+ar (3 itens fallback terreno) já cruzam o novo limiar 1');
+  store.setDiorama(proximoProgressoVisto(estadoZero));
 
   const thresholds = thresholdsPorFamilia(cat);
   const idsTerreno = cat.allItems()
     .filter((it) => !it.ia && familiaDoItem(it) === 'terreno')
     .map((it) => it.id)
     .filter((id) => !store.isDiscovered(id));
-  for (let i = 0; i < thresholds.terreno[0] - store.getSave().diorama.niveis.terreno; i += 1) {
+  for (let i = 0; i < thresholds.terreno[1] - 3; i += 1) {
     store.recordDiscovery(idsTerreno[i], null, 'combo');
   }
-  const fila = calcularAcontecimentosPendentes(estadoDoStore(store), store.getSave().diorama);
-  assert.ok(fila.some((e) => e.tipo === 'marco' && e.familia === 'terreno'), 'o motor precisa mesmo emitir o marco de terreno (comportamento real de hoje)');
+  const fila = calcularAcontecimentosPendentes(estadoDoStore(store), store.getSave().diorama)
+    .filter((e) => e.tipo === 'marco' && e.familia === 'terreno');
+  assert.deepEqual(fila, [{
+    tipo: 'marco', familia: 'terreno', de: 1, para: 2,
+  }]);
 });

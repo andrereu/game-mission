@@ -44,14 +44,33 @@ export const ANCHORS = {
 export const TERRENO_LARGURA = 900;
 export const TERRENO_ALTURA = 675;
 
+// posição do centro da revelação de água (mesma da âncora `nascente`, em
+// %) — a máscara cresce a PARTIR daí, então nível 0 mostra só a poça
+// primordial, nunca o rio/lago/cachoeira inteiros (auditoria V1.2 §1/§3).
+export const AGUA_CENTRO = { x: ANCHORS.nascente.x, y: ANCHORS.nascente.y };
+
+// elementos primários (auditoria V1.2 §1/§2): Terra é a própria ilha
+// (sempre presente); Água tem a nascente acima. Fogo e Ar ganham uma
+// manifestação mínima e discreta PRÓPRIA aqui — nunca mais dependem do
+// fallback genérico "terreno" pra existir visualmente. Nenhum dos dois
+// usa o sistema de âncoras/COMPOSICAO (não são marcos de família, são
+// decoração ambiente sempre presente uma vez que o item-base existe).
 export const GEOGRAFIA_HTML = `
 <img class="diorama-mundo-terreno" src="${ASSETS}terreno-master.png" alt="" aria-hidden="true" />
+<div class="diorama-mundo-terreno-brilho" aria-hidden="true"></div>
+<div class="diorama-mundo-terreno-poeira" aria-hidden="true">
+  <span></span><span></span><span></span>
+</div>
 <img class="diorama-mundo-agua" src="${ASSETS}agua-layer.png" alt="" aria-hidden="true" />
 <img class="diorama-mundo-vegetacao" src="${ASSETS}vegetacao-layer.png" alt="" aria-hidden="true" />
 <svg class="diorama-mundo-caminho" viewBox="0 0 ${TERRENO_LARGURA} ${TERRENO_ALTURA}" preserveAspectRatio="none" aria-hidden="true">
   <path class="geo-caminho" d="M280,425 C340,395 400,375 432,350 C500,375 600,395 684,417" fill="none" stroke="#caa06a" stroke-width="7" stroke-linecap="round" stroke-dasharray="620" stroke-dashoffset="620" />
 </svg>
 <div class="diorama-mundo-cristal" aria-hidden="true"></div>
+<div class="diorama-mundo-fogo" aria-hidden="true"></div>
+<div class="diorama-mundo-ar" aria-hidden="true">
+  <span></span><span></span><span></span>
+</div>
 `;
 
 // ---- Registro de elementos: cada um sabe só o próprio visual (imagem ou

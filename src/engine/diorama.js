@@ -67,18 +67,33 @@ function totaisPorFamilia(catalogo) {
   return totais;
 }
 
-// limiares de cada família: 25/50/75/100% da contagem REAL daquela família
-// no catálogo atual — nunca um número copiado do briefing. Se o catálogo
-// crescer, os limiares se ajustam sozinhos.
+// PRIMEIRO_SINAL: quantas descobertas REAIS daquela família bastam pro
+// primeiro sinal visual — recalibrado na auditoria V1.2 (docs pendente):
+// os limiares antigos (25% do total) faziam vida/civilização/tecnologia
+// esperarem 12-17 itens SÓ daquela família antes do primeiro pixel mudar,
+// mesmo quando o primeiro item possível daquela família só existe lá pela
+// descoberta #24-57 do jogo inteiro. Regra nova: o primeiro sinal é um
+// número pequeno e FIXO (nunca escala com o tamanho da família — uma
+// família de 66 itens não deveria ser 4x mais lenta pra reagir que uma de
+// 18), e os níveis seguintes se espalham linearmente até 100% do total.
+const PRIMEIRO_SINAL = 3;
+
+// limiares de cada família: nível 1 = PRIMEIRO_SINAL (fixo, barato, "muito
+// próximo da primeira vez que a criança descobre algo daquela família" —
+// auditoria V1.2 §7); níveis 2-4 interpolam linearmente até 100% do total
+// REAL da família no catálogo atual — nunca um número copiado de briefing.
+// Se o catálogo crescer, os limiares (exceto o primeiro) se ajustam sozinhos.
 export function thresholdsPorFamilia(catalogo) {
   const totais = totaisPorFamilia(catalogo);
   const thresholds = {};
   for (const f of FAMILIAS) {
     const total = totais[f] || 0;
-    thresholds[f] = Array.from(
-      { length: NIVEIS_POR_FAMILIA },
-      (_, i) => Math.ceil((total * (i + 1)) / NIVEIS_POR_FAMILIA),
-    );
+    const primeiro = Math.min(PRIMEIRO_SINAL, total);
+    thresholds[f] = Array.from({ length: NIVEIS_POR_FAMILIA }, (_, i) => {
+      if (i === 0) return primeiro;
+      if (i === NIVEIS_POR_FAMILIA - 1) return total;
+      return Math.min(total, Math.ceil(primeiro + ((total - primeiro) * i) / (NIVEIS_POR_FAMILIA - 1)));
+    });
   }
   return thresholds;
 }
@@ -89,6 +104,70 @@ function nivelPelosLimites(contagem, limites) {
     if (limite > 0 && contagem >= limite) nivel += 1;
   }
   return Math.min(nivel, limites.length);
+}
+
+// ---- água: progressão semântica real (auditoria V1.2 §3) --------------
+// N0 nascente/poça primordial -> N1 primeiro curso -> N2 rio/lago
+// desenvolvido -> N3 curso completo -> N4 cachoeira. Cada nível liga a
+// IDs REAIS do catálogo (nunca inventados); quando mais de um item real
+// serve o mesmo nível, todos contam (o que a criança descobrir primeiro
+// já avança o nível). Contagem genérica da família continua como rede de
+// segurança pra quem chegar lá por outro caminho de combinação.
+const AGUA_MARCOS_SEMANTICOS = [
+  ['poca', 'chuva'], // N1 — primeira água "parada" além da nascente
+  ['rio', 'lago'], // N2 — corpo d'água desenvolvido
+  ['oceano'], // N3 — curso completo
+  ['cachoeira'], // N4 — queda d'água
+];
+
+function nivelAgua(contagemAgua, descobertos, limitesContagem) {
+  let nivel = 0;
+  for (let i = 0; i < AGUA_MARCOS_SEMANTICOS.length; i += 1) {
+    const temItemMarco = AGUA_MARCOS_SEMANTICOS[i].some((id) => Boolean(descobertos?.[id]));
+    const limite = limitesContagem[i];
+    const bateuContagem = limite > 0 && contagemAgua >= limite;
+    if (temItemMarco || bateuContagem) nivel = i + 1;
+    else break; // sequencial: não pula nível sem cumprir o anterior
+  }
+  return Math.min(nivel, AGUA_MARCOS_SEMANTICOS.length);
+}
+
+// ---- elementos primários (auditoria V1.2 §1/§2) ------------------------
+// Terra/Água/Fogo/Ar são os 4 itens-base do save (sempre descobertos desde
+// o boot — ver saveInicial). Isso é INDEPENDENTE da família visual
+// genérica (fogo e ar caem no fallback 'terreno' pra fins de contagem de
+// família, mas ganham manifestação própria na composição visual — nunca
+// tratados como "terreno" pro jogador). Como são itens-base, presença aqui
+// é praticamente sempre true; o campo existe pra a UI nunca precisar
+// assumir isso e pra saves hipotéticos sem os 4 itens ainda funcionarem.
+export const ELEMENTOS_PRIMARIOS_IDS = {
+  terra: 'terra', agua: 'agua', fogo: 'fogo', ar: 'ar',
+};
+
+function calcularElementosPrimarios(descobertos) {
+  const out = {};
+  for (const [chave, id] of Object.entries(ELEMENTOS_PRIMARIOS_IDS)) {
+    out[chave] = Boolean(descobertos?.[id]);
+  }
+  return out;
+}
+
+// ---- vitalidade global (auditoria V1.2 §5) -----------------------------
+// Derivada só do TOTAL de descobertas canônicas (nunca cria objeto novo,
+// nunca substitui os marcos semânticos por família) — existe só pra
+// garantir que nenhuma janela de 10-15 descobertas passe em silêncio
+// absoluto: a cada ~4 descobertas o mundo "respira" um pouco mais (água
+// brilha, poeira/vento aumentam, solo ganha detalhe). Intensifica o que
+// já existe; nunca decide sozinha o que aparece.
+const DESCOBERTAS_POR_VITALIDADE = 4;
+const VITALIDADE_MAXIMA = 20;
+
+function calcularVitalidade(descobertos, catalogo) {
+  let total = 0;
+  for (const id of Object.keys(descobertos || {})) {
+    if (familiaDoItem(catalogo.getItem(id))) total += 1;
+  }
+  return Math.min(VITALIDADE_MAXIMA, Math.floor(total / DESCOBERTAS_POR_VITALIDADE));
 }
 
 // ---- estado puro e determinístico ----
@@ -105,13 +184,26 @@ export function resolverEstadoDiorama({ descobertos = {}, catalogo, itensIA = {}
   }
 
   const niveis = {};
-  for (const f of FAMILIAS) niveis[f] = nivelPelosLimites(contagens[f], thresholds[f]);
+  for (const f of FAMILIAS) {
+    niveis[f] = f === 'agua'
+      ? nivelAgua(contagens.agua, descobertos, thresholds.agua)
+      : nivelPelosLimites(contagens[f], thresholds[f]);
+  }
 
   const era = eraMaisAvancada(erasAlcancadas(descobertos, catalogo));
   const temCriacoesIA = Object.keys(itensIA || {}).length > 0;
+  const elementosPrimarios = calcularElementosPrimarios(descobertos);
+  const vitalidade = calcularVitalidade(descobertos, catalogo);
 
   return {
-    niveis, contagens, thresholds, era, temCriacoesIA, nivelMaximo: NIVEIS_POR_FAMILIA,
+    niveis,
+    contagens,
+    thresholds,
+    era,
+    temCriacoesIA,
+    nivelMaximo: NIVEIS_POR_FAMILIA,
+    elementosPrimarios,
+    vitalidade,
   };
 }
 
@@ -145,6 +237,16 @@ export function calcularAcontecimentosPendentes(estadoAtual, progressoVisto) {
       });
     }
   }
+
+  // vitalidade: um único evento por visita (nunca um por sub-nível) — só
+  // intensifica o que já existe na cena, nunca compete com marcos
+  // semânticos por atenção. Ver §5 da auditoria V1.2.
+  const vitalidadeAtual = estadoAtual.vitalidade || 0;
+  const vitalidadeVista = visto.vitalidade || 0;
+  if (vitalidadeAtual > vitalidadeVista) {
+    eventos.push({ tipo: 'vitalidade', de: vitalidadeVista, para: vitalidadeAtual });
+  }
+
   return eventos;
 }
 
@@ -157,5 +259,9 @@ export function haAcontecimentosPendentes(estadoAtual, progressoVisto) {
 // Idempotente: chamar de novo com o mesmo estado sempre gera o mesmo
 // progresso — reload nunca reabre uma transformação já vista.
 export function proximoProgressoVisto(estadoAtual) {
-  return { niveis: { ...estadoAtual.niveis }, era: estadoAtual.era };
+  return {
+    niveis: { ...estadoAtual.niveis },
+    era: estadoAtual.era,
+    vitalidade: estadoAtual.vitalidade || 0,
+  };
 }
