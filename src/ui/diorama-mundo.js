@@ -139,77 +139,85 @@ export const COMPOSICAO = {
     1: [{ anchor: 'margem_lago', elemento: 'borboleta', escala: 0.58 }],
     2: [
       { anchor: 'margem_lago', elemento: 'borboleta', escala: 0.58 },
-      // dx/dy: ajuste fino da instância (% do palco) pra a capivara ficar
-      // sobre o planalto e não "empoleirada" na borda direita da ilha —
-      // não mexe na âncora nem no deslocamento da família.
+      // Calibração V2: capivara desce pra clareira direita/frontal, fora da
+      // colisão casa × ponte. dx/dy = ajuste de instância (% do palco), não
+      // mexe na âncora nem no deslocamento da família.
       {
-        anchor: 'clareira_direita', elemento: 'bicho', escala: 0.66, dx: -9, dy: -4,
+        anchor: 'clareira_direita', elemento: 'bicho', escala: 0.66, dx: -2, dy: 13,
       },
     ],
     3: [
       { anchor: 'margem_lago', elemento: 'passaro', escala: 0.6 },
       {
-        anchor: 'clareira_direita', elemento: 'bicho', escala: 0.7, dx: -9, dy: -4,
+        anchor: 'clareira_direita', elemento: 'bicho', escala: 0.7, dx: -2, dy: 13,
       },
-      // pássaro do céu vai pro canto direito: o canto esquerdo é a âncora
-      // da 1ª estrela (cósmico N1) — com arte real os dois colidiam.
-      { anchor: 'ceu_direita', elemento: 'passaro', escala: 0.52 },
+      // Calibração V2: pássaro do céu sai de ceu_direita/aurora e vai pro céu
+      // central, majoritariamente dentro do palco (só ajuste de instância).
+      { anchor: 'ceu_direita', elemento: 'passaro', escala: 0.52, dx: -56, dy: 13 },
     ],
   },
   civilizacao: {
     1: [{ anchor: 'clareira_esquerda', elemento: 'fogueira', escala: 0.55 }],
     2: [
       { anchor: 'clareira_esquerda', elemento: 'fogueira', escala: 0.55 },
-      { anchor: 'clareira_direita', elemento: 'casa', escala: 0.7 },
+      { anchor: 'clareira_direita', elemento: 'casa', escala: 0.85 },
     ],
     3: [
       { anchor: 'clareira_esquerda', elemento: 'fogueira', escala: 0.55 },
-      { anchor: 'clareira_direita', elemento: 'casa', escala: 0.75 },
+      { anchor: 'clareira_direita', elemento: 'casa', escala: 0.9 },
     ],
   },
   // Tecnologia cumulativa/evolutiva (Round A2): N1 e N2 são a MESMA oficina
   // evoluindo no mesmo ponto (N2 substitui N1); N3 mantém o engenho e ADICIONA
   // o observatório no pico; N4 mantém os dois e ADICIONA o foguete no arco.
-  // dx:8 dy:-4 (ajuste de instância, % do palco): afasta a oficina/engenho da
-  // fogueira de Civilização (mesma âncora clareira_esquerda) — não mexe na
-  // âncora nem no deslocamento da família. Aplicado igual em N1 e N2+ pra o
-  // ponto da oficina não "pular" ao evoluir.
+  // Calibração V2: dx:-3 dy:-7 (ajuste de instância, % do palco) traz o
+  // engenho pra o território esquerdo (~x35/y53), fora da sobreposição com a
+  // árvore central — não mexe na âncora nem no deslocamento da família.
+  // Aplicado igual em N1 e N2+ pra o ponto da oficina não "pular" ao evoluir.
   tecnologia: {
     1: [{
-      anchor: 'clareira_esquerda', elemento: 'ferramenta', escala: 0.95, dx: 8, dy: -4,
+      anchor: 'clareira_esquerda', elemento: 'ferramenta', escala: 0.95, dx: -3, dy: -7,
     }],
     2: [{
-      anchor: 'clareira_esquerda', elemento: 'engrenagem', escala: 1.05, dx: 8, dy: -4,
+      anchor: 'clareira_esquerda', elemento: 'engrenagem', escala: 1.05, dx: -3, dy: -7,
     }],
     3: [
       {
-        anchor: 'clareira_esquerda', elemento: 'engrenagem', escala: 1.05, dx: 8, dy: -4,
+        anchor: 'clareira_esquerda', elemento: 'engrenagem', escala: 1.05, dx: -3, dy: -7,
       },
+      // Calibração V2: observatório passa a coroar o pico e cresce ~+17%
+      // (escala 0.9 -> 1.05; dy 15 -> 18 pra assentar a base na rocha).
+      // Resíduo de "base rochosa" pertence ao asset — refinamento futuro,
+      // não compensação por offset.
       {
-        anchor: 'alto_observatorio', elemento: 'observatorio', escala: 0.9, dx: -4, dy: 15,
+        anchor: 'alto_observatorio', elemento: 'observatorio', escala: 1.05, dx: -4, dy: 18,
       },
     ],
     4: [
       {
-        anchor: 'clareira_esquerda', elemento: 'engrenagem', escala: 1.05, dx: 8, dy: -4,
+        anchor: 'clareira_esquerda', elemento: 'engrenagem', escala: 1.05, dx: -3, dy: -7,
       },
       {
-        anchor: 'alto_observatorio', elemento: 'observatorio', escala: 0.9, dx: -4, dy: 15,
+        anchor: 'alto_observatorio', elemento: 'observatorio', escala: 1.05, dx: -4, dy: 18,
       },
+      // Calibração V2: foguete cresce ~+22% (0.8 -> 0.98) como landmark do
+      // arco; posição mantida.
       {
-        anchor: 'arco_rochoso', elemento: 'foguete', escala: 0.8, dx: -8, dy: 4,
+        anchor: 'arco_rochoso', elemento: 'foguete', escala: 0.98, dx: -10, dy: 4,
       },
     ],
   },
+  // Calibração V2: dx/dy de instância nas estrelas/fenômeno pra trazer a arte
+  // pra dentro do palco (estava ~50-60% cortada acima da borda superior).
   cosmico: {
-    1: [{ anchor: 'ceu_esquerda', elemento: 'estrela', escala: 0.6 }],
+    1: [{ anchor: 'ceu_esquerda', elemento: 'estrela', escala: 0.6, dx: 2, dy: 7 }],
     2: [
-      { anchor: 'ceu_esquerda', elemento: 'estrela', escala: 0.6 },
-      { anchor: 'ceu_direita', elemento: 'estrela', escala: 0.52 },
+      { anchor: 'ceu_esquerda', elemento: 'estrela', escala: 0.6, dx: 2, dy: 7 },
+      { anchor: 'ceu_direita', elemento: 'estrela', escala: 0.52, dx: 0, dy: 7 },
     ],
     3: [
-      { anchor: 'ceu_esquerda', elemento: 'estrela', escala: 0.6 },
-      { anchor: 'ceu_direita', elemento: 'fenomeno', escala: 1.35 },
+      { anchor: 'ceu_esquerda', elemento: 'estrela', escala: 0.6, dx: 2, dy: 7 },
+      { anchor: 'ceu_direita', elemento: 'fenomeno', escala: 1.35, dx: 3, dy: 10 },
     ],
   },
   // terreno e água não colocam objetos soltos — mudam a própria geografia
@@ -229,10 +237,12 @@ export const NIVEL_CAMINHO_CIVILIZACAO = 2;
 // (recebe o deslocamento dessa família); o ajuste de instância centra o
 // vão sobre o leito d'água entre clareira_central e clareira_direita. Ver
 // wiring em src/ui/diorama.js (sincronizarObjetos / tocarEventoConstrucao).
+// Calibração V2: ponte cresce ~+30% (1.08 -> 1.4) pra o tabuleiro alcançar
+// visualmente as duas margens do leito; cruzamento/offset mantidos.
 export const ENTRADA_PONTE = {
   familia: 'civilizacao',
   item: {
-    anchor: 'ponte', elemento: 'ponte', escala: 1.08, dx: -3, dy: 0,
+    anchor: 'ponte', elemento: 'ponte', escala: 1.4, dx: -3, dy: 0,
   },
 };
 
