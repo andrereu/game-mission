@@ -57,10 +57,14 @@
 
 .diorama-ilha {
   position: relative;
-  width: min(94%, 480px);
+  /* Mobile mantém a escala já validada (quase toda a largura útil, num
+     teto pequeno). Tablet/desktop calibrados pra o mundo parecer algo pra
+     OBSERVAR, não um ícone perdido no fundo cósmico — ver breakpoints
+     abaixo. O teto em vh evita estourar a altura em janelas baixas. */
+  width: min(94%, 480px, 80vh);
   aspect-ratio: 400 / 300;
   filter: drop-shadow(0 30px 40px rgba(0, 0, 0, 0.55));
-  transition: filter 400ms ease;
+  transition: filter 400ms ease, width 200ms ease;
 }
 .diorama-ilha-era-nova {
   animation: diorama-era-pulso 900ms ease;
@@ -334,4 +338,15 @@
 @media (min-width: 640px) {
   .diorama-cabecalho { padding: 16px 20px; }
   .diorama-titulo { font-size: 21px; }
+  /* tablet: escala intermediária, proporcional entre o teto do mobile e
+     os 40-50% do desktop — ~60-65% da largura útil do palco. */
+  .diorama-ilha { width: min(64%, 620px, 80vh); }
+}
+
+@media (min-width: 1024px) {
+  /* desktop: ~40-50% da largura útil do palco (nunca um ícone central) —
+     mesmo centro visual, mesma geografia, só maior. O teto em px evita
+     que a ilha vire enorme em telas ultra-largas; o teto em vh evita
+     estourar a altura em janelas baixas/paisagem. */
+  .diorama-ilha { width: min(clamp(520px, 45vw, 760px), 80vh); }
 }
