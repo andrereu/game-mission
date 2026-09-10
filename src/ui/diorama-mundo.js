@@ -122,6 +122,35 @@ export const ELEMENTOS = {
   ponte: { img: `${ASSETS}civilizacao-ponte.png`, anim: 'monta', contato: 'centro' },
 };
 
+// ---- Slots de composição compartilhados (calibração manual do Level
+// Editor — tabela de conversão v3). Cada slot é o ajuste {dx,dy} por
+// instância (% do palco) que, somado a ANCHORS[âncora] + o deslocamento
+// da família, reproduz a posição visual aprovada no editor. Ficam como
+// constantes nomeadas porque a MESMA posição é reutilizada em vários
+// níveis da COMPOSICAO (fogueira em N1/N2/N3, casa em N2/N3, a oficina
+// ferramenta->engrenagem, observatório em N3/N4, bicho em N2/N3,
+// borboleta em N1/N2) — um número num lugar só, os níveis não podem
+// divergir por engano. NÃO alteram ANCHORS nem DESLOCAMENTO_POR_FAMILIA.
+//
+// - foguete usa `position` (base-centro da bbox), não `visualContact`: é
+//   esse o ponto que o renderer realmente ancora, e o alpha assimétrico
+//   do PNG (~11% à esquerda) tornaria visualContact incorreto aqui.
+// - itens de contato `center` (borboleta, pássaros, fenômeno, ponte)
+//   trazem no dy do slot a compensação -heightPct/2, pra a base visível
+//   cair no mesmo ponto aprovado mesmo o renderer centrando o PNG.
+const SLOT_FOGUEIRA = { dx: 5.14, dy: -23.27 };
+const SLOT_CASA = { dx: -33.25, dy: 9.18 };
+const SLOT_VEGETACAO = { dx: 0.28, dy: 2.32 };
+const SLOT_OFICINA = { dx: 23.21, dy: -22.63 };
+const SLOT_OBSERVATORIO = { dx: -5.31, dy: 8.43 };
+const SLOT_FOGUETE = { dx: -9.6, dy: 17.29 };
+const SLOT_BICHO = { dx: -45.26, dy: 6.56 };
+const SLOT_BORBOLETA = { dx: 17.93, dy: -3.43 };
+const SLOT_PASSARO_CEU = { dx: -64.3, dy: 25.02 };
+const SLOT_PASSARO_MARGEM = { dx: -18, dy: 5.41 };
+const SLOT_FENOMENO = { dx: 5.95, dy: 2.68 };
+const SLOT_PONTE = { dx: -0.15, dy: -2.42 };
+
 // ---- Composição: estado (família + nível) -> lista de {âncora,
 // elemento, escala}, cumulativa por nível. -----------------------------
 //
@@ -129,86 +158,93 @@ export const ELEMENTOS = {
 // árvore adulta), nunca três árvores lado a lado (briefing §5) — a
 // "cobertura verde" espalhando pelo resto do terreno é a camada
 // diorama-mundo-vegetacao (grama), não objetos avulsos.
+//
+// Posições/escalas = tabela de conversão v3 do Level Editor. Escala por
+// instância = `size.scale` exportado (1:1 com --diorama-escala); jovem,
+// árvore e engrenagem herdam o ponto do slot da fase inicial mas mantêm
+// a escala própria. estrela cósmica não entrou nesta composição.
 export const COMPOSICAO = {
   vegetacao: {
-    1: [{ anchor: 'clareira_central', elemento: 'broto', escala: 0.55 }],
-    2: [{ anchor: 'clareira_central', elemento: 'jovem', escala: 0.7 }],
-    3: [{ anchor: 'clareira_central', elemento: 'arvore', escala: 0.85 }],
+    1: [{
+      anchor: 'clareira_central', elemento: 'broto', escala: 0.192, ...SLOT_VEGETACAO,
+    }],
+    2: [{
+      anchor: 'clareira_central', elemento: 'jovem', escala: 0.7, ...SLOT_VEGETACAO,
+    }],
+    3: [{
+      anchor: 'clareira_central', elemento: 'arvore', escala: 0.85, ...SLOT_VEGETACAO,
+    }],
   },
   vida: {
-    1: [{ anchor: 'margem_lago', elemento: 'borboleta', escala: 0.58 }],
+    1: [{ anchor: 'margem_lago', elemento: 'borboleta', escala: 0.278, ...SLOT_BORBOLETA }],
     2: [
-      { anchor: 'margem_lago', elemento: 'borboleta', escala: 0.58 },
-      // Calibração V2: capivara desce pra clareira direita/frontal, fora da
-      // colisão casa × ponte. dx/dy = ajuste de instância (% do palco), não
-      // mexe na âncora nem no deslocamento da família.
+      { anchor: 'margem_lago', elemento: 'borboleta', escala: 0.278, ...SLOT_BORBOLETA },
       {
-        anchor: 'clareira_direita', elemento: 'bicho', escala: 0.66, dx: -2, dy: 13,
+        anchor: 'clareira_direita', elemento: 'bicho', escala: 0.364, ...SLOT_BICHO,
       },
     ],
     3: [
-      { anchor: 'margem_lago', elemento: 'passaro', escala: 0.6 },
       {
-        anchor: 'clareira_direita', elemento: 'bicho', escala: 0.7, dx: -2, dy: 13,
+        anchor: 'margem_lago', elemento: 'passaro', escala: 0.201, ...SLOT_PASSARO_MARGEM,
       },
-      // Calibração V2: pássaro do céu sai de ceu_direita/aurora e vai pro céu
-      // central, majoritariamente dentro do palco (só ajuste de instância).
-      { anchor: 'ceu_direita', elemento: 'passaro', escala: 0.52, dx: -56, dy: 13 },
+      {
+        anchor: 'clareira_direita', elemento: 'bicho', escala: 0.364, ...SLOT_BICHO,
+      },
+      {
+        anchor: 'ceu_direita', elemento: 'passaro', escala: 0.326, ...SLOT_PASSARO_CEU,
+      },
     ],
   },
   civilizacao: {
-    1: [{ anchor: 'clareira_esquerda', elemento: 'fogueira', escala: 0.55 }],
+    1: [{
+      anchor: 'clareira_esquerda', elemento: 'fogueira', escala: 0.412, ...SLOT_FOGUEIRA,
+    }],
     2: [
-      { anchor: 'clareira_esquerda', elemento: 'fogueira', escala: 0.55 },
-      { anchor: 'clareira_direita', elemento: 'casa', escala: 0.85 },
+      {
+        anchor: 'clareira_esquerda', elemento: 'fogueira', escala: 0.412, ...SLOT_FOGUEIRA,
+      },
+      { anchor: 'clareira_direita', elemento: 'casa', escala: 0.45, ...SLOT_CASA },
     ],
     3: [
-      { anchor: 'clareira_esquerda', elemento: 'fogueira', escala: 0.55 },
-      { anchor: 'clareira_direita', elemento: 'casa', escala: 0.9 },
+      {
+        anchor: 'clareira_esquerda', elemento: 'fogueira', escala: 0.412, ...SLOT_FOGUEIRA,
+      },
+      { anchor: 'clareira_direita', elemento: 'casa', escala: 0.45, ...SLOT_CASA },
     ],
   },
   // Tecnologia cumulativa/evolutiva (Round A2): N1 e N2 são a MESMA oficina
   // evoluindo no mesmo ponto (N2 substitui N1); N3 mantém o engenho e ADICIONA
   // o observatório no pico; N4 mantém os dois e ADICIONA o foguete no arco.
-  // Calibração V2: dx:-3 dy:-7 (ajuste de instância, % do palco) traz o
-  // engenho pra o território esquerdo (~x35/y53), fora da sobreposição com a
-  // árvore central — não mexe na âncora nem no deslocamento da família.
-  // Aplicado igual em N1 e N2+ pra o ponto da oficina não "pular" ao evoluir.
+  // ferramenta (N1) e engrenagem (N2+) partilham SLOT_OFICINA pra o ponto da
+  // oficina não "pular" ao evoluir; engrenagem mantém a escala própria 1.05,
+  // só a ferramenta cai pra 0.517 (tabela de conversão v3).
   tecnologia: {
     1: [{
-      anchor: 'clareira_esquerda', elemento: 'ferramenta', escala: 0.95, dx: -3, dy: -7,
+      anchor: 'clareira_esquerda', elemento: 'ferramenta', escala: 0.517, ...SLOT_OFICINA,
     }],
     2: [{
-      anchor: 'clareira_esquerda', elemento: 'engrenagem', escala: 1.05, dx: -3, dy: -7,
+      anchor: 'clareira_esquerda', elemento: 'engrenagem', escala: 1.05, ...SLOT_OFICINA,
     }],
     3: [
       {
-        anchor: 'clareira_esquerda', elemento: 'engrenagem', escala: 1.05, dx: -3, dy: -7,
+        anchor: 'clareira_esquerda', elemento: 'engrenagem', escala: 1.05, ...SLOT_OFICINA,
       },
-      // Calibração V2: observatório passa a coroar o pico e cresce ~+17%
-      // (escala 0.9 -> 1.05; dy 15 -> 18 pra assentar a base na rocha).
-      // Resíduo de "base rochosa" pertence ao asset — refinamento futuro,
-      // não compensação por offset.
       {
-        anchor: 'alto_observatorio', elemento: 'observatorio', escala: 1.05, dx: -4, dy: 18,
+        anchor: 'alto_observatorio', elemento: 'observatorio', escala: 0.69, ...SLOT_OBSERVATORIO,
       },
     ],
     4: [
       {
-        anchor: 'clareira_esquerda', elemento: 'engrenagem', escala: 1.05, dx: -3, dy: -7,
+        anchor: 'clareira_esquerda', elemento: 'engrenagem', escala: 1.05, ...SLOT_OFICINA,
       },
       {
-        anchor: 'alto_observatorio', elemento: 'observatorio', escala: 1.05, dx: -4, dy: 18,
+        anchor: 'alto_observatorio', elemento: 'observatorio', escala: 0.69, ...SLOT_OBSERVATORIO,
       },
-      // Calibração V2: foguete cresce ~+22% (0.8 -> 0.98) como landmark do
-      // arco; posição mantida.
       {
-        anchor: 'arco_rochoso', elemento: 'foguete', escala: 0.98, dx: -10, dy: 4,
+        anchor: 'arco_rochoso', elemento: 'foguete', escala: 1.724, ...SLOT_FOGUETE,
       },
     ],
   },
-  // Calibração V2: dx/dy de instância nas estrelas/fenômeno pra trazer a arte
-  // pra dentro do palco (estava ~50-60% cortada acima da borda superior).
   cosmico: {
     1: [{ anchor: 'ceu_esquerda', elemento: 'estrela', escala: 0.6, dx: 2, dy: 7 }],
     2: [
@@ -217,7 +253,7 @@ export const COMPOSICAO = {
     ],
     3: [
       { anchor: 'ceu_esquerda', elemento: 'estrela', escala: 0.6, dx: 2, dy: 7 },
-      { anchor: 'ceu_direita', elemento: 'fenomeno', escala: 1.35, dx: 3, dy: 10 },
+      { anchor: 'ceu_direita', elemento: 'fenomeno', escala: 1.667, ...SLOT_FENOMENO },
     ],
   },
   // terreno e água não colocam objetos soltos — mudam a própria geografia
@@ -237,12 +273,12 @@ export const NIVEL_CAMINHO_CIVILIZACAO = 2;
 // (recebe o deslocamento dessa família); o ajuste de instância centra o
 // vão sobre o leito d'água entre clareira_central e clareira_direita. Ver
 // wiring em src/ui/diorama.js (sincronizarObjetos / tocarEventoConstrucao).
-// Calibração V2: ponte cresce ~+30% (1.08 -> 1.4) pra o tabuleiro alcançar
-// visualmente as duas margens do leito; cruzamento/offset mantidos.
+// Tabela v3: ponte alinhada ao Level Editor (escala 0.757, SLOT_PONTE).
+// Contato semântico permanece `center`; o dy do slot embute -heightPct/2.
 export const ENTRADA_PONTE = {
   familia: 'civilizacao',
   item: {
-    anchor: 'ponte', elemento: 'ponte', escala: 1.4, dx: -3, dy: 0,
+    anchor: 'ponte', elemento: 'ponte', escala: 0.757, ...SLOT_PONTE,
   },
 };
 

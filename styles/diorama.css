@@ -516,6 +516,13 @@
   align-items: center;
   justify-content: center;
   width: calc(15% * var(--diorama-escala, 1));
+  /* zera o padding default do user-agent para <button> (1px 6px): com
+     box-sizing border-box + <img width:100%>, esse padding encolhia a
+     arte 12px de largura em TODO objeto (altura cai junto via height:auto),
+     com impacto proporcionalmente maior nos assets pequenos. A largura
+     renderizada tem que ser exatamente widthPct = 15% * escala. */
+  margin: 0;
+  padding: 0;
   border: 0;
   background: transparent;
   cursor: pointer;
